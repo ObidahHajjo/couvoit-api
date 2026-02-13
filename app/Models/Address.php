@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Address extends Model
 {
+    use HasFactory;
+
     /**
      * Disable timestamps because the "addresses" table does not contain
      * created_at / updated_at columns managed automatically by Laravel.

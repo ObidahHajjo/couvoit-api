@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Role extends Model
 {
+    use HasFactory;
+
     /**
      * Disable timestamps because the "roles" table does not contain
      * created_at / updated_at columns.
