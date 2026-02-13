@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'supabase' => [
+        'project_url' => env('SUPABASE_PROJECT_URL'),
+        'jwks_url' => env('SUPABASE_JWT_JWKS_URL'),
+        'anon_key' => env('SUPABASE_ANON_KEY'),
+    ],
+
 ];
