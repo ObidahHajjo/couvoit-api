@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('cities', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('name', 100);
+            $table->string('postal_code', 10);
+            $table->unique(['name', 'postal_code']);
         });
     }
 
