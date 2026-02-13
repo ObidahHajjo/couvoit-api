@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\AuthRequest;
 use App\Http\Requests\Auth\RefreshRequest;
+use App\Http\Resources\AuthTokenResource;
 use App\Services\Interfaces\AuthServiceInterface;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
@@ -12,37 +15,42 @@ class AuthController extends Controller
         private readonly AuthServiceInterface $authService
     ) {}
 
-    public function register(AuthRequest $request)
+    /**
+     * POST /register
+     */
+    public function register(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
-        try {
-            $result = $this->authService->register($data['email'], $data['password']);
-            return response()->json($result, 201);
-        } catch (\Throwable $e) {
-            return response()->json(['status' => 'NOK', 'message' => $e->getMessage()], 400);
-        }
+        $result = $this->authService->register($data['email'], $data['password']);
+
+        return (new AuthTokenResource($result))
+            ->response()
+            ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    public function login(AuthRequest $request)
+    /**
+     * POST /login
+     */
+    public function login(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
-        try {
-            $result = $this->authService->login($data['email'], $data['password']);
-            return response()->json($result);
-        } catch (\Throwable $e) {
-            return response()->json(['status' => 'NOK', 'message' => 'Invalid credentials'], 401);
-        }
+        $result = $this->authService->login($data['email'], $data['password']);
+
+        return (new AuthTokenResource($result))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
-    public function refresh(RefreshRequest $request)
+    /**
+     * POST /refresh
+     */
+    public function refresh(RefreshRequest $request): JsonResponse
     {
         $data = $request->validated();
-        try {
-            $result = $this->authService->refresh($data['refresh_token']);
-            return response()->json($result);
-        } catch (\Throwable $e) {
-            return response()->json(['status' => 'NOK', 'message' => $e->getMessage()], 401);
-        }
+        $result = $this->authService->refresh($data['refresh_token']);
+
+        return (new AuthTokenResource($result))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 }
-
