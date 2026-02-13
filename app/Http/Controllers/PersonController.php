@@ -22,7 +22,6 @@ class PersonController extends Controller
      */
     public function index(): JsonResponse
     {
-        return response()->json(auth()->user());
         $this->authorize('viewAny', Person::class);
 
         $people = $this->persons->list();
