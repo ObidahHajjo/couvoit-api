@@ -105,7 +105,7 @@ class CarController extends Controller
 
         $updatedCar->loadMissing(['model.brand', 'model.type', 'color']);
 
-        return (new CarResource($car))->response()->setStatusCode(Response::HTTP_OK);
+        return (new CarResource($updatedCar))->response()->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -114,11 +114,11 @@ class CarController extends Controller
      * @param Car $car
      * @return JsonResponse
      */
-    public function destroy(Car $car): JsonResponse
+    public function destroy(Car $car): Response
     {
         $this->authorize('delete', $car);
 
         $this->cars->deleteCar($car);
-        return response()->json(null, Response::HTTP_NO_CONTENT);
+        return response()->noContent();
     }
 }

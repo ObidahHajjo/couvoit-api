@@ -51,9 +51,9 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function update(CarModel $model, array $data): bool
+    public function update(CarModel $model, array $data): void
     {
-        return $model->update($data);
+        $model->update($data);
     }
 
     /**

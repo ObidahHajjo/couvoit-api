@@ -40,9 +40,9 @@ interface CarModelRepositoryInterface
      * @param CarModel $model
      * @param array $data
      *
-     * @return bool
+     * @return void
      */
-    public function update(CarModel $model, array $data): bool;
+    public function update(CarModel $model, array $data): void;
 
     /**
      * Delete a given CarModel.
