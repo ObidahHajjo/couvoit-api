@@ -44,6 +44,8 @@ Route::middleware('supabase.auth')->group(function () {
     Route::patch("/trips/{trip}", [TripController::class, 'update']);
     Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
     Route::post('/trips/{trip}/person', [TripController::class, 'reserve']);
+    Route::patch('/trips/{trip}/cancel', [TripController::class, 'cancel']);
+    Route::delete('/trips/{trip}/reservations', [TripController::class, 'cancelReservation']);
 
 
     /* ===== BRANDS ===== */
