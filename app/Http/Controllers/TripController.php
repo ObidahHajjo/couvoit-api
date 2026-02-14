@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ValidationLogicException;
+use App\Http\Requests\Trip\CancelReservationRequest;
 use App\Http\Requests\Trip\ReserveTripRequest;
 use App\Http\Requests\Trip\StoreTripRequest;
 use App\Http\Requests\Trip\TripIndexRequest;
@@ -119,16 +121,54 @@ class TripController extends Controller
     }
 
     /**
-     * DELETE /trips/{id}
+     * DELETE /trips/{trip}
      */
     public function destroy(Trip $trip): Response
     {
         /** @var Person $authPerson */
         $authPerson = auth()->user();
 
-        $this->authorize('delete', $trip);
+        $this->authorize('forceDelete', $trip);
 
-        $this->trips->deleteTrip($trip, $authPerson);
+        $this->trips->deleteTripPermanently($trip, $authPerson);
+
+        return response()->noContent();
+    }
+
+    /**
+     * PATCH /trips/{trip}/cancel
+     */
+    public function cancel(Trip $trip): Response
+    {
+        /** @var Person $authPerson */
+        $authPerson = auth()->user();
+
+        $this->authorize('cancel', $trip);
+
+        $this->trips->cancelTrip($trip, $authPerson);
+
+        return response()->noContent();
+    }
+
+    /**
+     * DELETE /trips/{trip}/reservations
+     */
+    public function cancelReservation(Trip $trip, CancelReservationRequest $request): Response
+    {
+        /** @var Person $authPerson */
+        $authPerson = auth()->user();
+
+        $this->authorize('cancelReservation', $trip);
+
+        if ($authPerson->isAdmin() && $request->validated('person_id') === null) {
+            throw new ValidationLogicException('person_id is required for admin.');
+        }
+
+        $personId = $authPerson->isAdmin()
+            ? (int) $request->validated('person_id')
+            : (int) $authPerson->id;
+
+        $this->trips->cancelReservation($trip, $personId, $authPerson);
 
         return response()->noContent();
     }

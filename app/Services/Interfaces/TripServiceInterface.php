@@ -60,6 +60,18 @@ interface TripServiceInterface
     public function createTrip(array $payload, Person $authPerson): Trip;
 
     /**
+     * Cancel a trip (soft delete)
+     *
+     * @param Trip $trip Trip instance to cancel.
+     * @param Person $authPerson Authenticated user.
+     * @return void
+     *
+     * @throws Throwable
+     */
+    public function cancelTrip(Trip $trip, Person $authPerson): void;
+
+
+    /**
      * Update a trip.
      *
      * Payload keys (optional):
@@ -90,7 +102,20 @@ interface TripServiceInterface
      * @throws NotFoundException If trip no longer exists.
      * @throws Throwable On transaction/database errors.
      */
-    public function deleteTrip(Trip $trip, Person $authPerson): void;
+    public function deleteTripPermanently(Trip $trip, Person $authPerson): void;
+
+    /**
+     * Cancel a trip and its reservations.
+     *
+     * @param Trip $trip Trip instance to delete.
+     * @param int $personId
+     * @param Person $authPerson Authenticated user.
+     * @return bool
+     *
+     * @throws NotFoundException If trip no longer exists.
+     * @throws Throwable On transaction/database errors.
+     */
+    public function cancelReservation(Trip $trip, int $personId, Person $authPerson): bool;
 
     /**
      * Reserve a seat for a passenger on a trip.

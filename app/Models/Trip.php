@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Trip
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Trip extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * Disable timestamps because the "trips" table does not contain
@@ -58,6 +59,11 @@ class Trip extends Model
         'arrival_address_id',    // Arrival address
         'smoking_allowed',       // Smoking allowed
         'person_id'              // Driver id
+    ];
+
+    protected $casts = [
+        'departure_time' => 'datetime',
+        'arrival_time' => 'datetime',
     ];
 
     /**

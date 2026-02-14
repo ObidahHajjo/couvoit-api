@@ -6,12 +6,9 @@ use App\Exceptions\ConflictException;
 use App\Exceptions\ForbiddenException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationLogicException;
-use App\Models\Address;
-use App\Models\City;
 use App\Models\Person;
 use App\Models\Trip;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
-use App\Repositories\Interfaces\ReservationRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
 use App\Services\Interfaces\TripServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -34,11 +31,12 @@ use App\Resolvers\Interfaces\AddressResolverInterface;
 readonly class TripService implements TripServiceInterface
 {
     public function __construct(
-        private TripRepositoryInterface $trips,
-        private ReservationRepositoryInterface $reservations,
+        private TripRepositoryInterface   $trips,
         private PersonRepositoryInterface $persons,
-        private AddressResolverInterface $addressResolver,
-    ) {}
+        private AddressResolverInterface  $addressResolver,
+    )
+    {
+    }
 
     /**
      * @inheritDoc
@@ -47,8 +45,9 @@ readonly class TripService implements TripServiceInterface
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int $perPage = 15
-    ): LengthAwarePaginator {
+        int     $perPage = 15
+    ): LengthAwarePaginator
+    {
         return $this->trips->search($startingCity, $arrivalCity, $tripDate, $perPage);
     }
 
@@ -68,7 +67,7 @@ readonly class TripService implements TripServiceInterface
         $driverId = (int)($payload['person_id'] ?? $authPerson->id);
 
         // Defensive check (policy should already handle)
-        if ($driverId !== $authPerson->id && ! $authPerson->isAdmin()) {
+        if ($driverId !== $authPerson->id && !$authPerson->isAdmin()) {
             throw new ForbiddenException('You cannot create a trip for another user.');
         }
 
@@ -82,16 +81,16 @@ readonly class TripService implements TripServiceInterface
 
         return DB::transaction(function () use ($payload, $driver, $authPerson) {
             $departureAddressId = $this->addressResolver->resolveId($payload['starting_address']);
-            $arrivalAddressId   = $this->addressResolver->resolveId($payload['arrival_address']);
+            $arrivalAddressId = $this->addressResolver->resolveId($payload['arrival_address']);
 
             $trip = $this->trips->create([
-                'departure_time'       => $payload['trip_datetime'],
-                'distance_km'          => $payload['kms'],
-                'available_seats'      => $payload['available_seats'],
-                'smoking_allowed'      => (bool)($payload['smoking_allowed'] ?? false),
+                'departure_time' => $payload['trip_datetime'],
+                'distance_km' => $payload['kms'],
+                'available_seats' => $payload['available_seats'],
+                'smoking_allowed' => (bool)($payload['smoking_allowed'] ?? false),
                 'departure_address_id' => $departureAddressId,
-                'arrival_address_id'   => $arrivalAddressId,
-                'person_id'            => $driver->id,
+                'arrival_address_id' => $arrivalAddressId,
+                'person_id' => $driver->id,
             ]);
 
             // reload with eager-loaded relations from repository
@@ -124,22 +123,16 @@ readonly class TripService implements TripServiceInterface
             }
 
             if (!empty($payload['starting_address'] ?? null)) {
-                $updates['departure_address_id'] = $this->createAddressFromPayload(
-                    $payload['starting_address']
-                );
+                $updates['departure_address_id'] = $this->addressResolver->resolveId($payload['starting_address']);
             }
 
             if (!empty($payload['arrival_address'] ?? null)) {
-                $updates['arrival_address_id'] = $this->createAddressFromPayload(
-                    $payload['arrival_address']
-                );
+                $updates['arrival_address_id'] = $this->addressResolver->resolveId($payload['arrival_address']);
             }
 
             if (empty($updates)) throw new ValidationLogicException('Nothing to update.');
 
-            $ok = $this->trips->update($trip->id, $updates);
-            if (!$ok) throw new NotFoundException('Trip not found.');
-
+            $this->trips->update($trip->id, $updates);
             return $this->trips->findByIdOrFail($trip->id);
         });
     }
@@ -147,14 +140,19 @@ readonly class TripService implements TripServiceInterface
     /**
      * @inheritDoc
      */
-    public function deleteTrip(Trip $trip, Person $authPerson): void
+    public function cancelTrip(Trip $trip, Person $authPerson): void
     {
-        DB::transaction(function () use ($trip) {
-            $this->reservations->deleteByTrip($trip->id);
+        $this->assertTripNotStarted($trip);
+        $this->trips->delete($trip->id); // soft delete (if Trip uses SoftDeletes)
+    }
 
-            $ok = $this->trips->delete($trip->id);
-            if (!$ok) throw new NotFoundException('Trip not found.');
-        });
+
+    /**
+     * @inheritDoc
+     */
+    public function deleteTripPermanently(Trip $trip, Person $authPerson): void
+    {
+        $this->trips->forceDelete($trip->id);
     }
 
     /**
@@ -163,21 +161,51 @@ readonly class TripService implements TripServiceInterface
     public function reserveSeat(Trip $trip, int $personId, Person $authPerson): bool
     {
         // Defensive check (policy should already handle)
-        if (! $authPerson->isAdmin() && $personId !== $authPerson->id) {
-            throw new ForbiddenException('You can only reserve for yourself.');
-        }
-
-        if ($trip->person_id === $personId) {
-            throw new ValidationLogicException('Driver cannot reserve their own trip.');
-        }
+        if (!$authPerson->isAdmin() && $personId !== $authPerson->id) throw new ForbiddenException('You can only reserve for yourself.');
+        if ($trip->person_id === $personId) throw new ValidationLogicException('Driver cannot reserve their own trip.');
+        $this->assertTripNotStarted($trip);
 
         return DB::transaction(function () use ($trip, $personId) {
-            $count = $this->reservations->countByTrip($trip->id);
 
-            if ($count >= $trip->available_seats) throw new ConflictException('No available seats left.');
+            // Lock the trip row to prevent seat overbooking under concurrency
+            $lockedTrip = $this->trips->findByIdForUpdate($trip->id);
 
-            return $this->reservations->create($trip->id, $personId);
+            // Already reserved?
+            $already = $lockedTrip->passengers()
+                ->wherePivot('person_id', $personId)
+                ->exists();
+
+            if ($already) throw new ConflictException('You already reserved this trip.');
+
+
+            // Current reservations count
+            $reserved = $lockedTrip->passengers()->count();
+
+            if ($reserved >= $lockedTrip->available_seats) throw new ConflictException('No available seats left.');
+
+            // Attach to pivot table
+            $lockedTrip->passengers()->attach($personId);
+
+            return true;
         });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function cancelReservation(Trip $trip, int $personId, Person $authPerson): bool
+    {
+        if (!$authPerson->isAdmin() && $personId !== $authPerson->id) {
+            throw new ForbiddenException('You can only cancel for yourself.');
+        }
+
+        $this->assertTripNotStarted($trip);
+
+        $lockedTrip = $this->trips->findByIdForUpdate($trip->id);
+        $deleted = $lockedTrip->passengers()->detach($personId);
+        if ($deleted === 0) throw new NotFoundException('Reservation not found.');
+        return true;
+
     }
 
     /**
@@ -188,31 +216,8 @@ readonly class TripService implements TripServiceInterface
         return $this->persons->findById($personId);
     }
 
-    /**
-     * Create City + Address from payload:
-     * {
-     *   street_number, street_name, postal_code, city_name
-     * }
-     *
-     * @param array $addr
-     * @return int Address id
-     */
-    private function createAddressFromPayload(array $addr): int
+    private function assertTripNotStarted(Trip $trip): void
     {
-        $cityName = trim((string)($addr['city_name'] ?? ''));
-        $postal   = trim((string)($addr['postal_code'] ?? ''));
-
-        $city = City::query()->firstOrCreate([
-            'name' => mb_strtolower($cityName),
-            'postal_code' => $postal,
-        ]);
-
-        $address = Address::query()->create([
-            'street' => mb_strtolower(trim((string)($addr['street_name'] ?? ''))),
-            'street_number' => trim((string)($addr['street_number'] ?? '')),
-            'city_id' => (int)$city->id,
-        ]);
-
-        return (int)$address->id;
+        if ($trip->departure_time <= now()) throw new ForbiddenException('Trip already started; it cannot be canceled.');
     }
 }

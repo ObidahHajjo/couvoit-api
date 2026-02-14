@@ -30,11 +30,15 @@ interface TripRepositoryInterface
      */
     public function findByIdOrFail(int $id): Trip;
 
+    public function findByIdForUpdate(int $id): Trip;
+
     public function create(array $attributes): Trip;
 
-    public function update(int $id, array $attributes): bool;
+    public function update(int $id, array $attributes): void;
 
     public function delete(int $id): bool;
+
+    public function forceDelete(int $id): void;
 
     /**
      * Passengers list for a given trip.

@@ -159,17 +159,45 @@ class TripPolicy
      * Only the driver of the trip (or admin) may delete it.
      *
      * @param Person $user
+     * @return Response
+     */
+    public function delete(Person $user): Response
+    {
+        if(! $user->isAdmin()) Response::deny("You cannot delete trips.");
+        return Response::allow();
+    }
+
+    /**
+     * Determine whether the user can cancel a trip.
+     *
+     * Only the driver of the trip (or admin) may delete it.
+     *
+     * @param Person $user
      * @param Trip $trip
      * @return Response
      */
-    public function delete(Person $user, Trip $trip): Response
+    public function cancel(Person $user, Trip $trip): Response
     {
-        if (! $user->is_active) {
-            return Response::deny("Only active users can delete trips.");
-        }
+        if ($trip->departure_time <= now()) return Response::deny('Trip already started; reservations are closed.');
+        if(! $user->is_active) Response::deny("Only active users can cancel trips.");
+        if($trip->person_id !== $user->id) Response::deny("Only the driver of this trip can cancel it.");
+        return Response::allow();
+    }
 
-        if ($trip->person_id !== $user->id) {
-            return Response::deny("Only the driver of this trip can delete it.");
+    /**
+     * Cancel a reservation on a trip.
+     * - Passenger can cancel their own reservation if not started.
+     * - Admin can cancel any reservation (handled in controller/service).
+     *
+     * IMPORTANT: Policy only checks access at the trip level.
+     * The "which person_id" decision happens in controller:
+     *   - if admin => allow request person_id
+     *   - else => force auth id
+     */
+    public function cancelReservation(Person $user, Trip $trip): Response|bool
+    {
+        if ($trip->departure_time <= now()) {
+            return Response::deny('Trip already started; reservation cannot be canceled.');
         }
 
         return Response::allow();
@@ -190,6 +218,10 @@ class TripPolicy
      */
     public function reserve(Person $user, Trip $trip, Person $passenger): Response
     {
+        if ($trip->departure_time <= now()) {
+            return Response::deny('Trip already started; reservations are closed.');
+        }
+
         if (! $user->is_active) {
             return Response::deny("Only active users can reserve seats.");
         }

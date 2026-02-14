@@ -14,8 +14,6 @@ class TripEloquentRepository implements TripRepositoryInterface
         $q = Trip::query()
             ->with(['driver', 'departureAddress.city', 'arrivalAddress.city']);
 
-         $q->whereNull('deleted_at');
-
         if ($startingCity) {
             $q->whereHas('departureAddress.city', function ($qq) use ($startingCity) {
                 $qq->whereRaw('lower(name) = ?', [mb_strtolower($startingCity)]);
@@ -49,19 +47,33 @@ class TripEloquentRepository implements TripRepositoryInterface
             ->findOrFail($id);
     }
 
+    public function findByIdForUpdate(int $id): Trip
+    {
+        return Trip::query()
+            ->with(['departureAddress.city', 'arrivalAddress.city']) // if you want
+            ->whereKey($id)
+            ->lockForUpdate()
+            ->firstOrFail();
+    }
+
     public function create(array $attributes): Trip
     {
         return Trip::query()->create($attributes);
     }
 
-    public function update(int $id, array $attributes): bool
+    public function update(int $id, array $attributes): void
     {
-        return (bool) Trip::query()->whereKey($id)->update($attributes);
+        Trip::query()->findOrFail($id)->update($attributes);
     }
 
     public function delete(int $id): bool
     {
-        return (bool) Trip::query()->whereKey($id)->delete();
+        return (bool) Trip::query()->findOrFail($id)->delete();
+    }
+
+    public function forceDelete(int $id): void
+    {
+        Trip::withTrashed()->findOrFail($id)->forceDelete();
     }
 
     public function passengers(Trip $trip): Collection
