@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\FlushesModelCache;
 
 /**
  * Class Person
@@ -44,7 +45,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Person extends Authenticatable
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, FlushesModelCache;
+
+    public const ROLE_USER  = 1;
+    public const ROLE_ADMIN = 2;
 
     /**
      * Explicit table name because Laravel expects "people"
@@ -138,6 +142,20 @@ class Person extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->role?->name === 'admin';
+        return $this->role_id === self::ROLE_ADMIN;
+    }
+
+    public function cacheTags(): array
+    {
+        // keep your existing "persons" tag if you already use it
+        return ['persons'];
+    }
+
+    public function cacheKeys(): array
+    {
+        return [
+            "persons:id:{$this->id}",
+            "persons:supabase:{$this->supabase_user_id}",
+        ];
     }
 }
