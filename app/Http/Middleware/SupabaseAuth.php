@@ -13,8 +13,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SupabaseAuth
 {
+    private const JWKS_CACHE_KEY = 'supabase:jwks';
+    private const JWKS_TTL_SECONDS = 86400; // 24h
+
+    private const PERSON_CACHE_PREFIX = 'persons:supabase:'; // persons:supabase:{uuid}
+    private const PERSON_TTL_SECONDS = 300; // 5 min
+
     public function handle(Request $request, Closure $next): Response
     {
+        $start = microtime(true);
         $token = $request->bearerToken();
         if (!$token) {
             return response()->json(['error' => 'Missing Bearer token'], 401);
@@ -42,10 +49,13 @@ class SupabaseAuth
                 return response()->json(['error' => 'Unsupported JWT alg'], 401);
             }
 
+            // Fetch JWKS from cache/HTTP
             $jwks = $this->getJwks();
+
+            // Parse keys; decode token
+            // (Parsing keys is cheap compared to HTTP; caching JWKS is the real win)
             $keySet = JWK::parseKeySet($jwks);
 
-            // firebase/php-jwt v6.10: third param is headers passed by reference
             $decodedHeaders = new \stdClass();
             $payload = JWT::decode($token, $keySet, $decodedHeaders);
 
@@ -55,39 +65,50 @@ class SupabaseAuth
             }
 
             $supabaseUserId = $payload->sub ?? null;
-            $email = $payload->email ?? null;
-
-            if (!$supabaseUserId) {
+            if (!is_string($supabaseUserId) || $supabaseUserId === '') {
                 return response()->json(['error' => 'Invalid token payload (no sub)'], 401);
             }
 
-            $person = Person::query()
-                ->where('supabase_user_id', $supabaseUserId)
-                ->first();
+            // Cache person lookup (includes relations to avoid policy N+1)
+            $cacheKey = self::PERSON_CACHE_PREFIX . $supabaseUserId;
+
+            /** @var Person|null $person */
+            $person = Cache::remember($cacheKey, self::PERSON_TTL_SECONDS, function () use ($supabaseUserId) {
+                return Person::query()
+                    ->with(['role', 'car'])
+                    ->where('supabase_user_id', $supabaseUserId)
+                    ->first();
+            });
 
             if (!$person) {
                 return response()->json([
-                    'error' => 'Profile not found',
+                    'error'   => 'Profile not found',
                     'details' => 'No person row linked to this Supabase user',
                 ], 403);
             }
 
+            // Optional: block inactive users globally
+            if (!$person->is_active) {
+                return response()->json(['error' => 'Account inactive'], 403);
+            }
+
             auth()->setUser($person);
             $request->attributes->set('person', $person);
-
+            \Log::info('SupabaseAuth seconds', ['t' => microtime(true) - $start]);
             return $next($request);
 
         } catch (\Firebase\JWT\ExpiredException $e) {
             return response()->json(['error' => 'Token expired'], 401);
 
         } catch (\Throwable $e) {
-            // Key rotation often produces "kid" / "Key ID" related errors -> refetch JWKS next time
-            if (str_contains($e->getMessage(), 'kid') || str_contains($e->getMessage(), 'Key ID')) {
-                Cache::forget('supabase_jwks');
+            // If key rotation / kid problems, purge JWKS cache so next request refetches
+            $msg = $e->getMessage();
+            if (is_string($msg) && (str_contains($msg, 'kid') || str_contains($msg, 'Key ID'))) {
+                Cache::forget(self::JWKS_CACHE_KEY);
             }
 
             return response()->json([
-                'error' => 'Unauthorized',
+                'error'   => 'Unauthorized',
                 'details' => $e->getMessage(),
             ], 401);
         }
@@ -95,15 +116,16 @@ class SupabaseAuth
 
     private function getJwks(): array
     {
-        return Cache::remember('supabase_jwks', 60 * 60 * 6, function () {
+        return Cache::remember(self::JWKS_CACHE_KEY, self::JWKS_TTL_SECONDS, function () {
             $jwksUrl = config('services.supabase.jwks_url');
             if (!$jwksUrl) {
                 throw new \RuntimeException('SUPABASE_JWT_JWKS_URL is not set');
             }
 
-            $resp = Http::withHeaders([
-                'apikey' => config('services.supabase.anon_key'),
-            ])->get($jwksUrl);
+            // JWKS endpoint is public; apikey header is not required for fetching JWKS
+            $resp = Http::timeout(3)
+                ->retry(2, 200)
+                ->get($jwksUrl);
 
             if (!$resp->successful()) {
                 throw new \RuntimeException(
