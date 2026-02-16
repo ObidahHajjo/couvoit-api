@@ -13,6 +13,7 @@ use App\Repositories\Interfaces\TripRepositoryInterface;
 use App\Services\Interfaces\TripServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Resolvers\Interfaces\AddressResolverInterface;
 
@@ -51,22 +52,17 @@ readonly class TripService implements TripServiceInterface
         return $this->trips->search($startingCity, $arrivalCity, $tripDate, $perPage);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function getTripPassengers(Trip $trip): Collection
     {
         return $this->trips->passengers($trip);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function createTrip(array $payload, Person $authPerson): Trip
     {
         $driverId = (int)($payload['person_id'] ?? $authPerson->id);
 
-        // Defensive check (policy should already handle)
         if ($driverId !== $authPerson->id && !$authPerson->isAdmin()) {
             throw new ForbiddenException('You cannot create a trip for another user.');
         }
@@ -79,7 +75,7 @@ readonly class TripService implements TripServiceInterface
             throw new ForbiddenException('Only drivers (persons with a car) can create trips.');
         }
 
-        return DB::transaction(function () use ($payload, $driver, $authPerson) {
+        return DB::transaction(function () use ($payload, $driver) {
             $departureAddressId = $this->addressResolver->resolveId($payload['starting_address']);
             $arrivalAddressId = $this->addressResolver->resolveId($payload['arrival_address']);
 
@@ -93,34 +89,20 @@ readonly class TripService implements TripServiceInterface
                 'person_id' => $driver->id,
             ]);
 
-            // reload with eager-loaded relations from repository
             return $this->trips->findByIdOrFail((int)$trip->id);
         });
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function updateTrip(Trip $trip, array $payload, Person $authPerson): Trip
     {
-        return DB::transaction(function () use ($trip, $payload, $authPerson) {
+        return DB::transaction(function () use ($trip, $payload) {
             $updates = [];
 
-            if (array_key_exists('kms', $payload)) {
-                $updates['distance_km'] = $payload['kms'];
-            }
-
-            if (array_key_exists('trip_datetime', $payload)) {
-                $updates['departure_time'] = $payload['trip_datetime'];
-            }
-
-            if (array_key_exists('available_seats', $payload)) {
-                $updates['available_seats'] = $payload['available_seats'];
-            }
-
-            if (array_key_exists('smoking_allowed', $payload)) {
-                $updates['smoking_allowed'] = (bool)$payload['smoking_allowed'];
-            }
+            if (array_key_exists('kms', $payload)) $updates['distance_km'] = $payload['kms'];
+            if (array_key_exists('trip_datetime', $payload)) $updates['departure_time'] = $payload['trip_datetime'];
+            if (array_key_exists('available_seats', $payload)) $updates['available_seats'] = $payload['available_seats'];
+            if (array_key_exists('smoking_allowed', $payload)) $updates['smoking_allowed'] = (bool)$payload['smoking_allowed'];
 
             if (!empty($payload['starting_address'] ?? null)) {
                 $updates['departure_address_id'] = $this->addressResolver->resolveId($payload['starting_address']);
@@ -137,62 +119,59 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function cancelTrip(Trip $trip, Person $authPerson): void
     {
         $this->assertTripNotStarted($trip);
-        $this->trips->delete($trip->id); // soft delete (if Trip uses SoftDeletes)
+
+        DB::transaction(function () use ($trip) {
+            $this->trips->delete($trip->id);
+        });
     }
 
-
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function deleteTripPermanently(Trip $trip, Person $authPerson): void
     {
-        $this->trips->forceDelete($trip->id);
+        DB::transaction(function () use ($trip) {
+            $this->trips->forceDelete($trip->id);
+        });
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function reserveSeat(Trip $trip, int $personId, Person $authPerson): bool
     {
-        // Defensive check (policy should already handle)
-        if (!$authPerson->isAdmin() && $personId !== $authPerson->id) throw new ForbiddenException('You can only reserve for yourself.');
-        if ($trip->person_id === $personId) throw new ValidationLogicException('Driver cannot reserve their own trip.');
+        if (!$authPerson->isAdmin() && $personId !== $authPerson->id) {
+            throw new ForbiddenException('You can only reserve for yourself.');
+        }
+        if ($trip->person_id === $personId) {
+            throw new ValidationLogicException('Driver cannot reserve their own trip.');
+        }
+
         $this->assertTripNotStarted($trip);
 
         return DB::transaction(function () use ($trip, $personId) {
-
-            // Lock the trip row to prevent seat overbooking under concurrency
             $lockedTrip = $this->trips->findByIdForUpdate($trip->id);
 
-            // Already reserved?
             $already = $lockedTrip->passengers()
                 ->wherePivot('person_id', $personId)
                 ->exists();
 
             if ($already) throw new ConflictException('You already reserved this trip.');
 
-
-            // Current reservations count
             $reserved = $lockedTrip->passengers()->count();
+            if ($reserved >= $lockedTrip->available_seats) {
+                throw new ConflictException('No available seats left.');
+            }
 
-            if ($reserved >= $lockedTrip->available_seats) throw new ConflictException('No available seats left.');
-
-            // Attach to pivot table
             $lockedTrip->passengers()->attach($personId);
+
+            DB::afterCommit(fn() => $this->invalidateTripReservationCaches((int)$trip->id));
 
             return true;
         });
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function cancelReservation(Trip $trip, int $personId, Person $authPerson): bool
     {
         if (!$authPerson->isAdmin() && $personId !== $authPerson->id) {
@@ -201,16 +180,19 @@ readonly class TripService implements TripServiceInterface
 
         $this->assertTripNotStarted($trip);
 
-        $lockedTrip = $this->trips->findByIdForUpdate($trip->id);
-        $deleted = $lockedTrip->passengers()->detach($personId);
-        if ($deleted === 0) throw new NotFoundException('Reservation not found.');
-        return true;
+        return DB::transaction(function () use ($trip, $personId) {
+            $lockedTrip = $this->trips->findByIdForUpdate($trip->id);
 
+            $deleted = $lockedTrip->passengers()->detach($personId);
+            if ($deleted === 0) throw new NotFoundException('Reservation not found.');
+
+            DB::afterCommit(fn() => $this->invalidateTripReservationCaches((int)$trip->id));
+
+            return true;
+        });
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function getPersonById(int $personId): Person
     {
         return $this->persons->findById($personId);
@@ -218,6 +200,18 @@ readonly class TripService implements TripServiceInterface
 
     private function assertTripNotStarted(Trip $trip): void
     {
-        if ($trip->departure_time <= now()) throw new ForbiddenException('Trip already started; it cannot be canceled.');
+        if ($trip->departure_time <= now()) {
+            throw new ForbiddenException('Trip already started; action not allowed.');
+        }
+    }
+
+    private function invalidateTripReservationCaches(int $tripId): void
+    {
+        Cache::forget("trips:{$tripId}");
+        Cache::forget("trips:{$tripId}:passengers");
+
+        // versioned search cache invalidation
+        Cache::add('trips:search:version', 1);
+        Cache::increment('trips:search:version');
     }
 }

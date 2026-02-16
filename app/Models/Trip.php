@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\FlushesModelCache;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,7 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Trip extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, FlushesModelCache;
 
     /**
      * Disable timestamps because the "trips" table does not contain
@@ -58,9 +59,11 @@ class Trip extends Model
         'departure_address_id',  // Departure address
         'arrival_address_id',    // Arrival address
         'smoking_allowed',       // Smoking allowed
-        'person_id'              // Driver id
+        'person_id',
+        'arrival_time'
     ];
 
+    //TODO : add arrival time in db
     protected $casts = [
         'departure_time' => 'datetime',
         'arrival_time' => 'datetime',
@@ -71,7 +74,13 @@ class Trip extends Model
      *
      * @var array<int, string>
      */
-    protected $guarded = ["id"];
+    protected $guarded = [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by"
+    ];
 
     /**
      * Relationship: Trip belongs to a Person (driver).
@@ -101,5 +110,17 @@ class Trip extends Model
     public function arrivalAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'arrival_address_id');
+    }
+
+    public function cacheTags(): array
+    {
+        return ['trips'];
+    }
+
+    public function cacheKeys(): array
+    {
+        return [
+            "trips:id:{$this->id}",
+        ];
     }
 }
