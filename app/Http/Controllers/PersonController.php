@@ -15,7 +15,9 @@ class PersonController extends Controller
 {
     public function __construct(
         private readonly PersonServiceInterface $persons
-    ) {}
+    )
+    {
+    }
 
     /**
      * GET /persons (Admin only)
@@ -26,10 +28,21 @@ class PersonController extends Controller
 
         $people = $this->persons->list();
 
-        return response()->json(
-            PersonResource::collection($people),
-            Response::HTTP_OK
-        );
+        return PersonResource::collection($people)
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
+    }
+
+    /**
+     * GET /persons (Admin only)
+     */
+    public function indexPublic(): JsonResponse
+    {
+        $people = $this->persons->list();
+
+        return PersonResource::collection($people)
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -37,16 +50,24 @@ class PersonController extends Controller
      */
     public function show(Person $person): JsonResponse
     {
+        $t0 = microtime(true);
+
+        $t1 = microtime(true);
         $this->authorize('view', $person);
+        $t2 = microtime(true);
 
-        // optional: eager load to enrich resource
-        $person->loadMissing(['role', 'car']);
+        $res = PersonResource::make($person)->response()->setStatusCode(Response::HTTP_OK);
+        $t3 = microtime(true);
 
-        return response()->json(
-            new PersonResource($person),
-            Response::HTTP_OK
-        );
+        \Log::info('persons.show timings', [
+            'authorize_sec' => $t2 - $t1,
+            'resource_sec'  => $t3 - $t2,
+            'total_sec'     => $t3 - $t0,
+        ]);
+
+        return $res;
     }
+
 
     /**
      * GET /persons/{id}/trips-driver
@@ -57,10 +78,9 @@ class PersonController extends Controller
 
         $trips = $this->persons->tripsAsDriver($person);
 
-        return response()->json(
-            TripResource::collection($trips),
-            Response::HTTP_OK
-        );
+        return TripResource::collection($trips)
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -72,10 +92,9 @@ class PersonController extends Controller
 
         $trips = $this->persons->tripsAsPassenger($person);
 
-        return response()->json(
-            TripResource::collection($trips),
-            Response::HTTP_OK
-        );
+        return TripResource::collection($trips)
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -95,10 +114,9 @@ class PersonController extends Controller
 
         $updated->loadMissing(['role', 'car']);
 
-        return response()->json(
-            new PersonResource($updated),
-            Response::HTTP_CREATED
-        );
+        return PersonResource::make($updated)
+            ->response()
+            ->setStatusCode(Response::HTTP_CREATED);
     }
 
     /**
@@ -111,10 +129,9 @@ class PersonController extends Controller
         $updated = $this->persons->update($person, $request->validated());
         $updated->loadMissing(['role', 'car']);
 
-        return response()->json(
-            new PersonResource($updated),
-            Response::HTTP_OK
-        );
+        return PersonResource::make($updated)
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
