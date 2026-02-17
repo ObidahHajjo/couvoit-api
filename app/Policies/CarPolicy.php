@@ -33,7 +33,7 @@ class CarPolicy
             return Response::deny("Vous n'avez pas de voiture associée à votre compte.");
         }
 
-        if ((int) $user->car_id !== (int) $car->id) {
+        if ($user->car_id !== $car->id) {
             return Response::deny("Vous ne pouvez consulter que votre propre voiture.");
         }
 
@@ -63,7 +63,7 @@ class CarPolicy
             return Response::deny("Vous n'avez pas de voiture à modifier.");
         }
 
-        if ((int) $user->car_id !== (int) $car->id) {
+        if ( $user->car_id !== $car->id) {
             return Response::deny("Vous ne pouvez modifier que votre propre voiture.");
         }
 
@@ -80,7 +80,7 @@ class CarPolicy
             return Response::deny("Vous n'avez pas de voiture à supprimer.");
         }
 
-        if ((int) $user->car_id !== (int) $car->id) {
+        if ( $user->car_id !==  $car->id) {
             return Response::deny("Vous ne pouvez supprimer que votre propre voiture.");
         }
 

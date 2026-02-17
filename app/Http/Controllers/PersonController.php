@@ -50,22 +50,8 @@ class PersonController extends Controller
      */
     public function show(Person $person): JsonResponse
     {
-        $t0 = microtime(true);
-
-        $t1 = microtime(true);
         $this->authorize('view', $person);
-        $t2 = microtime(true);
-
-        $res = PersonResource::make($person)->response()->setStatusCode(Response::HTTP_OK);
-        $t3 = microtime(true);
-
-        \Log::info('persons.show timings', [
-            'authorize_sec' => $t2 - $t1,
-            'resource_sec'  => $t3 - $t2,
-            'total_sec'     => $t3 - $t0,
-        ]);
-
-        return $res;
+        return PersonResource::make($person)->response()->setStatusCode(Response::HTTP_OK);
     }
 
 

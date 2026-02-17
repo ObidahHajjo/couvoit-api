@@ -63,7 +63,6 @@ class Trip extends Model
         'arrival_time'
     ];
 
-    //TODO : add arrival time in db
     protected $casts = [
         'departure_time' => 'datetime',
         'arrival_time' => 'datetime',
@@ -74,12 +73,20 @@ class Trip extends Model
      *
      * @var array<int, string>
      */
-    protected $guarded = [
-        "id",
+    protected $guarded = ["id"];
+
+    /**
+     * Attributes that are NOT mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
         "created_at",
         "updated_at",
+        "deleted_at",
         "created_by",
-        "updated_by"
+        "updated_by",
+        "deleted_by"
     ];
 
     /**

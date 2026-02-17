@@ -11,6 +11,15 @@ class CityEloquentRepository implements CityRepositoryInterface
 {
     private const TTL_SECONDS = 3600;
 
+    // ---------- Tags ----------
+    private function tagCities(): array { return ['cities']; }
+    private function tagCity(string $name, string $postal): array
+    {
+        return [$this->tagCities(), 'city:' . $this->normalizeName($name) . ':' . trim($postal)];
+    }
+    private function tagPostcodes(): array { return ['cities', 'cities:postcodes']; }
+
+    // ---------- Keys ----------
     private function keyPostcodes(): string
     {
         return 'cities:postcodes';
@@ -18,7 +27,12 @@ class CityEloquentRepository implements CityRepositoryInterface
 
     private function keyCity(string $name, string $postal): string
     {
-        return 'cities:' . mb_strtolower(trim($name)) . ':' . trim($postal);
+        return 'cities:' . $this->normalizeName($name) . ':' . trim($postal);
+    }
+
+    private function normalizeName(string $name): string
+    {
+        return mb_strtolower(trim($name));
     }
 
     /** @inheritDoc */
@@ -26,8 +40,10 @@ class CityEloquentRepository implements CityRepositoryInterface
     {
         $city = City::query()->create($data);
 
-        Cache::forget($this->keyPostcodes());
-        Cache::forget($this->keyCity((string)$city->name, (string)$city->postal_code));
+        Cache::tags($this->tagCity($city->name, $city->postal_code))
+            ->put($this->keyCity($city->name, $city->postal_code), $city, self::TTL_SECONDS);
+
+        Cache::tags($this->tagPostcodes())->forget($this->keyPostcodes());
 
         return $city;
     }
@@ -35,31 +51,29 @@ class CityEloquentRepository implements CityRepositoryInterface
     /** @inheritDoc */
     public function delete(City $city): void
     {
-        $key = $this->keyCity($city->name, $city->postal_code);
-
         $city->delete();
 
-        Cache::forget($this->keyPostcodes());
-        Cache::forget($key);
+        Cache::tags($this->tagCity($city->name, $city->postal_code))->flush();
+        Cache::tags($this->tagPostcodes())->forget($this->keyPostcodes());
     }
 
+    /** @inheritDoc */
     public function getPostcodes(): Collection
     {
-        /** @var Collection $cached */
-        $cached = Cache::remember($this->keyPostcodes(), self::TTL_SECONDS, function () {
-            return City::query()
-                ->select('postal_code')
-                ->distinct()
-                ->orderBy('postal_code')
-                ->get();
-        });
+        /** @var Collection $postcodes */
+        $postcodes = Cache::tags($this->tagPostcodes())
+            ->remember($this->keyPostcodes(), self::TTL_SECONDS, function () {
+                return City::query()
+                    ->select('postal_code')
+                    ->distinct()
+                    ->orderBy('postal_code')
+                    ->get();
+            });
 
-        return $cached;
+        return $postcodes;
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function firstOrCreate(string $cityName, string $postalCode): City
     {
         $cityName = trim($cityName);
@@ -68,15 +82,16 @@ class CityEloquentRepository implements CityRepositoryInterface
         $key = $this->keyCity($cityName, $postalCode);
 
         /** @var City $city */
-        $city = Cache::remember($key, self::TTL_SECONDS, function () use ($cityName, $postalCode) {
-            return City::query()->firstOrCreate([
-                'name' => $cityName,
-                'postal_code' => $postalCode,
-            ]);
-        });
+        $city = Cache::tags($this->tagCity($cityName, $postalCode))
+            ->remember($key, self::TTL_SECONDS, function () use ($cityName, $postalCode) {
+                return City::query()->firstOrCreate([
+                    'name' => $cityName,
+                    'postal_code' => $postalCode,
+                ]);
+            });
 
-        // postcodes list might change if a new city was created
-        Cache::forget($this->keyPostcodes());
+        // Postcodes list might change if a new city was created
+        Cache::tags($this->tagPostcodes())->forget($this->keyPostcodes());
 
         return $city;
     }

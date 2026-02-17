@@ -50,6 +50,11 @@ readonly class PersonService implements PersonServiceInterface
         return $person;
     }
 
+    public function findById(int $id): Person
+    {
+        return $this->persons->findById($id);
+    }
+
     /**
      * @inheritDoc
      */
