@@ -15,8 +15,12 @@ class CityEloquentRepository implements CityRepositoryInterface
     private function tagCities(): array { return ['cities']; }
     private function tagCity(string $name, string $postal): array
     {
-        return [$this->tagCities(), 'city:' . $this->normalizeName($name) . ':' . trim($postal)];
+        return array_merge(
+            $this->tagCities(),
+            ['city:' . $this->normalizeName($name) . ':' . trim($postal)]
+        );
     }
+
     private function tagPostcodes(): array { return ['cities', 'cities:postcodes']; }
 
     // ---------- Keys ----------

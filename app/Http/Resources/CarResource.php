@@ -7,12 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CarResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  Request  $request
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -25,19 +19,25 @@ class CarResource extends JsonResource
                     'name'  => $this->model->name,
                     'seats' => $this->model->seats,
 
-                    'brand' => $this->model->whenLoaded('brand', function () {
-                        return [
-                            'id'   => $this->model->brand->id,
-                            'name' => $this->model->brand->name,
-                        ];
-                    }),
+                    'brand' => $this->when(
+                        $this->model->relationLoaded('brand'),
+                        function () {
+                            return [
+                                'id'   => $this->model->brand->id,
+                                'name' => $this->model->brand->name,
+                            ];
+                        }
+                    ),
 
-                    'type' => $this->model->whenLoaded('type', function () {
-                        return [
-                            'id'   => $this->model->type->id,
-                            'type' => $this->model->type->type,
-                        ];
-                    }),
+                    'type' => $this->when(
+                        $this->model->relationLoaded('type'),
+                        function () {
+                            return [
+                                'id'   => $this->model->type->id,
+                                'type' => $this->model->type->type,
+                            ];
+                        }
+                    ),
                 ];
             }),
 

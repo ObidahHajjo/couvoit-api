@@ -11,11 +11,13 @@ use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 use App\Services\Implementations\AuthService;
 use App\Services\Implementations\BrandService;
 use App\Services\Implementations\CarService;
+use App\Services\Implementations\OrsRoutingClient;
 use App\Services\Implementations\PersonService;
 use App\Services\Implementations\TripService;
 use App\Services\Interfaces\AuthServiceInterface;
 use App\Services\Interfaces\BrandServiceInterface;
 use App\Services\Interfaces\CarServiceInterface;
+use App\Services\Interfaces\OrsRoutingClientInterface;
 use App\Services\Interfaces\PersonServiceInterface;
 use App\Services\Interfaces\TripServiceInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -44,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AddressResolverInterface::class, AddressResolver::class);
 
         $this->app->bind(SupabaseAuthClientInterface::class, SupabaseAuthClient::class);
+        $this->app->bind(OrsRoutingClientInterface::class, OrsRoutingClient::class);
 
     }
 

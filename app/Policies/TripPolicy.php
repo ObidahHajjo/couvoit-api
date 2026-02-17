@@ -163,8 +163,9 @@ class TripPolicy
      */
     public function delete(Person $user): Response
     {
-        if(! $user->isAdmin()) Response::deny("You cannot delete trips.");
-        return Response::allow();
+        return $user->isAdmin()
+            ? Response::allow()
+            : Response::deny("You cannot delete trips.");
     }
 
     /**

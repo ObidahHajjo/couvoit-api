@@ -110,4 +110,10 @@ readonly class PersonService implements PersonServiceInterface
     {
         $this->persons->update($person->id, ['is_active' => true]);
     }
+
+    public function updateRole(string $supabaseUserId, int $roleId): Person
+    {
+        $this->persons->updateRole($supabaseUserId, $roleId);
+        return $this->persons->findBySupabaseUserId($supabaseUserId);
+    }
 }

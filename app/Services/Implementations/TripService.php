@@ -8,10 +8,13 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Person;
 use App\Models\Trip;
+use App\Repositories\Interfaces\AddressRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
+use App\Services\Interfaces\OrsRoutingClientInterface;
 use App\Services\Interfaces\TripServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +38,8 @@ readonly class TripService implements TripServiceInterface
         private TripRepositoryInterface   $trips,
         private PersonRepositoryInterface $persons,
         private AddressResolverInterface  $addressResolver,
+        private AddressRepositoryInterface $addresses,
+        private OrsRoutingClientInterface $orsRoutingClient,
     )
     {
     }
@@ -79,6 +84,37 @@ readonly class TripService implements TripServiceInterface
             $departureAddressId = $this->addressResolver->resolveId($payload['starting_address']);
             $arrivalAddressId = $this->addressResolver->resolveId($payload['arrival_address']);
 
+            $departure = $this->addresses->findOrFail($departureAddressId);
+            $arrival   = $this->addresses->findOrFail($arrivalAddressId);
+
+            $depStr = sprintf(
+                '%s %s, %s %s, France',
+                $departure->street_number,
+                $departure->street,
+                $departure->city?->postal_code,
+                $departure->city?->name
+            );
+
+            $arrStr = sprintf(
+                '%s %s, %s %s, France',
+                $arrival->street_number,
+                $arrival->street,
+                $arrival->city?->postal_code,
+                $arrival->city?->name
+            );
+
+            $from = cache()->remember('geo:' . sha1($depStr), 86400, fn () => $this->orsRoutingClient->geocode($depStr));
+            $to   = cache()->remember('geo:' . sha1($arrStr), 86400, fn () => $this->orsRoutingClient->geocode($arrStr));
+
+            $durationSeconds = cache()->remember(
+                'route:' . sha1(json_encode([$from, $to])),
+                86400,
+                fn () => $this->orsRoutingClient->durationSeconds($from, $to)
+            );
+
+            $departureTime = Carbon::parse($payload['trip_datetime']);
+            $arrivalTime = $departureTime->copy()->addSeconds($durationSeconds);
+
             $trip = $this->trips->create([
                 'departure_time' => $payload['trip_datetime'],
                 'distance_km' => $payload['kms'],
@@ -87,6 +123,7 @@ readonly class TripService implements TripServiceInterface
                 'departure_address_id' => $departureAddressId,
                 'arrival_address_id' => $arrivalAddressId,
                 'person_id' => $driver->id,
+                'arrival_time' => $arrivalTime,
             ]);
 
             return $this->trips->findByIdOrFail((int)$trip->id);

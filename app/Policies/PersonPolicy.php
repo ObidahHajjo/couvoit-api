@@ -4,25 +4,20 @@ namespace App\Policies;
 
 use App\Models\Person;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\Log;
 
 class PersonPolicy
 {
     public function before(Person $user): ?bool
     {
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        return null;
+        return $user->isAdmin() ? true : null;
     }
 
     public function viewAny(Person $user): Response
     {
-        if (!$user->isAdmin()) {
-            return Response::deny("Seuls les administrateurs peuvent consulter la liste des utilisateurs.");
-        }
-
-        return Response::allow();
+        return $user->isAdmin()
+            ? Response::allow()
+            : Response::deny("Seuls les administrateurs peuvent consulter la liste des utilisateurs.");
     }
 
     public function view(Person $user, Person $person): Response
@@ -48,11 +43,9 @@ class PersonPolicy
 
     public function create(Person $user): Response
     {
-        if (!$user->exists) {
-            return Response::deny("Profil utilisateur introuvable.");
-        }
-
-        return Response::allow();
+        return $user->exists
+            ? Response::allow()
+            : Response::deny("Profil utilisateur introuvable.");
     }
 
     public function update(Person $user, Person $person): Response
@@ -65,5 +58,12 @@ class PersonPolicy
     public function delete(Person $user, Person $person): Response
     {
         return Response::deny("Suppression interdite : réservée à un administrateur.");
+    }
+
+    public function updateRole(Person $user): Response
+    {
+        return ($user->isAdmin())
+            ? Response::allow()
+            : Response::deny("Seuls les administrateurs peuvent mettre à jour les roles");
     }
 }

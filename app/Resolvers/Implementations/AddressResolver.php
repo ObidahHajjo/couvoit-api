@@ -6,6 +6,7 @@ use App\Exceptions\ValidationLogicException;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
 use App\Repositories\Interfaces\CityRepositoryInterface;
 use App\Resolvers\Interfaces\AddressResolverInterface;
+use Illuminate\Support\Facades\Cache;
 
 final readonly class AddressResolver implements AddressResolverInterface
 {
@@ -16,6 +17,8 @@ final readonly class AddressResolver implements AddressResolverInterface
 
     public function resolveId(array $payload): int
     {
+        Cache::tags(['cities'])->flush();
+
         $cityName = trim((string)($payload['city_name'] ?? ''));
         $postal   = trim((string)($payload['postal_code'] ?? ''));
         $street   = trim((string)($payload['street_name'] ?? ''));

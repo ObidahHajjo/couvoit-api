@@ -71,4 +71,6 @@ interface PersonServiceInterface
 
     public function reactivate(Person $person): void;
 
+    public function updateRole(string $supabaseUserId, int $roleId): Person;
+
 }

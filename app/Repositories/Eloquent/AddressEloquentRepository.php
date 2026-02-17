@@ -11,4 +11,9 @@ class AddressEloquentRepository implements AddressRepositoryInterface
     {
         return Address::query()->create($data);
     }
+
+    public function findOrFail(int $id): Address
+    {
+        return Address::query()->findOrFail($id)->loadMissing('city');
+    }
 }

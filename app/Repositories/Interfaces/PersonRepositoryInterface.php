@@ -21,4 +21,6 @@ interface PersonRepositoryInterface
 
     public function findBySupabaseUserId(string $supabaseUserId): ?Person;
 
+    public function updateRole(string $supabaseUserId, int $roleId): void;
+
 }

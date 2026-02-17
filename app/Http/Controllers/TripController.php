@@ -128,7 +128,7 @@ class TripController extends Controller
         /** @var Person $authPerson */
         $authPerson = auth()->user();
 
-        $this->authorize('forceDelete', $trip);
+        $this->authorize('delete', $trip);
 
         $this->trips->deleteTripPermanently($trip, $authPerson);
 

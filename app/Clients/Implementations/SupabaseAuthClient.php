@@ -9,6 +9,7 @@ use App\Exceptions\UnauthorizedException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 final readonly class SupabaseAuthClient implements SupabaseAuthClientInterface
 {
@@ -39,7 +40,9 @@ final readonly class SupabaseAuthClient implements SupabaseAuthClientInterface
     public function signUp(string $email, string $password): array
     {
         $url = $this->baseUrl() . '/auth/v1/signup';
-
+        Log::info('signup', [
+            $email, $password
+        ]);
         try {
             $resp = $this->http()->post($url, [
                 'email'    => $email,
@@ -60,7 +63,9 @@ final readonly class SupabaseAuthClient implements SupabaseAuthClientInterface
     public function signInWithPassword(string $email, string $password): array
     {
         $url = $this->baseUrl() . '/auth/v1/token?grant_type=password';
-
+        Log::info('login', [
+            $email, $password
+        ]);
         try {
             $resp = $this->http()->post($url, [
                 'email'    => $email,
@@ -71,6 +76,9 @@ final readonly class SupabaseAuthClient implements SupabaseAuthClientInterface
         }
 
         if (! $resp->successful()) {
+            Log::info('response', [
+                $resp->body()
+            ]);
             if (in_array($resp->status(), [400, 401], true)) {
                 throw new UnauthorizedException('Invalid credentials.');
             }

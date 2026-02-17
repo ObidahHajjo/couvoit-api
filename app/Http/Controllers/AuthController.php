@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\RefreshRequest;
 use App\Http\Resources\AuthTokenResource;
 use App\Services\Interfaces\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller

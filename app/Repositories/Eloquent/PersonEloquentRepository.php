@@ -82,8 +82,10 @@ class PersonEloquentRepository implements PersonRepositoryInterface
     /** @inheritDoc */
     public function update(int $id, array $data): void
     {
-        $person = Person::query()->with(['role', 'car'])->findOrFail($id);
-        $oldSupabase = (string) $person->supabase_user_id;
+        if(array_key_exists('role_id', $data)) {unset($data['role_id']);}
+
+        $person = $this->findById($id);
+        $oldSupabase = $person->supabase_user_id;
 
         $person->update($data);
         $person->refresh()->loadMissing(['role', 'car']);
@@ -151,6 +153,7 @@ class PersonEloquentRepository implements PersonRepositoryInterface
                 return Person::query()
                     ->with(['role', 'car'])
                     ->where('supabase_user_id', $supabaseUserId)
+                    ->where('is_active', true)
                     ->first();
             });
 
@@ -162,4 +165,24 @@ class PersonEloquentRepository implements PersonRepositoryInterface
 
         return $person;
     }
+
+    /** @inheritDoc */
+    public function updateRole(string $supabaseUserId, int $roleId): void
+    {
+        /** @var Person $person */
+        $person = $this->findBySupabaseUserId($supabaseUserId);
+        $person->role_id = $roleId;
+        $person->save();
+
+        $person->refresh()->loadMissing(['role', 'car']);
+
+        Cache::tags($this->tagPerson($person->id))
+            ->put($this->keyById($person->id), $person, self::TTL_SECONDS);
+
+        Cache::tags($this->tagSupabase($supabaseUserId))
+            ->put($this->keyBySupabase($supabaseUserId), $person, self::TTL_SECONDS);
+
+        Cache::tags($this->tagPersons())->forget($this->keyAll());
+    }
+
 }

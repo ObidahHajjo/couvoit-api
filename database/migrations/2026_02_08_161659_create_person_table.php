@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('phone', 15)->nullable();
             $table->boolean('is_active')->default(true);
 
-            $table->foreignUuid('supabase_user_id')->unique()->constrained('auth.users')->cascadeOnDelete();
+            $table->uuid('supabase_user_id')->unique();
             $table->foreignId('role_id')->constrained()->cascadeOnDelete();
             $table->foreignId('car_id')->nullable()->unique()->constrained()->nullOnDelete();
 

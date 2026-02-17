@@ -12,7 +12,8 @@ final readonly class CarCreateData
         public int $seats,
         public string $brandName,
         public string $typeName,
-        public string $colorHex
+        public string $colorHex,
+        public string $colorName,
     ) {}
 
     public static function fromArray(array $data): self
@@ -32,6 +33,7 @@ final readonly class CarCreateData
             ?? data_get($data, 'color.hex')
             ?? data_get($data, 'color.code');
 
+        $colorName = data_get($data, 'color.name');
         if (!is_string($license) || trim($license) === '') {
             throw new InvalidArgumentException('license_plate is required.');
         }
@@ -43,6 +45,7 @@ final readonly class CarCreateData
             brandName: strtolower(trim((string) $brandName)),
             typeName: strtolower(trim((string) $typeName)),
             colorHex: strtolower(trim((string) $colorHex)),
+            colorName: strtolower(trim((string) $colorName))
         );
     }
 }

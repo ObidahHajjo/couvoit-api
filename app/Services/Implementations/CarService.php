@@ -51,7 +51,7 @@ readonly class CarService implements CarServiceInterface
                 'brand' => ['name' => $dto->brandName],
                 'type'  => ['name' => $dto->typeName],
                 'model' => ['name' => $dto->modelName, 'seats' => $dto->seats],
-                'color' => ['hex_code' => $dto->colorHex],
+                'color' => ['hex_code' => $dto->colorHex, "name" => $dto->colorName],
             ]);
 
             $car = $this->carRepository->create([
