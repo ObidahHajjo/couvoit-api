@@ -2,26 +2,47 @@
 
 namespace App\Clients\Interfaces;
 
+use App\Exceptions\ConflictException;
+use App\Exceptions\ExternalServiceException;
+use App\Exceptions\UnauthorizedException;
+
 interface SupabaseAuthClientInterface
 {
     /**
-     * Signup a user in Supabase.
+     * Register a new user in Supabase.
      *
-     * @return array<string,mixed> Supabase JSON response
+     * @param string $email
+     * @param string $password
+     *
+     * @return array<string, mixed>
+     *
+     * @throws ConflictException
+     * @throws ExternalServiceException
      */
     public function signUp(string $email, string $password): array;
 
     /**
-     * Login using password grant.
+     * Authenticate user with email/password.
      *
-     * @return array<string,mixed> Supabase JSON response
+     * @param string $email
+     * @param string $password
+     *
+     * @return array<string, mixed>
+     *
+     * @throws UnauthorizedException
+     * @throws ExternalServiceException
      */
     public function signInWithPassword(string $email, string $password): array;
 
     /**
-     * Refresh an access token.
+     * Refresh an access token using a refresh token.
      *
-     * @return array<string,mixed> Supabase JSON response
+     * @param string $refreshToken
+     *
+     * @return array<string, mixed>
+     *
+     * @throws UnauthorizedException
+     * @throws ExternalServiceException
      */
     public function refreshToken(string $refreshToken): array;
 }

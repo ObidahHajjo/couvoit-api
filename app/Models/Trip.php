@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\FlushesModelCache;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -37,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Trip extends Model
 {
-    use HasFactory, SoftDeletes, FlushesModelCache;
+    use HasFactory, SoftDeletes;
 
     /**
      * Disable timestamps because the "trips" table does not contain
@@ -117,17 +116,5 @@ class Trip extends Model
     public function arrivalAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'arrival_address_id');
-    }
-
-    public function cacheTags(): array
-    {
-        return ['trips'];
-    }
-
-    public function cacheKeys(): array
-    {
-        return [
-            "trips:id:{$this->id}",
-        ];
     }
 }

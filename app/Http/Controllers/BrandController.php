@@ -7,12 +7,12 @@ use App\Models\Brand;
 use App\Services\Interfaces\BrandServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use OpenApi\Attributes as OA;
 
 /**
- * Class BrandController
- *
  * HTTP controller for Brand endpoints.
  */
+#[OA\Tag(name: 'Brands', description: 'Brand endpoints.')]
 class BrandController extends Controller
 {
     /**
@@ -23,10 +23,21 @@ class BrandController extends Controller
     ) {}
 
     /**
-     * GET /brands
+     * List brands.
      *
      * @return JsonResponse
      */
+    #[OA\Get(
+        path: '/api/brands',
+        operationId: 'brandsIndex',
+        summary: 'List brands',
+        security: [['bearerAuth' => []]],
+        tags: ['Brands'],
+        responses: [
+            new OA\Response(response: 200, description: 'OK'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ]
+    )]
     public function index(): JsonResponse
     {
         $brands = $this->brands->getBrands();
@@ -37,16 +48,28 @@ class BrandController extends Controller
     }
 
     /**
-     * GET /brands/{brand}
+     * Show a brand.
      *
-     * @param  Brand  $brand
+     * @param Brand $brand
      * @return JsonResponse
      */
+    #[OA\Get(
+        path: '/api/brands/{id}',
+        operationId: 'brandsShow',
+        summary: 'Get brand by id',
+        security: [['bearerAuth' => []]],
+        tags: ['Brands'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'OK'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 404, description: 'Not Found'),
+        ]
+    )]
     public function show(Brand $brand): JsonResponse
     {
-        // If you want to enforce loading from DB through service/repo:
-        // $brand = $this->brands->getBrandById($brand->id);
-
         return (new BrandResource($brand))
             ->response()
             ->setStatusCode(Response::HTTP_OK);

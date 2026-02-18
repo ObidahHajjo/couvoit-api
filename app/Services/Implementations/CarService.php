@@ -24,16 +24,19 @@ readonly class CarService implements CarServiceInterface
         private PersonRepositoryInterface     $personRepository
     ) {}
 
+    /** @inheritDoc */
     public function getCars(): Collection
     {
         return $this->carRepository->all();
     }
 
+    /** @inheritDoc */
     public function findCar(Car $car): Car
     {
         return $car;
     }
 
+    /** @inheritDoc */
     public function createCar(CarCreateData $dto, Person $person): Car
     {
         if (!$person->is_active) {
@@ -67,6 +70,7 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
+    /** @inheritDoc */
     public function updateCar(Car $car, CarUpdateData $dto): Car
     {
         if ($dto->isEmpty()) {
@@ -112,6 +116,7 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
+    /** @inheritDoc */
     public function deleteCar(Car $car): void
     {
         $this->carRepository->delete($car);

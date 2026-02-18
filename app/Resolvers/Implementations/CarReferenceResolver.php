@@ -11,32 +11,71 @@ use App\Repositories\Interfaces\ColorRepositoryInterface;
 use App\Repositories\Interfaces\TypeRepositoryInterface;
 use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 
+/**
+ * Resolves and/or creates reference entities needed to create or update a Car.
+ *
+ * Responsibilities:
+ * - Create or reuse Brand, Type, CarModel, Color based on incoming payload data
+ * - Return resolved foreign keys to be used when persisting a Car
+ */
 final readonly class CarReferenceResolver implements CarReferenceResolverInterface
 {
+    /**
+     * @param BrandRepositoryInterface    $brands
+     * @param TypeRepositoryInterface     $types
+     * @param CarModelRepositoryInterface $models
+     * @param ColorRepositoryInterface    $colors
+     */
     public function __construct(
-        private BrandRepositoryInterface    $brands,
-        private TypeRepositoryInterface     $types,
+        private BrandRepositoryInterface $brands,
+        private TypeRepositoryInterface $types,
         private CarModelRepositoryInterface $models,
-        private ColorRepositoryInterface    $colors,
-    )
-    {
+        private ColorRepositoryInterface $colors,
+    ) {
     }
 
+    /** @inheritDoc */
     public function resolveForCreate(array $data): ResolvedCarRefs
     {
-        $brand = $this->brands->createOrFirst(strtolower($data["brand"]["name"]));
-        $type = $this->types->createOrFirst(strtolower($data["type"]["name"]));
+        $brandName = data_get($data, 'brand.name');
+        $typeName  = data_get($data, 'type.name');
+        $modelName = data_get($data, 'model.name');
+        $seats     = data_get($data, 'model.seats');
+        $colorName = data_get($data, 'color.name');
+        $hexCode   = data_get($data, 'color.hex_code');
+
+        if (!is_string($brandName) || trim($brandName) === '') {
+            throw new ValidationLogicException('brand.name is required.');
+        }
+        if (!is_string($typeName) || trim($typeName) === '') {
+            throw new ValidationLogicException('type.name is required.');
+        }
+        if (!is_string($modelName) || trim($modelName) === '') {
+            throw new ValidationLogicException('model.name is required.');
+        }
+        if ($seats === null) {
+            throw new ValidationLogicException('model.seats is required.');
+        }
+        if (!is_string($colorName) || trim($colorName) === '') {
+            throw new ValidationLogicException('color.name is required.');
+        }
+        if (!is_string($hexCode) || trim($hexCode) === '') {
+            throw new ValidationLogicException('color.hex_code is required.');
+        }
+
+        $brand = $this->brands->createOrFirst(strtolower(trim($brandName)));
+        $type  = $this->types->createOrFirst(strtolower(trim($typeName)));
 
         $model = $this->models->createOrFirst([
-            "name" => strtolower($data["model"]["name"]),
-            "seats" => (int)$data["model"]["seats"],
-            "brand_id" => $brand->id,
-            "type_id" => $type->id,
+            'name'     => strtolower(trim($modelName)),
+            'seats'    => (int) $seats,
+            'brand_id' => $brand->id,
+            'type_id'  => $type->id,
         ]);
 
         $color = $this->colors->createOrFirst([
-            "name" => strtolower($data["color"]["name"]),
-            "hex_code" => $data["color"]["hex_code"],
+            'name'     => strtolower(trim($colorName)),
+            'hex_code' => strtolower(trim($hexCode)),
         ]);
 
         return new ResolvedCarRefs(
@@ -47,6 +86,7 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         );
     }
 
+    /** @inheritDoc */
     public function resolveModelForUpdate(Car $car, array $data): ?int
     {
         $modelName = data_get($data, 'model.name');
@@ -55,10 +95,8 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
             return null;
         }
 
-        // Ensure current model is loaded (if not eager loaded)
         $car->loadMissing('model');
 
-        // default values from current car model
         $currentBrandId = $car->model->brand_id;
         $currentTypeId  = $car->model->type_id;
         $currentSeats   = $car->model->seats;
@@ -67,29 +105,23 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         $typeName  = data_get($data, 'type.name');
         $seats     = data_get($data, 'model.seats');
 
-        // Resolve brand (if provided, else reuse existing brand)
         $brandId = $currentBrandId;
-        if ($brandName !== null && trim((string)$brandName) !== '') {
-            $brand = $this->brands->createOrFirst(strtolower(trim((string)$brandName)));
-            $brandId = $brand->id;
+        if ($brandName !== null && trim((string) $brandName) !== '') {
+            $brandId = $this->brands->createOrFirst(strtolower(trim((string) $brandName)))->id;
         }
 
-        // Resolve type (if provided, else reuse existing type)
         $typeId = $currentTypeId;
-        if ($typeName !== null && trim((string)$typeName) !== '') {
-            $type = $this->types->createOrFirst(strtolower(trim((string)$typeName)));
-            $typeId = $type->id;
+        if ($typeName !== null && trim((string) $typeName) !== '') {
+            $typeId = $this->types->createOrFirst(strtolower(trim((string) $typeName)))->id;
         }
 
-        // Seats (if provided, else reuse current)
         $finalSeats = $currentSeats;
         if ($seats !== null) {
             $finalSeats = (int) $seats;
         }
 
-        // Resolve model (create or reuse)
         $model = $this->models->createOrFirst([
-            'name'     => strtolower(trim((string)$modelName)),
+            'name'     => strtolower(trim((string) $modelName)),
             'brand_id' => $brandId,
             'type_id'  => $typeId,
             'seats'    => $finalSeats,
@@ -98,24 +130,26 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         return $model->id;
     }
 
+    /** @inheritDoc */
     public function resolveColorForUpdate(array $data): ?int
     {
         $colorName = data_get($data, 'color.name');
 
-        if ($colorName === null) return null;
+        if ($colorName === null) {
+            return null;
+        }
 
         $hexCode = data_get($data, 'color.hex_code');
 
-        if ($hexCode === null || trim((string)$hexCode) === '') {
-            throw new ValidationLogicException("color.hex_code is required when updating color.");
+        if ($hexCode === null || trim((string) $hexCode) === '') {
+            throw new ValidationLogicException('color.hex_code is required when updating color.');
         }
 
         $color = $this->colors->createOrFirst([
-            'name'     => strtolower(trim((string)$colorName)),
-            'hex_code' => strtolower(trim((string)$hexCode)),
+            'name'     => strtolower(trim((string) $colorName)),
+            'hex_code' => strtolower(trim((string) $hexCode)),
         ]);
 
         return $color->id;
     }
-
 }

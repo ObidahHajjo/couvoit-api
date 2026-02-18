@@ -7,15 +7,46 @@ use App\Repositories\Interfaces\CarRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Eloquent implementation of CarRepositoryInterface.
+ *
+ * Provides read-through and write-through caching using tagged cache.
+ *
+ * Loaded relations:
+ * - model.brand
+ * - model.type
+ * - color
+ */
 class CarRepositoryEloquent implements CarRepositoryInterface
 {
     private const TTL_SECONDS = 3600;
 
-    private function tagCars(): array { return ['cars']; }
-    private function tagCar(int $id): array { return ['cars', 'car:' . $id]; }
+    /**
+     * @return array<int,string>
+     */
+    private function tagCars(): array
+    {
+        return ['cars'];
+    }
 
-    private function keyAll(): string { return 'cars:all'; }
-    private function keyById(int $id): string { return 'cars:' . $id; }
+    /**
+     * @param int $id
+     * @return array<int,string>
+     */
+    private function tagCar(int $id): array
+    {
+        return ['cars', 'car:' . $id];
+    }
+
+    private function keyAll(): string
+    {
+        return 'cars:all';
+    }
+
+    private function keyById(int $id): string
+    {
+        return 'cars:' . $id;
+    }
 
     /** @inheritDoc */
     public function all(): Collection

@@ -12,7 +12,6 @@ use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Log;
 use RuntimeException;
 use stdClass;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,16 +28,32 @@ class SupabaseAuth
     // Auth “session” cache (sub -> {token_fp, person_id})
     private const AUTH_CACHE_PREFIX = 'supabase:auth:'; // supabase:auth:{sub}
 
-    public function __construct(private PersonRepositoryInterface $repo)
+    /**
+     * @param PersonRepositoryInterface $repo
+     */
+    public function __construct(private readonly PersonRepositoryInterface $repo)
     {
     }
 
+    /**
+     * Authenticate request using Supabase JWT (JWKS), resolve Person, and set Laravel auth user.
+     *
+     * Caching:
+     * - JWKS is cached for 24h
+     * - Per-kid parsed Key is cached for 24h
+     * - Auth cache maps "sub" => ['token_fp' => ..., 'person_id' => ...] with TTL aligned to token exp (clamped)
+     *
+     * @param Request $request
+     * @param Closure $next
+     *
+     * @return Response
+     *
+     * @throws Throwable
+     */
     public function handle(Request $request, Closure $next): Response
     {
-        $start = microtime(true);
-
         $token = $request->bearerToken();
-        if (!$token) {
+        if (! $token) {
             return response()->json(['error' => 'Missing Bearer token'], 401);
         }
 
@@ -57,12 +72,12 @@ class SupabaseAuth
             $alg = $tokenHeader->alg ?? null;
             $kid = $tokenHeader->kid ?? null;
 
-            if (!is_string($alg) || !is_string($kid) || $alg === '' || $kid === '') {
+            if (! is_string($alg) || ! is_string($kid) || $alg === '' || $kid === '') {
                 return response()->json(['error' => 'Invalid token header (missing alg or kid)'], 401);
             }
 
             $allowedAlgs = ['ES256'];
-            if (!in_array($alg, $allowedAlgs, true)) {
+            if (! in_array($alg, $allowedAlgs, true)) {
                 return response()->json(['error' => 'Unsupported JWT alg'], 401);
             }
 
@@ -72,12 +87,12 @@ class SupabaseAuth
             $decodedHeaders = new stdClass();
             $payload = JWT::decode($token, $key, $decodedHeaders);
 
-            if (!isset($decodedHeaders->alg) || $decodedHeaders->alg !== $alg) {
+            if (! isset($decodedHeaders->alg) || $decodedHeaders->alg !== $alg) {
                 return response()->json(['error' => 'JWT header mismatch'], 401);
             }
 
             $supabaseUserId = $payload->sub ?? null;
-            if (!is_string($supabaseUserId) || $supabaseUserId === '') {
+            if (! is_string($supabaseUserId) || $supabaseUserId === '') {
                 return response()->json(['error' => 'Invalid token payload (no sub)'], 401);
             }
 
@@ -104,7 +119,7 @@ class SupabaseAuth
                 $cachedPersonId = (int) $cachedAuth['person_id'];
 
                 // If token differs => invalidate and refresh
-                if (!hash_equals($cachedFp, $tokenFp)) {
+                if (! hash_equals($cachedFp, $tokenFp)) {
                     Cache::forget($authCacheKey);
                 } else {
                     // Token matches cache: load person (repo may cache by id)
@@ -112,12 +127,11 @@ class SupabaseAuth
                         $person = $this->repo->findById($cachedPersonId);
                     } catch (Throwable) {
                         // If cached person_id is stale, force refresh
-                        $person = null;
                         Cache::forget($authCacheKey);
                     }
 
                     // Safety: ensure person matches the same sub
-                    if ($person instanceof Person && (string) $person->supabase_user_id !== (string) $supabaseUserId) {
+                    if ($person instanceof Person && (string) $person->supabase_user_id !== $supabaseUserId) {
                         $person = null;
                         Cache::forget($authCacheKey);
                     }
@@ -125,37 +139,37 @@ class SupabaseAuth
             }
 
             // If no valid cached person, resolve by sub and write cache
-            if (!$person instanceof Person) {
+            if (! $person instanceof Person) {
                 $person = $this->repo->findBySupabaseUserId($supabaseUserId);
 
-                if (!$person instanceof Person) {
+                if (! $person instanceof Person) {
                     return response()->json(['error' => 'Unauthorized'], 401);
                 }
 
                 // Must match sub (explicit)
-                if ((string) $person->supabase_user_id !== (string) $supabaseUserId) {
+                if ($person->supabase_user_id !== (string) $supabaseUserId) {
                     return response()->json(['error' => 'Unauthorized'], 401);
                 }
 
                 Cache::put($authCacheKey, [
                     'token_fp'  => $tokenFp,
-                    'person_id' => (int) $person->id,
+                    'person_id' => $person->id,
                 ], $ttlSeconds);
             }
 
-            if (!$person->is_active) {
+            if (! $person->is_active) {
                 return response()->json(['error' => 'Account inactive'], 403);
             }
 
             auth()->setUser($person);
             $request->attributes->set('person', $person);
-            return $next($request);
 
+            return $next($request);
         } catch (ExpiredException) {
             // Token expired: invalidate auth cache for this sub if we can decode sub without verifying signature
             $this->bestEffortInvalidateAuthCacheFromTokenParts($parts);
-            return response()->json(['error' => 'Token expired'], 401);
 
+            return response()->json(['error' => 'Token expired'], 401);
         } catch (Throwable $e) {
             $msg = $e->getMessage();
 
@@ -183,18 +197,27 @@ class SupabaseAuth
         }
     }
 
+    /**
+     * Hash the full JWT to get a stable fingerprint for cache validation.
+     */
     private function tokenFingerprint(string $jwt): string
     {
         return hash('sha256', $jwt);
     }
 
+    /**
+     * Compute cache TTL from JWT exp (clamped), defaulting to 1h if missing.
+     *
+     * @param object $payload
+     * @return int
+     */
     private function ttlFromPayload(object $payload): int
     {
         // Default if no exp
         $default = 3600; // 1h
 
         $exp = $payload->exp ?? null;
-        if (!is_int($exp) && !is_float($exp) && !is_string($exp)) {
+        if (! is_int($exp) && ! is_float($exp) && ! is_string($exp)) {
             return $default;
         }
 
@@ -211,10 +234,21 @@ class SupabaseAuth
         return max(60, min(86400, $delta));
     }
 
+    /**
+     * Best-effort cache invalidation when token is expired.
+     *
+     * Decodes payload without signature verification to obtain "sub".
+     *
+     * @param array<int, string> $parts
+     *
+     * @throws Throwable
+     */
     private function bestEffortInvalidateAuthCacheFromTokenParts(array $parts): void
     {
         try {
-            if (count($parts) !== 3) return;
+            if (count($parts) !== 3) {
+                return;
+            }
 
             // Decode payload WITHOUT verification (best effort only) just to get sub
             $payload = JWT::jsonDecode(JWT::urlsafeB64Decode($parts[1]));
@@ -228,29 +262,50 @@ class SupabaseAuth
         }
     }
 
+    /**
+     * Fetch and cache Supabase JWKS.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws RuntimeException
+     */
     private function getJwks(): array
     {
         return Cache::remember(self::JWKS_CACHE_KEY, self::JWKS_TTL_SECONDS, function () {
             $jwksUrl = config('services.supabase.jwks_url');
-            if (!$jwksUrl) throw new RuntimeException('SUPABASE_JWT_JWKS_URL is not set');
+            if (! $jwksUrl) {
+                throw new RuntimeException('SUPABASE_JWT_JWKS_URL is not set');
+            }
 
             $resp = Http::timeout(3)
                 ->retry(2, 200)
                 ->get($jwksUrl);
 
-            if (!$resp->successful()) {
+            if (! $resp->successful()) {
                 throw new RuntimeException(
                     'Unable to fetch Supabase JWKS: HTTP ' . $resp->status() . ' ' . $resp->body()
                 );
             }
 
             $json = $resp->json();
-            if (!is_array($json)) throw new RuntimeException('Supabase JWKS response is not valid JSON');
+            if (! is_array($json)) {
+                throw new RuntimeException('Supabase JWKS response is not valid JSON');
+            }
 
             return $json;
         });
     }
 
+    /**
+     * Resolve and cache the parsed public key for the given KID.
+     *
+     * @param array<string, mixed> $jwks
+     * @param string              $kid
+     *
+     * @return Key
+     *
+     * @throws RuntimeException
+     */
     private function getCachedKeyForKid(array $jwks, string $kid): Key
     {
         $cacheKey = self::JWKS_KEY_CACHE_PREFIX . $kid;
@@ -267,18 +322,34 @@ class SupabaseAuth
         return $key;
     }
 
+    /**
+     * Parse a Key from JWKS for the given KID.
+     *
+     * @param array<string, mixed> $jwks
+     * @param string              $kid
+     *
+     * @return Key
+     *
+     * @throws RuntimeException
+     */
     private function parseKeyForKid(array $jwks, string $kid): Key
     {
         $keys = $jwks['keys'] ?? null;
-        if (!is_array($keys)) throw new RuntimeException('JWKS malformed: missing keys[]');
+        if (! is_array($keys)) {
+            throw new RuntimeException('JWKS malformed: missing keys[]');
+        }
 
         foreach ($keys as $jwk) {
-            if (!is_array($jwk)) continue;
+            if (! is_array($jwk)) {
+                continue;
+            }
 
             if (($jwk['kid'] ?? null) === $kid) {
                 $parsed = JWK::parseKey($jwk);
 
-                if (!$parsed instanceof Key) throw new RuntimeException('Failed to parse JWK for kid=' . $kid);
+                if (! $parsed instanceof Key) {
+                    throw new RuntimeException('Failed to parse JWK for kid=' . $kid);
+                }
 
                 return $parsed;
             }

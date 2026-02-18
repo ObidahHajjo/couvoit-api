@@ -5,6 +5,14 @@ namespace App\Http\Requests\Trip;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Reserve trip request.
+ *
+ * Notes:
+ * - In your controller, non-admin users reserve for themselves, but the request
+ *   still validates `person_id`. If you want, you can make it optional for non-admins
+ *   later; for now we document the current validation.
+ */
 class ReserveTripRequest extends FormRequest
 {
     /**
@@ -16,7 +24,7 @@ class ReserveTripRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Validation rules.
      *
      * @return array<string, ValidationRule|array|string>
      */

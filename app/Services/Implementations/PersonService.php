@@ -34,17 +34,13 @@ readonly class PersonService implements PersonServiceInterface
         private TripRepositoryInterface $trips,
     ) {}
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function list(): Collection
     {
         return $this->persons->all();
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function show(Person $person): Person
     {
         return $person;
@@ -55,25 +51,19 @@ readonly class PersonService implements PersonServiceInterface
         return $this->persons->findById($id);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function tripsAsDriver(Person $person): Collection
     {
         return $this->trips->listByDriver($person->id);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function tripsAsPassenger(Person $person): Collection
     {
         return $this->trips->listByPassenger($person->id);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function update(Person $person, array $data): Person
     {
         if(empty($data)) throw new ValidationLogicException("Nothing to update");
@@ -93,24 +83,25 @@ readonly class PersonService implements PersonServiceInterface
         return $this->persons->findById($person->id);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function softDelete(Person $person): void
     {
         $this->persons->delete($person->id);
     }
 
+    /** @inheritDoc */
     public function deactivate(Person $person): void
     {
         $this->persons->update($person->id, ['is_active' => false]);
     }
 
+    /** @inheritDoc */
     public function reactivate(Person $person): void
     {
         $this->persons->update($person->id, ['is_active' => true]);
     }
 
+    /** @inheritDoc */
     public function updateRole(string $supabaseUserId, int $roleId): Person
     {
         $this->persons->updateRole($supabaseUserId, $roleId);

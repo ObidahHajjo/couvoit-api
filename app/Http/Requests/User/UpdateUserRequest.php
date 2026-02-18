@@ -4,6 +4,12 @@ namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Update user request.
+ *
+ * Notes:
+ * - This request merges `id` from the route into the payload during prepareForValidation().
+ */
 class UpdateUserRequest extends FormRequest
 {
     /**
@@ -14,21 +20,25 @@ class UpdateUserRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Merge route params into request data prior to validation.
+     */
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'id' => $this->route('id')
+            'id' => $this->route('id'),
         ]);
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Validation rules.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
         $userId = $this->route('id');
+
         return [
             'id' => ['required', 'integer', 'exists:users,id'],
             'pseudo' => ['sometimes', 'string', 'max:50', "unique:users,pseudo,$userId"],

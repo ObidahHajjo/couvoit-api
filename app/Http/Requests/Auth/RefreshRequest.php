@@ -5,6 +5,9 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Refresh token request payload.
+ */
 class RefreshRequest extends FormRequest
 {
     /**

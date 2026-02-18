@@ -7,22 +7,86 @@ use App\Repositories\Interfaces\CarModelRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Eloquent implementation of CarModelRepositoryInterface.
+ *
+ * Provides read-through and write-through caching using tagged cache.
+ *
+ * Cache strategy:
+ * - Global list: models:all (tag: models)
+ * - By id:       models:{id} (tags: models, model:{id})
+ * - By brand:    models:brand:{brandId} (tags: models, brand:{brandId})
+ * - By name:     models:name:{normalizedName} (tags: models, name:{normalizedName})
+ */
 class CarModelEloquentRepository implements CarModelRepositoryInterface
 {
     private const TTL_SECONDS = 3600;
 
     // ---------- Tags ----------
-    private function tagModels(): array { return ['models']; }
-    private function tagModel(int $id): array { return ['models', 'model:' . $id]; }
-    private function tagBrand(int $brandId): array { return ['models', 'brand:' . $brandId]; }
-    private function tagName(string $name): array { return ['models', 'name:' . $this->normalizeName($name)]; }
+
+    /**
+     * @return array<int,string>
+     */
+    private function tagModels(): array
+    {
+        return ['models'];
+    }
+
+    /**
+     * @param int $id
+     * @return array<int,string>
+     */
+    private function tagModel(int $id): array
+    {
+        return ['models', 'model:' . $id];
+    }
+
+    /**
+     * @param int $brandId
+     * @return array<int,string>
+     */
+    private function tagBrand(int $brandId): array
+    {
+        return ['models', 'brand:' . $brandId];
+    }
+
+    /**
+     * @param string $name
+     * @return array<int,string>
+     */
+    private function tagName(string $name): array
+    {
+        return ['models', 'name:' . $this->normalizeName($name)];
+    }
 
     // ---------- Keys ----------
-    private function keyAll(): string { return 'models:all'; }
-    private function keyById(int $id): string { return 'models:' . $id; }
-    private function keyByBrand(int $brandId): string { return 'models:brand:' . $brandId; }
-    private function keyByName(string $name): string { return 'models:name:' . $this->normalizeName($name); }
 
+    private function keyAll(): string
+    {
+        return 'models:all';
+    }
+
+    private function keyById(int $id): string
+    {
+        return 'models:' . $id;
+    }
+
+    private function keyByBrand(int $brandId): string
+    {
+        return 'models:brand:' . $brandId;
+    }
+
+    private function keyByName(string $name): string
+    {
+        return 'models:name:' . $this->normalizeName($name);
+    }
+
+    /**
+     * Normalize model name for consistent caching and lookup.
+     *
+     * @param string $name
+     * @return string
+     */
     private function normalizeName(string $name): string
     {
         return mb_strtolower(trim($name));
@@ -34,16 +98,15 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
         /** @var Collection<int,CarModel> $models */
         $models = Cache::tags($this->tagModels())
             ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return CarModel::query()->with('brand')->get();
+                return CarModel::query()
+                    ->with('brand')
+                    ->get();
             });
 
-        // Optional: warm per-model + per-brand + per-name caches
+        // Optional: warm per-model + per-name caches (avoid re-caching by-brand for each model)
         foreach ($models as $m) {
             Cache::tags($this->tagModel($m->id))
                 ->put($this->keyById($m->id), $m, self::TTL_SECONDS);
-
-            Cache::tags($this->tagBrand($m->brand_id))
-                ->put($this->keyByBrand($m->brand_id), $models->where('brand_id', $m->brand_id)->values(), self::TTL_SECONDS);
 
             Cache::tags($this->tagName($m->name))
                 ->put($this->keyByName($m->name), $m, self::TTL_SECONDS);
@@ -58,7 +121,9 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
         /** @var CarModel|null $model */
         $model = Cache::tags($this->tagModel($id))
             ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return CarModel::query()->with('brand')->find($id);
+                return CarModel::query()
+                    ->with('brand')
+                    ->find($id);
             });
 
         return $model;
@@ -71,7 +136,7 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
 
         $model = CarModel::query()->createOrFirst(
             [
-                'name' => $data['name'],
+                'name'     => $data['name'],
                 'brand_id' => $data['brand_id'],
             ],
             $data
@@ -115,7 +180,7 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
         Cache::tags($this->tagBrand($oldBrandId))->flush();
         Cache::tags($this->tagBrand($model->brand_id))->flush();
 
-        // if name changed, clear old name tag
+        // if name changed, clear old name scope
         if ($oldName !== $model->name) {
             Cache::tags($this->tagName($oldName))->flush();
         }
@@ -130,12 +195,10 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
 
         $ok = (bool) $model->delete();
 
-        // wipe anything stored under these scopes
         Cache::tags($this->tagModel($id))->flush();
         Cache::tags($this->tagBrand($brandId))->flush();
         Cache::tags($this->tagName($name))->flush();
 
-        // invalidate global list
         Cache::tags($this->tagModels())->forget($this->keyAll());
 
         return $ok;
@@ -144,11 +207,9 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
     /** @inheritDoc */
     public function findByName(string $name): ?CarModel
     {
-        $key = $this->keyByName($name);
-
         /** @var CarModel|null $model */
         $model = Cache::tags($this->tagName($name))
-            ->remember($key, self::TTL_SECONDS, function () use ($name) {
+            ->remember($this->keyByName($name), self::TTL_SECONDS, function () use ($name) {
                 $normalized = $this->normalizeName($name);
 
                 return CarModel::query()

@@ -202,7 +202,7 @@ readonly class TripService implements TripServiceInterface
 
             $lockedTrip->passengers()->attach($personId);
 
-            DB::afterCommit(fn() => $this->invalidateTripReservationCaches((int)$trip->id));
+            DB::afterCommit(fn() => $this->invalidateTripReservationCaches($trip->id));
 
             return true;
         });
@@ -223,7 +223,7 @@ readonly class TripService implements TripServiceInterface
             $deleted = $lockedTrip->passengers()->detach($personId);
             if ($deleted === 0) throw new NotFoundException('Reservation not found.');
 
-            DB::afterCommit(fn() => $this->invalidateTripReservationCaches((int)$trip->id));
+            DB::afterCommit(fn() => $this->invalidateTripReservationCaches($trip->id));
 
             return true;
         });
@@ -235,6 +235,9 @@ readonly class TripService implements TripServiceInterface
         return $this->persons->findById($personId);
     }
 
+    /**
+     * @throws ForbiddenException
+     */
     private function assertTripNotStarted(Trip $trip): void
     {
         if ($trip->departure_time <= now()) {
@@ -244,8 +247,8 @@ readonly class TripService implements TripServiceInterface
 
     private function invalidateTripReservationCaches(int $tripId): void
     {
-        Cache::forget("trips:{$tripId}");
-        Cache::forget("trips:{$tripId}:passengers");
+        Cache::forget("trips:$tripId");
+        Cache::forget("trips:$tripId:passengers");
 
         // versioned search cache invalidation
         Cache::add('trips:search:version', 1);

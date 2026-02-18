@@ -5,6 +5,9 @@ namespace App\Http\Requests\Trip;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Store trip request.
+ */
 class StoreTripRequest extends FormRequest
 {
     /**
@@ -16,7 +19,7 @@ class StoreTripRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Validation rules.
      *
      * @return array<string, ValidationRule|array|string>
      */
@@ -39,6 +42,7 @@ class StoreTripRequest extends FormRequest
             'arrival_address.street_name' => ['required', 'string', 'max:255'],
             'arrival_address.postal_code' => ['required', 'string', 'max:20'],
             'arrival_address.city_name' => ['required', 'string', 'max:255'],
+
             'person_id' => ['sometimes', 'integer', 'exists:persons,id'],
         ];
     }

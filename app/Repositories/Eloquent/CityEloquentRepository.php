@@ -7,12 +7,36 @@ use App\Repositories\Interfaces\CityRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Eloquent implementation of CityRepositoryInterface.
+ *
+ * Provides read-through and write-through caching using tagged cache.
+ *
+ * Cache strategy:
+ * - City by (name, postal_code): cities:{normalizedName}:{postal_code}
+ * - Distinct postcodes list:     cities:postcodes
+ */
 class CityEloquentRepository implements CityRepositoryInterface
 {
     private const TTL_SECONDS = 3600;
 
     // ---------- Tags ----------
-    private function tagCities(): array { return ['cities']; }
+
+    /**
+     * @return array<int,string>
+     */
+    private function tagCities(): array
+    {
+        return ['cities'];
+    }
+
+    /**
+     * Tag scope for a specific (name, postal_code) pair.
+     *
+     * @param string $name
+     * @param string $postal
+     * @return array<int,string>
+     */
     private function tagCity(string $name, string $postal): array
     {
         return array_merge(
@@ -21,9 +45,16 @@ class CityEloquentRepository implements CityRepositoryInterface
         );
     }
 
-    private function tagPostcodes(): array { return ['cities', 'cities:postcodes']; }
+    /**
+     * @return array<int,string>
+     */
+    private function tagPostcodes(): array
+    {
+        return ['cities', 'cities:postcodes'];
+    }
 
     // ---------- Keys ----------
+
     private function keyPostcodes(): string
     {
         return 'cities:postcodes';
@@ -34,6 +65,12 @@ class CityEloquentRepository implements CityRepositoryInterface
         return 'cities:' . $this->normalizeName($name) . ':' . trim($postal);
     }
 
+    /**
+     * Normalize city name for consistent caching and lookup.
+     *
+     * @param string $name
+     * @return string
+     */
     private function normalizeName(string $name): string
     {
         return mb_strtolower(trim($name));
@@ -44,9 +81,14 @@ class CityEloquentRepository implements CityRepositoryInterface
     {
         $city = City::query()->create($data);
 
-        Cache::tags($this->tagCity($city->name, $city->postal_code))
-            ->put($this->keyCity($city->name, $city->postal_code), $city, self::TTL_SECONDS);
+        Cache::tags($this->tagCity((string) $city->name, (string) $city->postal_code))
+            ->put(
+                $this->keyCity((string) $city->name, (string) $city->postal_code),
+                $city,
+                self::TTL_SECONDS
+            );
 
+        // New city may introduce a new postal code
         Cache::tags($this->tagPostcodes())->forget($this->keyPostcodes());
 
         return $city;
@@ -64,7 +106,7 @@ class CityEloquentRepository implements CityRepositoryInterface
     /** @inheritDoc */
     public function getPostcodes(): Collection
     {
-        /** @var Collection $postcodes */
+        /** @var Collection<int,mixed> $postcodes */
         $postcodes = Cache::tags($this->tagPostcodes())
             ->remember($this->keyPostcodes(), self::TTL_SECONDS, function () {
                 return City::query()
@@ -89,7 +131,7 @@ class CityEloquentRepository implements CityRepositoryInterface
         $city = Cache::tags($this->tagCity($cityName, $postalCode))
             ->remember($key, self::TTL_SECONDS, function () use ($cityName, $postalCode) {
                 return City::query()->firstOrCreate([
-                    'name' => $cityName,
+                    'name'        => $cityName,
                     'postal_code' => $postalCode,
                 ]);
             });

@@ -8,6 +8,17 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Eloquent implementation of TripRepositoryInterface.
+ *
+ * Provides read-through and write-through caching using tagged cache.
+ *
+ * Cache strategy:
+ * - Trip by id:                 trips:{id} (tags: trips, trip:{id})
+ * - Trip passengers:            trips:{id}:passengers (tags: trips, trip:{id}, reservations, persons)
+ * - Search results (paginated): trips:search:* (tags: trips, trips:search)
+ * - Lists by driver/passenger:  trips:driver:{personId}, trips:passenger:{personId}
+ */
 class TripEloquentRepository implements TripRepositoryInterface
 {
     private const TTL_TRIP_SECONDS = 3600;
@@ -16,32 +27,52 @@ class TripEloquentRepository implements TripRepositoryInterface
     private const TTL_LIST_SECONDS = 600;
 
     // ---------- Tags ----------
+
+    /**
+     * @return array<int,string>
+     */
     private function tagTrips(): array
     {
         return ['trips'];
     }
 
+    /**
+     * @param int $tripId
+     * @return array<int,string>
+     */
     private function tagTrip(int $tripId): array
     {
-        return ['trips', 'trip:' . $tripId];
+        return [$this->tagTrips(), 'trip:' . $tripId];
     }
 
+    /**
+     * @return array<int,string>
+     */
     private function tagSearch(): array
     {
         return ['trips', 'trips:search'];
     }
 
+    /**
+     * @param int $personId
+     * @return array<int,string>
+     */
     private function tagPerson(int $personId): array
     {
         return ['trips', 'person:' . $personId];
     }
 
+    /**
+     * @param int $tripId
+     * @return array<int,string>
+     */
     private function tagPassengers(int $tripId): array
     {
         return ['trips', 'trip:' . $tripId, 'reservations', 'persons'];
     }
 
     // ---------- Keys ----------
+
     private function keyTrip(int $id): string
     {
         return 'trips:' . $id;
@@ -86,15 +117,15 @@ class TripEloquentRepository implements TripRepositoryInterface
                 $q = Trip::query()->with(['driver', 'departureAddress.city', 'arrivalAddress.city']);
 
                 if ($startingCity) {
-                    $q->whereHas('departureAddress.city', fn ($qq) =>
-                    $qq->whereRaw('lower(name) = ?', [mb_strtolower($startingCity)])
-                    );
+                    $q->whereHas('departureAddress.city', function ($qq) use ($startingCity) {
+                        $qq->whereRaw('lower(name) = ?', [mb_strtolower($startingCity)]);
+                    });
                 }
 
                 if ($arrivalCity) {
-                    $q->whereHas('arrivalAddress.city', fn ($qq) =>
-                    $qq->whereRaw('lower(name) = ?', [mb_strtolower($arrivalCity)])
-                    );
+                    $q->whereHas('arrivalAddress.city', function ($qq) use ($arrivalCity) {
+                        $qq->whereRaw('lower(name) = ?', [mb_strtolower($arrivalCity)]);
+                    });
                 }
 
                 if ($tripDate) {
@@ -150,10 +181,10 @@ class TripEloquentRepository implements TripRepositoryInterface
     {
         $trip = Trip::query()->create($attributes);
 
-        Cache::tags($this->tagTrip($trip->id))->flush();
-        Cache::tags($this->tagPassengers($trip->id))->flush();
+        Cache::tags($this->tagTrip((int)$trip->id))->flush();
+        Cache::tags($this->tagPassengers((int)$trip->id))->flush();
         Cache::tags($this->tagSearch())->flush();
-        Cache::tags($this->tagPerson($trip->person_id))->flush();
+        Cache::tags($this->tagPerson((int)$trip->person_id))->flush();
 
         return $trip;
     }
@@ -162,7 +193,7 @@ class TripEloquentRepository implements TripRepositoryInterface
     public function update(int $id, array $attributes): void
     {
         $trip = Trip::query()->findOrFail($id);
-        $oldDriverId = $trip->person_id;
+        $oldDriverId = (int)$trip->person_id;
 
         $trip->update($attributes);
 
@@ -171,16 +202,16 @@ class TripEloquentRepository implements TripRepositoryInterface
         Cache::tags($this->tagSearch())->flush();
 
         Cache::tags($this->tagPerson($oldDriverId))->flush();
-        Cache::tags($this->tagPerson($trip->person_id))->flush();
+        Cache::tags($this->tagPerson((int)$trip->person_id))->flush();
     }
 
     /** @inheritDoc */
     public function delete(int $id): bool
     {
         $trip = Trip::query()->findOrFail($id);
-        $driverId = $trip->person_id;
+        $driverId = (int)$trip->person_id;
 
-        $ok = (bool) $trip->delete();
+        $ok = (bool)$trip->delete();
 
         Cache::tags($this->tagTrip($id))->flush();
         Cache::tags($this->tagPassengers($id))->flush();
@@ -194,7 +225,7 @@ class TripEloquentRepository implements TripRepositoryInterface
     public function forceDelete(int $id): void
     {
         $trip = Trip::withTrashed()->findOrFail($id);
-        $driverId = $trip->person_id;
+        $driverId = (int)$trip->person_id;
 
         $trip->forceDelete();
 
@@ -209,7 +240,7 @@ class TripEloquentRepository implements TripRepositoryInterface
     {
         $id = $trip->id;
 
-        /** @var Collection $passengers */
+        /** @var Collection<int,mixed> $passengers */
         $passengers = Cache::tags($this->tagPassengers($id))
             ->remember($this->keyPassengers($id), self::TTL_PASSENGERS_SECONDS, function () use ($trip) {
                 return $trip->load('passengers.role', 'passengers.car')->passengers;
@@ -223,7 +254,7 @@ class TripEloquentRepository implements TripRepositoryInterface
     {
         $key = $this->keyDriverTrips($personId);
 
-        /** @var Collection $trips */
+        /** @var Collection<int,mixed> $trips */
         $trips = Cache::tags(array_merge($this->tagPerson($personId), ['persons']))
             ->remember($key, self::TTL_LIST_SECONDS, function () use ($personId) {
                 return Trip::query()
@@ -241,11 +272,13 @@ class TripEloquentRepository implements TripRepositoryInterface
     {
         $key = $this->keyPassengerTrips($personId);
 
-        /** @var Collection $trips */
+        /** @var Collection<int,mixed> $trips */
         $trips = Cache::tags(array_merge($this->tagPerson($personId), ['reservations', 'persons']))
             ->remember($key, self::TTL_LIST_SECONDS, function () use ($personId) {
                 return Trip::query()
-                    ->whereHas('passengers', fn ($query) => $query->where('persons.id', $personId))
+                    ->whereHas('passengers', function ($query) use ($personId) {
+                        $query->where('persons.id', $personId);
+                    })
                     ->with(['departureAddress.city', 'arrivalAddress.city', 'driver'])
                     ->orderByDesc('departure_time')
                     ->get();

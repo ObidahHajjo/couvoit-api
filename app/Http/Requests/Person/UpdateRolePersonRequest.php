@@ -5,6 +5,9 @@ namespace App\Http\Requests\Person;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Update role request (admin).
+ */
 class UpdateRolePersonRequest extends FormRequest
 {
     /**
@@ -23,8 +26,8 @@ class UpdateRolePersonRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'person_id'     => ['required','string'],
-            'role_id'     => ['required','integer','exists:roles,id'],
+            'person_id' => ['required', 'string'],
+            'role_id'   => ['required', 'integer', 'exists:roles,id'],
         ];
     }
 }
