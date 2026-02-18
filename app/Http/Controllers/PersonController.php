@@ -32,11 +32,6 @@ class PersonController extends Controller
             'is_admin' => auth()->user()?->isAdmin(),
         ]);
 
-        Log::info('AUTH DEBUG', [
-            'id' => auth()->id(),
-            'role_id' => auth()->user()?->role_id,
-            'is_admin' => auth()->user()?->isAdmin(),
-        ]);
         $this->authorize('viewAny', Person::class);
 
         $people = $this->persons->list();

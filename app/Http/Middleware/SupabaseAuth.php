@@ -149,18 +149,6 @@ class SupabaseAuth
 
             auth()->setUser($person);
             $request->attributes->set('person', $person);
-
-            Log::info('SupabaseAuth seconds', ['t' => microtime(true) - $start]);
-            Log::info('SupabaseAuth resolved user', [
-                'sub' => $supabaseUserId,
-                'person_id' => $person->id,
-                "role_id" => $person->role_id,
-                'person_supabase_user_id' => (string) $person->supabase_user_id,
-                'auth_cache_key' => $authCacheKey,
-                'auth_cache_present' => Cache::has($authCacheKey),
-                'auth_cache_value' => Cache::get($authCacheKey),
-            ]);
-
             return $next($request);
 
         } catch (ExpiredException) {

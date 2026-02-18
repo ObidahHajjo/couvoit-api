@@ -70,8 +70,6 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
             ->throw()
             ->json();
 
-        Log::info('routing response', $json);
-
         // ✅ correct path for your response
         $seconds = data_get($json, 'routes.0.summary.duration');
 

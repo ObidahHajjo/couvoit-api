@@ -74,7 +74,6 @@ class CarController extends Controller
      */
     public function store(StoreCarRequest $request): JsonResponse
     {
-        Log::info("payload", $request->validated());
         $this->authorize('create', Car::class);
 
         $person = auth()->user();
