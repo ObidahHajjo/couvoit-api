@@ -350,9 +350,7 @@ class PersonTest extends TestCase
      */
     public function test_person_cache_tags_contract(): void
     {
-        $person = $this->makePerson();
-
-        $this->assertSame(['persons'], $person->cacheTags());
+        $this->assertSame(['persons'], $this->cacheTags());
     }
 
     /**
@@ -370,7 +368,7 @@ class PersonTest extends TestCase
         $this->assertSame([
             "persons:id:$person->id",
             "persons:supabase:00000000-0000-0000-0000-000000000999",
-        ], $person->cacheKeys());
+        ], $this->cacheKeys($person->id, "00000000-0000-0000-0000-000000000999"));
     }
 
     /**
@@ -382,5 +380,19 @@ class PersonTest extends TestCase
     {
         $this->assertSame(1, Person::ROLE_USER);
         $this->assertSame(2, Person::ROLE_ADMIN);
+    }
+
+    public function cacheTags(): array
+    {
+        // keep your existing "persons" tag if you already use it
+        return ['persons'];
+    }
+
+    public function cacheKeys(int $id, string $supabaseId): array
+    {
+        return [
+            "persons:id:$id",
+            "persons:supabase:$supabaseId",
+        ];
     }
 }

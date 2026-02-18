@@ -36,6 +36,38 @@ final class TripEloquentRepositoryTest extends TestCase
     }
 
     /**
+     * @param mixed $tags
+     * @return array<int, string>
+     */
+    private function flattenTags(mixed $tags): array
+    {
+        if (!is_array($tags)) {
+            return [];
+        }
+
+        $flat = [];
+        $it = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($tags));
+        foreach ($it as $v) {
+            if (is_string($v) && $v !== '') {
+                $flat[] = $v;
+            }
+        }
+
+        return array_values($flat);
+    }
+
+    /**
+     * @param array<int, string> $expected
+     * @return \Closure(mixed):bool
+     */
+    private function tagsAre(array $expected): \Closure
+    {
+        return function (mixed $actual) use ($expected): bool {
+            return $this->flattenTags($actual) === array_values($expected);
+        };
+    }
+
+    /**
      * @throws Throwable
      */
     public function test_find_by_id_uses_trip_tag_and_key(): void
@@ -50,7 +82,7 @@ final class TripEloquentRepositoryTest extends TestCase
 
         Cache::shouldReceive('tags')
             ->once()
-            ->with(['trips', 'trip:' . $id])
+            ->with(Mockery::on($this->tagsAre(['trips', 'trip:' . $id])))
             ->andReturn($tagged);
 
         $res = $this->repo->findById($id);
@@ -63,22 +95,23 @@ final class TripEloquentRepositoryTest extends TestCase
      */
     public function test_search_uses_search_tag_and_key_format(): void
     {
-        // We only assert the cache tags + remember key prefix,
-        // not the paginator internals.
         $tagged = Mockery::mock();
         $tagged->shouldReceive('remember')
             ->once()
-            ->with(Mockery::on(function (string $key): bool {
-                return str_starts_with($key, 'trips:search:');
-            }), 3600, Mockery::type('callable'))
+            ->with(
+                Mockery::on(static function (string $key): bool {
+                    return str_starts_with($key, 'trips:search:');
+                }),
+                3600,
+                Mockery::type('callable')
+            )
             ->andReturn(Mockery::mock(LengthAwarePaginator::class));
 
         Cache::shouldReceive('tags')
             ->once()
-            ->with(['trips', 'trips:search'])
+            ->with(Mockery::on($this->tagsAre(['trips', 'trips:search'])))
             ->andReturn($tagged);
 
-        // Fake page=1 like request()->integer('page',1)
         request()->merge(['page' => 1]);
 
         $p = $this->repo->search('Paris', 'Lyon', '2026-02-20');

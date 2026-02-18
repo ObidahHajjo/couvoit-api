@@ -103,8 +103,7 @@ class AuthServiceTest extends TestCase
                     && ($payload['email'] ?? null) === $email
                     && ($payload['role_id'] ?? null) === 1
                     && ($payload['is_active'] ?? null) === true;
-            }))
-            ->andReturn(null);
+            }));
 
         $res = $this->service->register($email, $password);
 

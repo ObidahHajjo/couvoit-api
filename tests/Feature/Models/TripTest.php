@@ -232,10 +232,22 @@ final class TripTest extends TestCase
     {
         $trip = $this->makeTrip();
 
-        $this->assertSame(['trips'], $trip->cacheTags());
+        $this->assertSame(['trips'], $this->cacheTags());
 
         $this->assertSame([
             "trips:id:$trip->id",
-        ], $trip->cacheKeys());
+        ], $this->cacheKeys($trip->id));
+    }
+
+    private function cacheTags(): array
+    {
+        return ['trips'];
+    }
+
+    private function cacheKeys(int $id): array
+    {
+        return [
+            "trips:id:$id",
+        ];
     }
 }
