@@ -10,7 +10,6 @@ use App\Models\Car;
 use App\Models\Person;
 use App\Services\Interfaces\CarServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 use App\Http\Resources\CarResource;
