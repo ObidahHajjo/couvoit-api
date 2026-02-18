@@ -57,7 +57,7 @@ jobs:
         with:
           php-version: "8.5"
           extensions: mbstring, dom, fileinfo, pdo, pdo_pgsql, pgsql
-          coverage: none
+          coverage: xdebug
           tools: composer:v2
 
       - name: Cache Composer
@@ -90,3 +90,15 @@ jobs:
 
       - name: Run tests
         run: php artisan test
+
+      - name: Run tests with coverage
+        run: php artisan test --coverage-clover=coverage.xml
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        with:
+          args: >
+            -Dsonar.projectKey=covoiturage-api
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
