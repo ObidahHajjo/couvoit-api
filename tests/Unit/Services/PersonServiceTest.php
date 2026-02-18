@@ -1,142 +1,251 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\Services;
 
+use App\Exceptions\ValidationLogicException;
 use App\Models\Person;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
+use App\Repositories\Interfaces\TripRepositoryInterface;
 use App\Services\Implementations\PersonService;
+use Illuminate\Support\Collection;
 use Mockery;
+use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Throwable;
 
-class PersonServiceTest extends TestCase
+/**
+ * Class PersonServiceTest
+ *
+ * Unit tests for PersonService use-cases and delegation logic.
+ */
+final class PersonServiceTest extends TestCase
 {
+    /**
+     * @var PersonRepositoryInterface&MockInterface
+     */
+    private PersonRepositoryInterface $persons;
+
+    /**
+     * @var TripRepositoryInterface&MockInterface
+     */
+    private TripRepositoryInterface $trips;
+
+    /**
+     * @var PersonService
+     */
+    private PersonService $service;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        /** @var PersonRepositoryInterface&MockInterface $persons */
+        $persons = Mockery::mock(PersonRepositoryInterface::class);
+
+        /** @var TripRepositoryInterface&MockInterface $trips */
+        $trips = Mockery::mock(TripRepositoryInterface::class);
+
+        $this->persons = $persons;
+        $this->trips = $trips;
+
+        $this->service = new PersonService($this->persons, $this->trips);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
         parent::tearDown();
     }
 
-    public function test_list_calls_repository_all(): void
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function list_delegates_to_person_repository(): void
     {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
-        $repo->shouldReceive('all')->once()->andReturn(collect(['x']));
+        $expected = new Collection([new Person(), new Person()]);
 
-        $service = new PersonService($repo);
-
-        $result = $service->list();
-
-        $this->assertEquals(collect(['x']), $result);
-    }
-
-    public function test_show_calls_repository_find_by_id(): void
-    {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
-
-        $person = new Person();
-        $person->id = 10;
-
-        $repo->shouldReceive('findById')->once()->with(10)->andReturn($person);
-
-        $service = new PersonService($repo);
-
-        $result = $service->show(10);
-
-        $this->assertSame($person, $result);
-    }
-
-    public function test_create_calls_repository_create(): void
-    {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
-
-        $payload = ['email' => 'a@b.com', 'role_id' => 1, 'is_active' => true];
-
-        $created = new Person($payload);
-        $created->id = 1;
-
-        $repo->shouldReceive('create')->once()->with($payload)->andReturn($created);
-
-        $service = new PersonService($repo);
-
-        $result = $service->create($payload);
-
-        $this->assertSame($created, $result);
-    }
-
-    public function test_update_calls_repository_update(): void
-    {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
-
-        $repo->shouldReceive('update')->once()->with(5, ['pseudo' => 'new']);
-
-        $service = new PersonService($repo);
-
-        $service->update(5, ['pseudo' => 'new']);
-
-        $this->assertTrue(true); // reached here
-    }
-
-    public function test_delete_calls_repository_delete(): void
-    {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
-
-        $repo->shouldReceive('delete')->once()->with(7);
-
-        $service = new PersonService($repo);
-
-        $service->delete(7);
-
-        $this->assertTrue(true);
-    }
-
-    public function test_get_or_create_for_supabase_builds_default_payload_and_calls_get_or_create(): void
-    {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
-
-        $email = 'user@example.com';
-
-        $expectedData = [
-            'email'     => $email,
-            'role_id'   => 1,
-            'is_active' => true,
-        ];
-
-        $person = new Person($expectedData);
-        $person->id = 99;
-
-        $repo->shouldReceive('getOrCreate')
+        $this->persons->shouldReceive('all')
             ->once()
-            ->with($email, $expectedData)
-            ->andReturn($person);
+            ->andReturn($expected);
 
-        $service = new PersonService($repo);
+        $res = $this->service->list();
 
-        $result = $service->getOrCreateForSupabase($email);
-
-        $this->assertSame($person, $result);
+        self::assertSame($expected, $res);
     }
 
-    public function test_update_my_profile_unsets_supabase_user_id_before_update(): void
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function trips_as_driver_delegates_to_trip_repository(): void
     {
-        $repo = Mockery::mock(PersonRepositoryInterface::class);
+        $p = new Person();
+        $p->id = 10;
 
-        $me = new Person();
-        $me->id = 123;
+        $expected = new Collection([]);
 
-        $incoming = [
-            'supabase_user_id' => 'should_be_removed',
-            'pseudo' => 'changed',
-        ];
+        $this->trips->shouldReceive('listByDriver')
+            ->once()
+            ->with(10)
+            ->andReturn($expected);
 
-        $expected = [
-            'pseudo' => 'changed',
-        ];
+        $res = $this->service->tripsAsDriver($p);
 
-        $repo->shouldReceive('update')->once()->with(123, $expected);
+        self::assertSame($expected, $res);
+    }
 
-        $service = new PersonService($repo);
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function trips_as_passenger_delegates_to_trip_repository(): void
+    {
+        $p = new Person();
+        $p->id = 11;
 
-        $service->updateMyProfile($me, $incoming);
+        $expected = new Collection([]);
 
-        $this->assertTrue(true);
+        $this->trips->shouldReceive('listByPassenger')
+            ->once()
+            ->with(11)
+            ->andReturn($expected);
+
+        $res = $this->service->tripsAsPassenger($p);
+
+        self::assertSame($expected, $res);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function update_throws_when_data_empty(): void
+    {
+        $this->expectException(ValidationLogicException::class);
+
+        $p = new Person();
+        $p->id = 1;
+
+        $this->service->update($p, []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function update_handles_status_deleted_and_updates_is_active_false(): void
+    {
+        $p = new Person();
+        $p->id = 5;
+
+        $this->persons->shouldReceive('update')
+            ->once()
+            ->with(5, ['is_active' => false]);
+
+        $this->persons->shouldReceive('findById')
+            ->once()
+            ->with(5)
+            ->andReturn($p);
+
+        $res = $this->service->update($p, ['status' => 'DELETED']);
+
+        self::assertSame($p, $res);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function update_handles_status_active_and_updates_is_active_true(): void
+    {
+        $p = new Person();
+        $p->id = 6;
+
+        $this->persons->shouldReceive('update')
+            ->once()
+            ->with(6, ['is_active' => true]);
+
+        $this->persons->shouldReceive('findById')
+            ->once()
+            ->with(6)
+            ->andReturn($p);
+
+        $res = $this->service->update($p, ['status' => 'ACTIVE']);
+
+        self::assertSame($p, $res);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function update_updates_fields_and_returns_fresh_person(): void
+    {
+        $p = new Person();
+        $p->id = 7;
+
+        $fresh = new Person();
+        $fresh->id = 7;
+
+        $this->persons->shouldReceive('update')
+            ->once()
+            ->with(7, ['first_name' => 'New']);
+
+        $this->persons->shouldReceive('findById')
+            ->once()
+            ->with(7)
+            ->andReturn($fresh);
+
+        $res = $this->service->update($p, ['first_name' => 'New']);
+
+        self::assertSame($fresh, $res);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function soft_delete_delegates_to_repository_delete(): void
+    {
+        $p = new Person();
+        $p->id = 9;
+
+        $this->persons->shouldReceive('delete')
+            ->once()
+            ->with(9);
+
+        $this->service->softDelete($p);
+
+        self::assertTrue(true);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[Test]
+    public function update_role_updates_and_returns_person_by_supabase_user_id(): void
+    {
+        $supabaseId = 'uuid-123';
+        $roleId = 2;
+
+        $expected = new Person();
+        $expected->supabase_user_id = $supabaseId;
+
+        $this->persons->shouldReceive('updateRole')
+            ->once()
+            ->with($supabaseId, $roleId);
+
+        $this->persons->shouldReceive('findBySupabaseUserId')
+            ->once()
+            ->with($supabaseId)
+            ->andReturn($expected);
+
+        $res = $this->service->updateRole($supabaseId, $roleId);
+
+        self::assertSame($expected, $res);
     }
 }
