@@ -68,7 +68,7 @@ jobs:
             vendor
           key: ${{ runner.os }}-php82-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php82-
+            ${{ runner.os }}-php85-
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
