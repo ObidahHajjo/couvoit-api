@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Foundation\Configuration\Exceptions;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -121,6 +122,13 @@ final class ApiExceptionConfigurator
                 'error'   => 'DATABASE_ERROR',
                 'details' => 'Database query error.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        });
+
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            return response()->json([
+                'error'   => 'FORBIDDEN',
+                'details' => $e->getMessage() ?: 'Forbidden.',
+            ], Response::HTTP_FORBIDDEN);
         });
 
         $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
