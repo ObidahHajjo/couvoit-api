@@ -42,7 +42,7 @@ class TripEloquentRepository implements TripRepositoryInterface
      */
     private function tagTrip(int $tripId): array
     {
-        return [$this->tagTrips(), 'trip:' . $tripId];
+        return array_merge($this->tagTrips(), ['trip:' . $tripId]);
     }
 
     /**
