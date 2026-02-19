@@ -113,6 +113,7 @@ readonly class TripService implements TripServiceInterface
             );
 
             $departureTime = Carbon::parse($payload['trip_datetime']);
+            logger()->error('durationSeconds type', ['v' => $durationSeconds, 't' => gettype($durationSeconds)]);
             $arrivalTime = $departureTime->copy()->addSeconds($durationSeconds);
 
             $trip = $this->trips->create([
