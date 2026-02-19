@@ -109,7 +109,7 @@ readonly class TripService implements TripServiceInterface
             $durationSeconds = cache()->remember(
                 'route:' . sha1(json_encode([$from, $to])),
                 86400,
-                fn () => $this->orsRoutingClient->durationSeconds($from, $to)
+                fn () => (int) $this->orsRoutingClient->durationSeconds($from, $to)
             );
 
             $departureTime = Carbon::parse($payload['trip_datetime']);
