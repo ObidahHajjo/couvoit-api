@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Repositories\Interfaces\CityRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Eloquent implementation of CityRepositoryInterface.
@@ -122,22 +123,44 @@ class CityEloquentRepository implements CityRepositoryInterface
     /** @inheritDoc */
     public function firstOrCreate(string $cityName, string $postalCode): City
     {
-        $cityName = trim($cityName);
+        $cityName = $this->normalizeName($cityName);
         $postalCode = trim($postalCode);
 
-        $key = $this->keyCity($cityName, $postalCode);
+        $key  = $this->keyCity($cityName, $postalCode);
+        $tags = $this->tagCity($cityName, $postalCode);
 
-        /** @var City $city */
-        $city = Cache::tags($this->tagCity($cityName, $postalCode))
-            ->remember($key, self::TTL_SECONDS, function () use ($cityName, $postalCode) {
-                return City::query()->firstOrCreate([
-                    'name'        => $cityName,
-                    'postal_code' => $postalCode,
-                ]);
-            });
+        /** @var City|null $cached */
+        $cached = Cache::tags($tags)->get($key);
+        if ($cached instanceof City) {
+            // Safety: if cache contains a rolled-back city, ignore it
+            if (City::query()->whereKey($cached->id)->exists()) {
+                return $cached;
+            }
+            Cache::tags($tags)->forget($key);
+        }
 
-        // Postcodes list might change if a new city was created
-        Cache::tags($this->tagPostcodes())->forget($this->keyPostcodes());
+        // DB read first (no creation side-effects)
+        $existing = City::query()
+            ->where('name', $cityName)
+            ->where('postal_code', $postalCode)
+            ->first();
+
+        if ($existing) {
+            Cache::tags($tags)->put($key, $existing, self::TTL_SECONDS);
+            return $existing;
+        }
+
+        // Create (may be inside a transaction)
+        $city = City::query()->create([
+            'name' => $cityName,
+            'postal_code' => $postalCode,
+        ]);
+
+        // Only cache after the transaction COMMITs
+        DB::afterCommit(function () use ($tags, $key, $city) {
+            Cache::tags($tags)->put($key, $city, self::TTL_SECONDS);
+            Cache::tags($this->tagPostcodes())->forget($this->keyPostcodes());
+        });
 
         return $city;
     }
