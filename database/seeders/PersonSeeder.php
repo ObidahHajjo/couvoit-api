@@ -14,7 +14,12 @@ class PersonSeeder extends Seeder
     public function run(): void
     {
         DB::table('persons')->insertOrIgnore([
-            ['email' => 'admin@cda.fr', "role_id" => 2, "supabase_user_id" => "5acf29ea-a6db-45b0-a24b-1ab9488c1691"],
+            [
+                'first_name' => 'admin',
+                "last_name" => 'admin',
+                "pseudo" => 'admin',
+                "phone" => 'admin',
+            ],
         ]);
     }
 }

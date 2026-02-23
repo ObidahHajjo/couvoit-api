@@ -9,6 +9,7 @@ use App\Exceptions\InactiveUserException;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
 use App\Models\Person;
+use App\Models\User;
 use App\Repositories\Interfaces\CarRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Resolvers\Interfaces\CarReferenceResolverInterface;
@@ -91,32 +92,6 @@ class CarServiceTest extends TestCase
     }
 
     /**
-     * createCar() throws when user is inactive.
-     *
-     * @return void
-     *
-     * @throws Throwable
-     */
-    public function test_create_car_throws_when_user_inactive(): void
-    {
-        $person = new Person(['is_active' => false, 'car_id' => null]);
-
-        $dto = new CarCreateData(
-            licensePlate: 'AA-123-BB',
-            modelName: 'golf',
-            seats: 5,
-            brandName: 'vw',
-            typeName: 'hatch',
-            colorHex: '#00aaff',
-            colorName: 'sky',
-        );
-
-        $this->expectException(InactiveUserException::class);
-
-        $this->service->createCar($dto, $person);
-    }
-
-    /**
      * createCar() throws when user already has a car.
      *
      * @return void
@@ -125,7 +100,7 @@ class CarServiceTest extends TestCase
      */
     public function test_create_car_throws_when_user_already_has_car(): void
     {
-        $person = new Person(['is_active' => true, 'car_id' => 10]);
+        $person = new Person(['car_id' => 10]);
 
         $dto = new CarCreateData(
             licensePlate: 'AA-123-BB',
@@ -151,7 +126,7 @@ class CarServiceTest extends TestCase
      */
     public function test_create_car_happy_path(): void
     {
-        $person = new Person(['is_active' => true, 'car_id' => null]);
+        $person = new Person(['car_id' => null]);
         $person->id = 5;
 
         $dto = new CarCreateData(

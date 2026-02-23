@@ -4,6 +4,7 @@ namespace App\Services\Interfaces;
 
 use App\Exceptions\ValidationLogicException;
 use App\Models\Person;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Throwable;
@@ -83,37 +84,26 @@ interface PersonServiceInterface
     public function softDelete(Person $person): void;
 
     /**
-     * Deactivate a person account.
+     * Create profile for a user if you want lazy profile creation.
      *
-     * @param Person $person
-     *
-     * @return void
-     *
-     * @throws Throwable Propagates any repository or infrastructure-level exception.
-     */
-    public function deactivate(Person $person): void;
-
-    /**
-     * Reactivate a person account.
-     *
-     * @param Person $person
-     *
-     * @return void
-     *
-     * @throws Throwable Propagates any repository or infrastructure-level exception.
-     */
-    public function reactivate(Person $person): void;
-
-    /**
-     * Update the role of a person identified by Supabase user ID.
-     *
-     * @param string $supabaseUserId
-     * @param int    $roleId
+     * @param User $user
+     * @param array $data
      *
      * @return Person
      *
-     * @throws ModelNotFoundException If no person matches the given Supabase user ID.
-     * @throws Throwable              Propagates any repository or infrastructure-level exception.
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
      */
-    public function updateRole(string $supabaseUserId, int $roleId): Person;
+    public function createForUser(User $user, array $data): Person;
+
+    /**
+     * Admin: update USER role by person_id.
+     *
+     * @param int $personId
+     * @param int $roleId
+     *
+     * @return Person
+     *
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
+     */
+    public function updateUserRoleByPersonId(int $personId, int $roleId): Person;
 }

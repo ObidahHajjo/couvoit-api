@@ -23,7 +23,7 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('supabase.auth')->group(function () {
+Route::middleware('jwt')->group(function () {
 
     /* ===== USERS / PERSONS ===== */
     Route::get('/persons', [PersonController::class, 'index']);

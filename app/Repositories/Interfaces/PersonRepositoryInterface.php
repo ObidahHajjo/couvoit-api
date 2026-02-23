@@ -57,22 +57,4 @@ interface PersonRepositoryInterface
      * @return bool
      */
     public function attachCar(Person $person, int $carId): bool;
-
-    /**
-     * Find an active person by Supabase user id.
-     *
-     * @param string $supabaseUserId
-     * @return Person|null
-     */
-    public function findBySupabaseUserId(string $supabaseUserId): ?Person;
-
-    /**
-     * Update role for a person identified by Supabase user id and refresh caches.
-     *
-     * @param string $supabaseUserId
-     * @param int $roleId
-     * @return void
-     */
-    public function updateRole(string $supabaseUserId, int $roleId): void;
-
 }

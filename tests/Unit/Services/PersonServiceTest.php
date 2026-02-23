@@ -144,7 +144,7 @@ final class PersonServiceTest extends TestCase
 
         $this->persons->shouldReceive('update')
             ->once()
-            ->with(5, ['is_active' => false]);
+            ->with(5, ['status' => 'DELETED']);
 
         $this->persons->shouldReceive('findById')
             ->once()
@@ -167,7 +167,7 @@ final class PersonServiceTest extends TestCase
 
         $this->persons->shouldReceive('update')
             ->once()
-            ->with(6, ['is_active' => true]);
+            ->with(6, ['status' => 'ACTIVE']);
 
         $this->persons->shouldReceive('findById')
             ->once()
@@ -221,31 +221,5 @@ final class PersonServiceTest extends TestCase
         $this->service->softDelete($p);
 
         self::assertTrue(true);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    #[Test]
-    public function update_role_updates_and_returns_person_by_supabase_user_id(): void
-    {
-        $supabaseId = 'uuid-123';
-        $roleId = 2;
-
-        $expected = new Person();
-        $expected->supabase_user_id = $supabaseId;
-
-        $this->persons->shouldReceive('updateRole')
-            ->once()
-            ->with($supabaseId, $roleId);
-
-        $this->persons->shouldReceive('findBySupabaseUserId')
-            ->once()
-            ->with($supabaseId)
-            ->andReturn($expected);
-
-        $res = $this->service->updateRole($supabaseId, $roleId);
-
-        self::assertSame($expected, $res);
     }
 }

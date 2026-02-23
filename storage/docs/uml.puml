@@ -1,0 +1,273 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+
+' ============================================================
+'  CODE-LEVEL CLASS DIAGRAM (Laravel 12 project architecture)
+'  Focus: Controllers -> Services -> Repositories -> Models
+'         Policies + Infra clients (Supabase, ORS)
+'  (No DB columns / constraints)
+' ============================================================
+
+package "HTTP" {
+  class AuthController {
+    +register(request): JsonResponse
+    +login(request): JsonResponse
+    +refresh(request): JsonResponse
+  }
+
+  class PersonController {
+    +index(): JsonResponse
+    +show(person): JsonResponse
+    +store(request): JsonResponse
+    +update(person, request): JsonResponse
+    +destroy(person): JsonResponse
+    +updateRole(request): JsonResponse
+    +tripsDriver(person): JsonResponse
+    +tripsPassenger(person): JsonResponse
+  }
+
+  class CarController {
+    +index(): JsonResponse
+    +show(car): JsonResponse
+    +store(request): JsonResponse
+    +update(car, request): JsonResponse
+    +destroy(car): JsonResponse
+  }
+
+  class TripController {
+    +index(request): JsonResponse
+    +show(trip): JsonResponse
+    +store(request): JsonResponse
+    +update(trip, request): JsonResponse
+    +destroy(trip): JsonResponse
+    +cancel(trip): JsonResponse
+    +reserve(trip, request): JsonResponse
+    +cancelReservation(trip, request): JsonResponse
+    +passengers(trip): JsonResponse
+  }
+
+  class BrandController {
+    +index(): JsonResponse
+    +show(brand): JsonResponse
+  }
+}
+
+package "Application - Services" {
+  interface AuthServiceInterface
+  class AuthService {
+    +register(data): Person
+    +login(email, password): array
+    +refresh(refreshToken): array
+  }
+
+  interface PersonServiceInterface
+  class PersonService {
+    +all(): Collection
+    +findOrFail(id): Person
+    +create(data): Person
+    +update(person, data): Person
+    +delete(person): void
+    +updateRole(data): Person
+    +tripsDriver(person): Collection
+    +tripsPassenger(person): Collection
+  }
+
+  interface CarServiceInterface
+  class CarService {
+    +allFor(user): Collection
+    +findOrFail(id): Car
+    +create(data, user): Car
+    +update(car, data, user): Car
+    +delete(car, user): void
+  }
+
+  interface TripServiceInterface
+  class TripService {
+    +search(filters, user): Collection
+    +findOrFail(id): Trip
+    +create(data, user): Trip
+    +update(trip, data, user): Trip
+    +cancel(trip, user): Trip
+    +delete(trip, user): void
+    +reserve(trip, data, user): void
+    +cancelReservation(trip, data, user): void
+    +passengers(trip, user): Collection
+  }
+
+  interface BrandServiceInterface
+  class BrandService {
+    +all(): Collection
+    +findOrFail(id): Brand
+  }
+}
+
+package "Domain - Models" {
+  class Person {
+    +isAdmin(): bool
+  }
+  class Car
+  class Trip
+  class Brand
+  class CarModel
+  class Color
+  class Type
+  class City
+  class Address
+  class Role
+  class Reservation
+}
+
+package "Domain - Policies" {
+  class PersonPolicy
+  class CarPolicy
+  class TripPolicy
+}
+
+package "Infrastructure - Repositories" {
+  interface PersonRepositoryInterface
+  class PersonEloquentRepository {
+    +all(): Collection
+    +findOrFail(id): Person
+    +findBySupabaseId(uuid): ?Person
+    +create(data): Person
+    +update(person, data): Person
+    +delete(person): void
+    +flushPerson(id): void
+  }
+
+  interface CarRepositoryInterface
+  class CarRepositoryEloquent {
+    +all(): Collection
+    +findOrFail(id): Car
+    +create(data): Car
+    +update(car, data): Car
+    +delete(car): void
+  }
+
+  interface TripRepositoryInterface
+  class TripEloquentRepository {
+    +search(filters): Collection
+    +findOrFail(id): Trip
+    +create(data): Trip
+    +update(trip, data): Trip
+    +delete(trip): void
+    +passengers(trip): Collection
+    +reserve(person, trip): void
+    +cancelReservation(person, trip): void
+  }
+
+  interface BrandRepositoryInterface
+  class BrandEloquentRepository {
+    +all(): Collection
+    +findOrFail(id): Brand
+    +createOrFirst(name): Brand
+  }
+
+  interface CityRepositoryInterface
+  class CityEloquentRepository {
+    +findOrCreate(name, postal): City
+    +distinctPostcodes(): Collection
+  }
+
+  interface AddressRepositoryInterface
+  class AddressEloquentRepository {
+    +create(data): Address
+    +findOrFail(id): Address
+  }
+
+  interface ColorRepositoryInterface
+  class ColorEloquentRepository
+
+  interface TypeRepositoryInterface
+  class TypeEloquentRepository
+
+  interface CarModelRepositoryInterface
+  class CarModelEloquentRepository
+}
+
+package "Infrastructure - External Clients" {
+  interface SupabaseAuthInterface
+  class SupabaseAuth {
+    +verifyToken(jwt): array
+    +userIdFromToken(jwt): string
+  }
+
+  interface OrsRoutingClientInterface
+  class OrsRoutingClient {
+    +geocode(fullAddress): array
+    +durationSeconds(from, to): int
+    +distanceKm(from, to): float
+  }
+}
+
+package "Resolvers / DTO" {
+  interface CarReferenceResolverInterface
+  class CarReferenceResolver {
+    +resolveForCreate(data): ResolvedCarRefs
+    +resolveForUpdate(data): ResolvedCarRefs
+  }
+
+  class ResolvedCarRefs
+}
+
+' =========================
+' Dependencies (CODE FLOW)
+' =========================
+
+AuthController --> AuthServiceInterface
+PersonController --> PersonServiceInterface
+CarController --> CarServiceInterface
+TripController --> TripServiceInterface
+BrandController --> BrandServiceInterface
+
+AuthService ..|> AuthServiceInterface
+PersonService ..|> PersonServiceInterface
+CarService ..|> CarServiceInterface
+TripService ..|> TripServiceInterface
+BrandService ..|> BrandServiceInterface
+
+AuthService --> SupabaseAuthInterface
+AuthService --> PersonRepositoryInterface
+
+PersonService --> PersonRepositoryInterface
+PersonService --> TripRepositoryInterface
+
+CarService --> CarRepositoryInterface
+CarService --> PersonRepositoryInterface
+CarService --> CarReferenceResolverInterface
+
+TripService --> TripRepositoryInterface
+TripService --> PersonRepositoryInterface
+TripService --> OrsRoutingClientInterface
+
+BrandService --> BrandRepositoryInterface
+
+SupabaseAuth ..|> SupabaseAuthInterface
+OrsRoutingClient ..|> OrsRoutingClientInterface
+CarReferenceResolver ..|> CarReferenceResolverInterface
+
+PersonEloquentRepository ..|> PersonRepositoryInterface
+CarRepositoryEloquent ..|> CarRepositoryInterface
+TripEloquentRepository ..|> TripRepositoryInterface
+BrandEloquentRepository ..|> BrandRepositoryInterface
+CityEloquentRepository ..|> CityRepositoryInterface
+AddressEloquentRepository ..|> AddressRepositoryInterface
+ColorEloquentRepository ..|> ColorRepositoryInterface
+TypeEloquentRepository ..|> TypeRepositoryInterface
+CarModelEloquentRepository ..|> CarModelRepositoryInterface
+
+' Policies used by Controllers (authorize() / Gate)
+PersonController ..> PersonPolicy : authorize
+CarController ..> CarPolicy : authorize
+TripController ..> TripPolicy : authorize
+
+' Services return domain models (high level)
+AuthService --> Person
+PersonService --> Person
+CarService --> Car
+TripService --> Trip
+BrandService --> Brand
+
+@enduml

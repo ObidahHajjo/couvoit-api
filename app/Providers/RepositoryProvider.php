@@ -9,9 +9,10 @@ use App\Repositories\Eloquent\CarRepositoryEloquent;
 use App\Repositories\Eloquent\CityEloquentRepository;
 use App\Repositories\Eloquent\ColorEloquentRepository;
 use App\Repositories\Eloquent\PersonEloquentRepository;
-use App\Repositories\Eloquent\ReservationEloquentRepository;
+use App\Repositories\Eloquent\RefreshTokenEloquentRepository;
 use App\Repositories\Eloquent\TripEloquentRepository;
 use App\Repositories\Eloquent\TypeEloquentRepository;
+use App\Repositories\Eloquent\UserEloquentRepository;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
 use App\Repositories\Interfaces\BrandRepositoryInterface;
 use App\Repositories\Interfaces\CarModelRepositoryInterface;
@@ -19,9 +20,10 @@ use App\Repositories\Interfaces\CarRepositoryInterface;
 use App\Repositories\Interfaces\CityRepositoryInterface;
 use App\Repositories\Interfaces\ColorRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
-use App\Repositories\Interfaces\ReservationRepositoryInterface;
+use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
 use App\Repositories\Interfaces\TypeRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryProvider extends ServiceProvider
@@ -67,11 +69,6 @@ class RepositoryProvider extends ServiceProvider
         );
 
         $this->app->bind(
-            ReservationRepositoryInterface::class,
-            ReservationEloquentRepository::class
-        );
-
-        $this->app->bind(
             TripRepositoryInterface::class,
             TripEloquentRepository::class
         );
@@ -79,6 +76,16 @@ class RepositoryProvider extends ServiceProvider
         $this->app->bind(
             TypeRepositoryInterface::class,
             TypeEloquentRepository::class
+        );
+
+        $this->app->bind(
+            UserRepositoryInterface::class,
+            UserEloquentRepository::class
+        );
+
+        $this->app->bind(
+            RefreshTokenRepositoryInterface::class,
+            RefreshTokenEloquentRepository::class
         );
     }
 

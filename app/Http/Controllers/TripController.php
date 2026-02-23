@@ -10,10 +10,11 @@ use App\Http\Requests\Trip\TripIndexRequest;
 use App\Http\Requests\Trip\UpdateTripRequest;
 use App\Http\Resources\PersonResource;
 use App\Http\Resources\TripResource;
-use App\Models\Person;
 use App\Models\Trip;
+use App\Models\User;
 use App\Services\Interfaces\TripServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
 use Throwable;
@@ -38,6 +39,8 @@ class TripController extends Controller
      *
      * @param TripIndexRequest $request
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     #[OA\Get(
         path: '/api/trips',
@@ -112,6 +115,8 @@ class TripController extends Controller
      *
      * @param Trip $trip
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     #[OA\Get(
         path: '/api/trips/{id}/person',
@@ -166,8 +171,9 @@ class TripController extends Controller
     )]
     public function store(StoreTripRequest $request): JsonResponse
     {
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $authPerson = $authUser->person;
 
         $driverId = $request->safe()->input('person_id');
 
@@ -218,8 +224,9 @@ class TripController extends Controller
     )]
     public function update(UpdateTripRequest $request, Trip $trip): JsonResponse
     {
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $authPerson = $authUser->person;
 
         $this->authorize('update', $trip);
 
@@ -257,8 +264,9 @@ class TripController extends Controller
     )]
     public function destroy(Trip $trip): Response
     {
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $authPerson = $authUser->person;
 
         $this->authorize('delete', $trip);
 
@@ -292,8 +300,9 @@ class TripController extends Controller
     )]
     public function cancel(Trip $trip): Response
     {
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $authPerson = $authUser->person;
 
         $this->authorize('cancel', $trip);
 
@@ -333,16 +342,17 @@ class TripController extends Controller
     )]
     public function cancelReservation(Trip $trip, CancelReservationRequest $request): Response
     {
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $authPerson = $authUser->person;
 
         $this->authorize('cancelReservation', $trip);
 
-        if ($authPerson->isAdmin() && $request->validated('person_id') === null) {
+        if ($authUser->isAdmin() && $request->validated('person_id') === null) {
             throw new ValidationLogicException('person_id is required for admin.');
         }
 
-        $personId = $authPerson->isAdmin()
+        $personId = $authUser->isAdmin()
             ? (int) $request->validated('person_id')
             : $authPerson->id;
 
@@ -383,13 +393,15 @@ class TripController extends Controller
     )]
     public function reserve(ReserveTripRequest $request, Trip $trip): JsonResponse
     {
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $authPerson = $authUser->person;
 
-        $personId = $authPerson->isAdmin()
+        $personId = $authUser->isAdmin()
             ? (int) $request->validated('person_id')
             : $authPerson->id;
 
+        Log::info("person id");
         $passenger = $this->trips->getPersonById($personId);
 
         $this->authorize('reserve', [$trip, $passenger]);

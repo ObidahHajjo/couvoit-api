@@ -6,6 +6,7 @@ namespace Tests\Unit\Policies;
 
 use App\Models\Person;
 use App\Models\Role;
+use App\Models\User;
 use App\Policies\PersonPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -16,7 +17,7 @@ use Throwable;
 /**
  * Class PersonPolicyTest
  *
- * Unit tests for PersonPolicy authorization rules.
+ * Unit tests for PersonPolicy authorization rules using User (auth) + Person (profile).
  */
 final class PersonPolicyTest extends TestCase
 {
@@ -43,9 +44,9 @@ final class PersonPolicyTest extends TestCase
 
         $this->policy = new PersonPolicy();
 
-        // Your project uses fixed role ids on Person model.
-        $this->userRoleId  = $this->resolveConst(Person::class, 'ROLE_USER', 1);
-        $this->adminRoleId = $this->resolveConst(Person::class, 'ROLE_ADMIN', 2);
+        // Fixed role ids (as in your models)
+        $this->userRoleId  = 1;
+        $this->adminRoleId = 2;
 
         $this->ensureRoles();
     }
@@ -56,9 +57,9 @@ final class PersonPolicyTest extends TestCase
     #[Test]
     public function before_allows_admin_everything(): void
     {
-        $admin = $this->makePersonWithRole($this->adminRoleId);
+        $array = $this->makeUserWithProfileAndRole($this->adminRoleId);
 
-        $result = $this->policy->before($admin);
+        $result = $this->policy->before($array[0]);
 
         self::assertTrue($result === true);
     }
@@ -69,9 +70,9 @@ final class PersonPolicyTest extends TestCase
     #[Test]
     public function view_any_denies_non_admin(): void
     {
-        $user = $this->makePersonWithRole($this->userRoleId);
+        $array = $this->makeUserWithProfileAndRole($this->userRoleId);
 
-        $res = $this->policy->viewAny($user);
+        $res = $this->policy->viewAny($array[0]);
 
         self::assertTrue($res->denied());
     }
@@ -82,46 +83,20 @@ final class PersonPolicyTest extends TestCase
     #[Test]
     public function view_allows_self_and_denies_other_for_non_admin(): void
     {
-        $user  = $this->makePersonWithRole($this->userRoleId);
-        $other = $this->makePersonWithRole($this->userRoleId);
+        [$user, $myPerson] = $this->makeUserWithProfileAndRole($this->userRoleId);
+        [, $otherPerson]   = $this->makeUserWithProfileAndRole($this->userRoleId);
 
-        self::assertTrue($this->policy->view($user, $user)->allowed());
-        self::assertTrue($this->policy->view($user, $other)->denied());
+        self::assertTrue($this->policy->view($user, $myPerson)->allowed());
+        self::assertTrue($this->policy->view($user, $otherPerson)->denied());
     }
 
     /**
      * @throws Throwable
      */
     #[Test]
-    public function trips_driver_allows_self_and_denies_other_for_non_admin(): void
+    public function create_allows_when_user_is_active(): void
     {
-        $user  = $this->makePersonWithRole($this->userRoleId);
-        $other = $this->makePersonWithRole($this->userRoleId);
-
-        self::assertTrue($this->policy->viewTripsDriver($user, $user)->allowed());
-        self::assertTrue($this->policy->viewTripsDriver($user, $other)->denied());
-    }
-
-    /**
-     * @throws Throwable
-     */
-    #[Test]
-    public function trips_passenger_allows_self_and_denies_other_for_non_admin(): void
-    {
-        $user  = $this->makePersonWithRole($this->userRoleId);
-        $other = $this->makePersonWithRole($this->userRoleId);
-
-        self::assertTrue($this->policy->viewTripsPassenger($user, $user)->allowed());
-        self::assertTrue($this->policy->viewTripsPassenger($user, $other)->denied());
-    }
-
-    /**
-     * @throws Throwable
-     */
-    #[Test]
-    public function create_allows_when_user_exists(): void
-    {
-        $user = $this->makePersonWithRole($this->userRoleId);
+        [$user] = $this->makeUserWithProfileAndRole($this->userRoleId);
 
         $res = $this->policy->create($user);
 
@@ -134,11 +109,11 @@ final class PersonPolicyTest extends TestCase
     #[Test]
     public function update_allows_self_and_denies_other_for_non_admin(): void
     {
-        $user  = $this->makePersonWithRole($this->userRoleId);
-        $other = $this->makePersonWithRole($this->userRoleId);
+        [$user, $myPerson] = $this->makeUserWithProfileAndRole($this->userRoleId);
+        [, $otherPerson]   = $this->makeUserWithProfileAndRole($this->userRoleId);
 
-        self::assertTrue($this->policy->update($user, $user)->allowed());
-        self::assertTrue($this->policy->update($user, $other)->denied());
+        self::assertTrue($this->policy->update($user, $myPerson)->allowed());
+        self::assertTrue($this->policy->update($user, $otherPerson)->denied());
     }
 
     /**
@@ -147,10 +122,10 @@ final class PersonPolicyTest extends TestCase
     #[Test]
     public function delete_is_denied_for_non_admin(): void
     {
-        $user   = $this->makePersonWithRole($this->userRoleId);
-        $target = $this->makePersonWithRole($this->userRoleId);
+        [$user] = $this->makeUserWithProfileAndRole($this->userRoleId);
+        [, $targetPerson] = $this->makeUserWithProfileAndRole($this->userRoleId);
 
-        $res = $this->policy->delete($user, $target);
+        $res = $this->policy->delete($user, $targetPerson);
 
         self::assertTrue($res->denied());
     }
@@ -161,7 +136,7 @@ final class PersonPolicyTest extends TestCase
     #[Test]
     public function update_role_denies_non_admin(): void
     {
-        $user = $this->makePersonWithRole($this->userRoleId);
+        [$user] = $this->makeUserWithProfileAndRole($this->userRoleId);
 
         $res = $this->policy->updateRole($user);
 
@@ -169,34 +144,19 @@ final class PersonPolicyTest extends TestCase
     }
 
     /**
-     * @throws Throwable
-     */
-    #[Test]
-    public function update_role_allows_admin_via_before(): void
-    {
-        $admin = $this->makePersonWithRole($this->adminRoleId);
-
-        self::assertTrue($this->policy->before($admin) === true);
-    }
-
-    /**
      * Ensure roles exist with correct ids.
-     *
-     * IMPORTANT: Role::id is commonly guarded, so we create unguarded.
      *
      * @return void
      */
     private function ensureRoles(): void
     {
-        $userExists = Role::query()->where('name', 'user')->exists();
-        if (! $userExists) {
+        if (!Role::query()->where('id', $this->userRoleId)->exists()) {
             Role::unguarded(function (): void {
                 Role::query()->create(['id' => $this->userRoleId, 'name' => 'user']);
             });
         }
 
-        $adminExists = Role::query()->where('name', 'admin')->exists();
-        if (! $adminExists) {
+        if (!Role::query()->where('id', $this->adminRoleId)->exists()) {
             Role::unguarded(function (): void {
                 Role::query()->create(['id' => $this->adminRoleId, 'name' => 'admin']);
             });
@@ -204,40 +164,32 @@ final class PersonPolicyTest extends TestCase
     }
 
     /**
+     * Create a User (auth) + Person (profile) pair.
+     *
      * @param int $roleId
-     * @return Person
+     * @return array{0:User,1:Person}
      */
-    private function makePersonWithRole(int $roleId): Person
+    private function makeUserWithProfileAndRole(int $roleId): array
     {
         $suffix = Str::lower(Str::random(8));
 
         $person = Person::query()->create([
-            'supabase_user_id' => (string) Str::uuid(),
-            'pseudo' => "user_$suffix",
-            'email' => "user_$suffix@example.com",
+            'pseudo' => "p_$suffix",
             'first_name' => 'Test',
             'last_name' => 'User',
             'phone' => '+33600000000',
-            'role_id' => $roleId,
-            'is_active' => true,
         ]);
 
-        // isAdmin() often relies on $person->role relation (name), so load it.
-        $person->load('role');
+        $user = User::query()->create([
+            'email' => "u_$suffix@example.com",
+            'password' => bcrypt('secret123'),
+            'role_id' => $roleId,
+            'is_active' => true,
+            'person_id' => $person->id,
+        ]);
 
-        return $person;
-    }
+        $user->loadMissing('person');
 
-    /**
-     * @param class-string $fqcn
-     * @param string $name
-     * @param int $fallback
-     * @return int
-     */
-    private function resolveConst(string $fqcn, string $name, int $fallback): int
-    {
-        $const = $fqcn . '::' . $name;
-
-        return defined($const) ? (int) constant($const) : $fallback;
+        return [$user, $person];
     }
 }
