@@ -19,6 +19,8 @@ class AuthTokenResource extends JsonResource
             'token_type'    => $this->resource['token_type']    ?? 'Bearer',
             'expires_in'    => $this->resource['expires_in']    ?? null,
             'refresh_token' => $this->resource['refresh_token'] ?? null,
+            'person_id'     => $this->resource['person_id']    ?? null,
+            'role_id'       => $this->resource['role_id']       ?? null,
         ];
     }
 }
