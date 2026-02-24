@@ -35,11 +35,11 @@ use App\Resolvers\Interfaces\AddressResolverInterface;
 readonly class TripService implements TripServiceInterface
 {
     public function __construct(
-        private TripRepositoryInterface   $trips,
-        private PersonRepositoryInterface $persons,
-        private AddressResolverInterface  $addressResolver,
+        private TripRepositoryInterface    $trips,
+        private PersonRepositoryInterface  $persons,
+        private AddressResolverInterface   $addressResolver,
         private AddressRepositoryInterface $addresses,
-        private OrsRoutingClientInterface $orsRoutingClient,
+        private OrsRoutingClientInterface  $orsRoutingClient,
     )
     {
     }
@@ -67,8 +67,9 @@ readonly class TripService implements TripServiceInterface
     public function createTrip(array $payload, Person $authPerson): Trip
     {
         $driverId = (int)($payload['person_id'] ?? $authPerson->id);
+        $user = $authPerson->user;
 
-        if ($driverId !== $authPerson->id && !$authPerson->isAdmin()) {
+        if ($driverId !== $authPerson->id && !$user->isAdmin()) {
             throw new ForbiddenException('You cannot create a trip for another user.');
         }
 
@@ -85,7 +86,7 @@ readonly class TripService implements TripServiceInterface
             $arrivalAddressId = $this->addressResolver->resolveId($payload['arrival_address']);
 
             $departure = $this->addresses->findOrFail($departureAddressId);
-            $arrival   = $this->addresses->findOrFail($arrivalAddressId);
+            $arrival = $this->addresses->findOrFail($arrivalAddressId);
 
             $depStr = sprintf(
                 '%s %s, %s %s, France',
@@ -103,18 +104,19 @@ readonly class TripService implements TripServiceInterface
                 $arrival->city?->name
             );
 
-            $from = cache()->remember('geo:' . sha1($depStr), 86400, fn () => $this->orsRoutingClient->geocode($depStr));
-            $to   = cache()->remember('geo:' . sha1($arrStr), 86400, fn () => $this->orsRoutingClient->geocode($arrStr));
+            $from = cache()->remember('geo:' . sha1($depStr), 86400, fn() => $this->orsRoutingClient->geocode($depStr));
+            $to = cache()->remember('geo:' . sha1($arrStr), 86400, fn() => $this->orsRoutingClient->geocode($arrStr));
 
             $durationSeconds = cache()->remember(
                 'route:' . sha1(json_encode([$from, $to])),
                 86400,
-                fn () => (int) $this->orsRoutingClient->durationSeconds($from, $to)
+                fn() => $this->orsRoutingClient->durationSeconds($from, $to)
             );
 
-            $departureTime = Carbon::parse($payload['trip_datetime']);
-            logger()->error('durationSeconds type', ['v' => $durationSeconds, 't' => gettype($durationSeconds)]);
-            $arrivalTime = $departureTime->copy()->addSeconds($durationSeconds);
+            $departureTime = Carbon::parse((int)$payload['trip_datetime']);
+            $durationSecondsInt = (int)$durationSeconds;
+            logger()->error('durationSeconds type', ['v' => $durationSecondsInt, 't' => gettype($durationSecondsInt)]);
+            $arrivalTime = $departureTime->copy()->addSeconds($durationSecondsInt);
 
             $trip = $this->trips->create([
                 'departure_time' => $payload['trip_datetime'],
@@ -178,7 +180,8 @@ readonly class TripService implements TripServiceInterface
     /** @inheritDoc */
     public function reserveSeat(Trip $trip, int $personId, Person $authPerson): bool
     {
-        if (!$authPerson->isAdmin() && $personId !== $authPerson->id) {
+        $user = $authPerson->user;
+        if (!$user->isAdmin() && $personId !== $authPerson->id) {
             throw new ForbiddenException('You can only reserve for yourself.');
         }
         if ($trip->person_id === $personId) {
@@ -212,7 +215,8 @@ readonly class TripService implements TripServiceInterface
     /** @inheritDoc */
     public function cancelReservation(Trip $trip, int $personId, Person $authPerson): bool
     {
-        if (!$authPerson->isAdmin() && $personId !== $authPerson->id) {
+        $user = $authPerson->user;
+        if (!$user->isAdmin() && $personId !== $authPerson->id) {
             throw new ForbiddenException('You can only cancel for yourself.');
         }
 

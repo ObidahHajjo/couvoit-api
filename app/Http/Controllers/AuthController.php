@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
 
 /**
- * Auth endpoints (Supabase).
+ * Auth endpoints (Local JWT).
  */
 #[OA\Tag(name: 'Auth', description: 'Authentication endpoints (register/login/refresh).')]
 class AuthController extends Controller
@@ -20,9 +20,6 @@ class AuthController extends Controller
         private readonly AuthServiceInterface $authService
     ) {}
 
-    /**
-     * POST /register
-     */
     #[OA\Post(
         path: '/api/register',
         operationId: 'authRegister',
@@ -33,11 +30,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(
-                response: 201,
-                description: 'Created',
-                content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')
-            ),
+            new OA\Response(response: 201, description: 'Created', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
@@ -51,9 +44,6 @@ class AuthController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * POST /login
-     */
     #[OA\Post(
         path: '/api/login',
         operationId: 'authLogin',
@@ -64,11 +54,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: 'OK',
-                content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')
-            ),
+            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
             new OA\Response(response: 401, description: 'Unauthorized'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
@@ -83,9 +69,6 @@ class AuthController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * POST /refresh
-     */
     #[OA\Post(
         path: '/api/refresh',
         operationId: 'authRefresh',
@@ -96,11 +79,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: 'OK',
-                content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')
-            ),
+            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
             new OA\Response(response: 401, description: 'Unauthorized'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]

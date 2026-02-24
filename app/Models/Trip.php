@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property int $id Unique identifier of the trip.
  * @property string $departure_time Departure date/time.
+ * @property string $arrival_time Departure date/time.
  * @property float $distance_km Distance in kilometers.
  * @property int $available_seats Available seats for passengers.
  * @property bool $smoking_allowed Whether smoking is allowed.
@@ -33,6 +34,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property-read Person|null $driver Driver of the trip.
  * @property-read Collection<int, Person> $passengers Passengers who reserved.
+ * @property-read Address departureAddress
+ * @property-read Address arrivalAddress
  */
 class Trip extends Model
 {

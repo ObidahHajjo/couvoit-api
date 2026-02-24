@@ -94,11 +94,30 @@ final class ApiExceptionConfigurator
             // Postgres SQLSTATE is usually in $e->errorInfo[0]
             $sqlState = $e->errorInfo[0] ?? null;
 
-            // 23505 = unique_violation
             if ($sqlState === '23505') {
+
+                $message = $e->errorInfo[2] ?? '';
+
+                $constraint = null;
+                $fields = null;
+                $values = null;
+
+                // Extract constraint name
+                if (preg_match('/unique constraint "([^"]+)"/', $message, $m)) {
+                    $constraint = $m[1];
+                }
+
+                // Extract duplicated fields + values
+                if (preg_match('/Key \(([^)]+)\)=\(([^)]+)\)/', $message, $m)) {
+                    $fields = explode(', ', $m[1]);
+                    $values = explode(', ', $m[2]);
+                }
+
                 return response()->json([
-                    'error'   => 'CONFLICT',
-                    'details' => 'Unique constraint violation.',
+                    'error' => 'CONFLICT',
+                    'constraint' => $constraint,
+                    'duplicated_fields' => $fields,
+                    'duplicated_values' => $values,
                 ], Response::HTTP_CONFLICT);
             }
 

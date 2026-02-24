@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>Dashboard for C:\Users\cdax28\Desktop\Soutenances\4\covoiturage-api\app</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="_css/bootstrap.min.css?v=11.0.12" rel="stylesheet" type="text/css">
+  <link href="_css/nv.d3.min.css?v=11.0.12" rel="stylesheet" type="text/css">
+  <link href="_css/style.css?v=11.0.12" rel="stylesheet" type="text/css">
+  <link href="_css/custom.css" rel="stylesheet" type="text/css">
+ </head>
+ <body>
+  <header>
+   <div class="container-fluid">
+    <div class="row">
+     <div class="col-md-12">
+      <nav aria-label="breadcrumb">
+       <ol class="breadcrumb">
+         <li class="breadcrumb-item"><a href="index.html">C:\Users\cdax28\Desktop\Soutenances\4\covoiturage-api\app</a></li>
+         <li class="breadcrumb-item active">(Dashboard)</li>
+
+       </ol>
+      </nav>
+     </div>
+    </div>
+   </div>
+  </header>
+  <div class="container-fluid">
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Classes</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="classCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="classComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#18">App\Http\Controllers\PersonController</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#25">App\Http\Controllers\TripController</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Resources/PersonResource.php.html#23">App\Http\Resources\PersonResource</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Resources/TripResource.php.html#23">App\Http\Resources\TripResource</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Models/RefreshToken.php.html#8">App\Models\RefreshToken</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#19">App\Policies\CarPolicy</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#14">App\Repositories\Eloquent\AddressEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#21">App\Repositories\Eloquent\CarModelEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#20">App\Repositories\Eloquent\CityEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#21">App\Repositories\Eloquent\ColorEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#11">App\Repositories\Eloquent\RefreshTokenEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#20">App\Repositories\Eloquent\TypeEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/UserEloquentRepository.php.html#8">App\Repositories\Eloquent\UserEloquentRepository</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#10">App\Security\JwtIssuer</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/OrsRoutingClient.php.html#10">App\Services\Implementations\OrsRoutingClient</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#22">App\Repositories\Eloquent\TripEloquentRepository</a></td><td class="text-right">19%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#17">App\Repositories\Eloquent\PersonEloquentRepository</a></td><td class="text-right">28%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#21">App\Policies\TripPolicy</a></td><td class="text-right">29%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarRepositoryEloquent.php.html#20">App\Repositories\Eloquent\CarRepositoryEloquent</a></td><td class="text-right">45%</td></tr>
+       <tr><td><a href="Services/Implementations/PersonService.php.html#13">App\Services\Implementations\PersonService</a></td><td class="text-right">47%</td></tr>
+       <tr><td><a href="Http/Controllers/CarController.php.html#22">App\Http\Controllers\CarController</a></td><td class="text-right">51%</td></tr>
+       <tr><td><a href="Providers/RouteBindingServiceProvider.php.html#13">App\Providers\RouteBindingServiceProvider</a></td><td class="text-right">63%</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#15">App\Policies\PersonPolicy</a></td><td class="text-right">65%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#35">App\Services\Implementations\TripService</a></td><td class="text-right">66%</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#14">App\Http\Middleware\LocalJwtAuth</a></td><td class="text-right">66%</td></tr>
+       <tr><td><a href="Models/Person.php.html#42">App\Models\Person</a></td><td class="text-right">75%</td></tr>
+       <tr><td><a href="DTOS/Car/CarCreateData.php.html#7">App\DTOS\Car\CarCreateData</a></td><td class="text-right">80%</td></tr>
+       <tr><td><a href="Services/Implementations/CarService.php.html#18">App\Services\Implementations\CarService</a></td><td class="text-right">86%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Class</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#21">App\Repositories\Eloquent\ColorEloquentRepository</a></td><td class="text-right">812</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#21">App\Policies\TripPolicy</a></td><td class="text-right">536</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#21">App\Repositories\Eloquent\CarModelEloquentRepository</a></td><td class="text-right">462</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#19">App\Policies\CarPolicy</a></td><td class="text-right">380</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#20">App\Repositories\Eloquent\TypeEloquentRepository</a></td><td class="text-right">380</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#25">App\Http\Controllers\TripController</a></td><td class="text-right">342</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#22">App\Repositories\Eloquent\TripEloquentRepository</a></td><td class="text-right">320</td></tr>
+       <tr><td><a href="Services/Implementations/OrsRoutingClient.php.html#10">App\Services\Implementations\OrsRoutingClient</a></td><td class="text-right">272</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#20">App\Repositories\Eloquent\CityEloquentRepository</a></td><td class="text-right">182</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#18">App\Http\Controllers\PersonController</a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Http/Resources/TripResource.php.html#23">App\Http\Resources\TripResource</a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#10">App\Security\JwtIssuer</a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#11">App\Repositories\Eloquent\RefreshTokenEloquentRepository</a></td><td class="text-right">72</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#35">App\Services\Implementations\TripService</a></td><td class="text-right">71</td></tr>
+       <tr><td><a href="Http/Resources/PersonResource.php.html#23">App\Http\Resources\PersonResource</a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#17">App\Repositories\Eloquent\PersonEloquentRepository</a></td><td class="text-right">54</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#14">App\Http\Middleware\LocalJwtAuth</a></td><td class="text-right">48</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#14">App\Repositories\Eloquent\AddressEloquentRepository</a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarRepositoryEloquent.php.html#20">App\Repositories\Eloquent\CarRepositoryEloquent</a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#15">App\Policies\PersonPolicy</a></td><td class="text-right">29</td></tr>
+       <tr><td><a href="Services/Implementations/PersonService.php.html#13">App\Services\Implementations\PersonService</a></td><td class="text-right">28</td></tr>
+       <tr><td><a href="DTOS/Car/CarCreateData.php.html#7">App\DTOS\Car\CarCreateData</a></td><td class="text-right">18</td></tr>
+       <tr><td><a href="Http/Controllers/CarController.php.html#22">App\Http\Controllers\CarController</a></td><td class="text-right">15</td></tr>
+       <tr><td><a href="Services/Implementations/CarService.php.html#18">App\Services\Implementations\CarService</a></td><td class="text-right">12</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-12">
+     <h2>Methods</h2>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Coverage Distribution</h3>
+     <div id="methodCoverageDistribution" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Complexity</h3>
+     <div id="methodComplexity" style="height: 300px;">
+       <svg></svg>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-md-6">
+     <h3>Insufficient Coverage</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right">Coverage</th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Http/Controllers/CarController.php.html#115"><abbr title="App\Http\Controllers\CarController::store">store</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/CarController.php.html#157"><abbr title="App\Http\Controllers\CarController::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/CarController.php.html#198"><abbr title="App\Http\Controllers\CarController::destroy">destroy</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#21"><abbr title="App\Http\Controllers\PersonController::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#25"><abbr title="App\Http\Controllers\PersonController::index">index</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#48"><abbr title="App\Http\Controllers\PersonController::show">show</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#71"><abbr title="App\Http\Controllers\PersonController::tripsDriver">tripsDriver</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#96"><abbr title="App\Http\Controllers\PersonController::tripsPassenger">tripsPassenger</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#128"><abbr title="App\Http\Controllers\PersonController::store">store</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#166"><abbr title="App\Http\Controllers\PersonController::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#194"><abbr title="App\Http\Controllers\PersonController::destroy">destroy</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#217"><abbr title="App\Http\Controllers\PersonController::updateRole">updateRole</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#31"><abbr title="App\Http\Controllers\TripController::__construct">__construct</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#45"><abbr title="App\Http\Controllers\TripController::index">index</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#86"><abbr title="App\Http\Controllers\TripController::show">show</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#121"><abbr title="App\Http\Controllers\TripController::passengers">passengers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#155"><abbr title="App\Http\Controllers\TripController::store">store</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#204"><abbr title="App\Http\Controllers\TripController::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#249"><abbr title="App\Http\Controllers\TripController::destroy">destroy</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#285"><abbr title="App\Http\Controllers\TripController::cancel">cancel</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#322"><abbr title="App\Http\Controllers\TripController::cancelReservation">cancelReservation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#372"><abbr title="App\Http\Controllers\TripController::reserve">reserve</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Resources/PersonResource.php.html#31"><abbr title="App\Http\Resources\PersonResource::toArray">toArray</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Http/Resources/TripResource.php.html#31"><abbr title="App\Http\Resources\TripResource::toArray">toArray</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Models/Person.php.html#64"><abbr title="App\Models\Person::user">user</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Models/RefreshToken.php.html#24"><abbr title="App\Models\RefreshToken::user">user</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#29"><abbr title="App\Policies\CarPolicy::before">before</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#42"><abbr title="App\Policies\CarPolicy::viewAny">viewAny</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#59"><abbr title="App\Policies\CarPolicy::view">view</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#83"><abbr title="App\Policies\CarPolicy::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#104"><abbr title="App\Policies\CarPolicy::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#129"><abbr title="App\Policies\CarPolicy::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#64"><abbr title="App\Policies\PersonPolicy::viewTripsDriver">viewTripsDriver</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#78"><abbr title="App\Policies\PersonPolicy::viewTripsPassenger">viewTripsPassenger</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#58"><abbr title="App\Policies\TripPolicy::view">view</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#83"><abbr title="App\Policies\TripPolicy::viewPassengers">viewPassengers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#148"><abbr title="App\Policies\TripPolicy::createFor">createFor</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#196"><abbr title="App\Policies\TripPolicy::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#212"><abbr title="App\Policies\TripPolicy::cancel">cancel</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#239"><abbr title="App\Policies\TripPolicy::cancelReservation">cancelReservation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#24"><abbr title="App\Repositories\Eloquent\AddressEloquentRepository::tagAddresses">tagAddresses</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#29"><abbr title="App\Repositories\Eloquent\AddressEloquentRepository::tagAddress">tagAddress</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#40"><abbr title="App\Repositories\Eloquent\AddressEloquentRepository::keyById">keyById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#54"><abbr title="App\Repositories\Eloquent\AddressEloquentRepository::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#68"><abbr title="App\Repositories\Eloquent\AddressEloquentRepository::findOrFail">findOrFail</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#30"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::tagModels">tagModels</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#39"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::tagModel">tagModel</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#48"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::tagBrand">tagBrand</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#57"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::tagName">tagName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#64"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::keyAll">keyAll</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#69"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::keyById">keyById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#74"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::keyByBrand">keyByBrand</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#79"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::keyByName">keyByName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#90"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::normalizeName">normalizeName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#96"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::all">all</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#119"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::findById">findById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#133"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::createOrFirst">createOrFirst</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#160"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#190"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#208"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::findByName">findByName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#231"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::findByBrand">findByBrand</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarRepositoryEloquent.php.html#70"><abbr title="App\Repositories\Eloquent\CarRepositoryEloquent::find">find</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarRepositoryEloquent.php.html#94"><abbr title="App\Repositories\Eloquent\CarRepositoryEloquent::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarRepositoryEloquent.php.html#107"><abbr title="App\Repositories\Eloquent\CarRepositoryEloquent::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarRepositoryEloquent.php.html#121"><abbr title="App\Repositories\Eloquent\CarRepositoryEloquent::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#29"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::tagCities">tagCities</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#41"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::tagCity">tagCity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#52"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::tagPostcodes">tagPostcodes</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#59"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::keyPostcodes">keyPostcodes</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#64"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::keyCity">keyCity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#75"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::normalizeName">normalizeName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#81"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#99"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#108"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::getPostcodes">getPostcodes</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#124"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::firstOrCreate">firstOrCreate</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#30"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::tagColors">tagColors</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#39"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::tagColor">tagColor</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#48"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::tagHex">tagHex</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#57"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::tagName">tagName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#64"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::keyAll">keyAll</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#69"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::keyById">keyById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#74"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::keyByHex">keyByHex</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#79"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::keyByName">keyByName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#90"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::normalizeHex">normalizeHex</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#101"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::normalizeName">normalizeName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#107"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::all">all</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#133"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::findById">findById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#145"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::createOrFirst">createOrFirst</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#177"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#221"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#242"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::findByName">findByName</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#266"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::findByHexCode">findByHexCode</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#79"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#93"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#106"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#115"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::attachCar">attachCar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#16"><abbr title="App\Repositories\Eloquent\RefreshTokenEloquentRepository::store">store</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#33"><abbr title="App\Repositories\Eloquent\RefreshTokenEloquentRepository::consume">consume</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#57"><abbr title="App\Repositories\Eloquent\RefreshTokenEloquentRepository::consumeAndRotate">consumeAndRotate</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#65"><abbr title="App\Repositories\Eloquent\RefreshTokenEloquentRepository::hash">hash</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#60"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::tagPerson">tagPerson</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#69"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::tagPassengers">tagPassengers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#81"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::keyPassengers">keyPassengers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#98"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::keyDriverTrips">keyDriverTrips</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#103"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::keyPassengerTrips">keyPassengerTrips</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#156"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::findByIdOrFail">findByIdOrFail</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#170"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::findByIdForUpdate">findByIdForUpdate</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#180"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#193"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#209"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#225"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::forceDelete">forceDelete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#239"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::passengers">passengers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#253"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::listByDriver">listByDriver</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#271"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::listByPassenger">listByPassenger</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#29"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::tagTypes">tagTypes</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#38"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::tagTypeId">tagTypeId</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#47"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::tagTypeValue">tagTypeValue</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#54"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::keyAll">keyAll</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#59"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::keyById">keyById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#64"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::keyByType">keyByType</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#75"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::normalizeType">normalizeType</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#81"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::all">all</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#104"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::findById">findById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#116"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::createOrFirst">createOrFirst</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#137"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::update">update</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#169"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::delete">delete</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#188"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::findByType">findByType</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/UserEloquentRepository.php.html#10"><abbr title="App\Repositories\Eloquent\UserEloquentRepository::existsByEmail">existsByEmail</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/UserEloquentRepository.php.html#17"><abbr title="App\Repositories\Eloquent\UserEloquentRepository::findByEmail">findByEmail</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/UserEloquentRepository.php.html#27"><abbr title="App\Repositories\Eloquent\UserEloquentRepository::findById">findById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/UserEloquentRepository.php.html#38"><abbr title="App\Repositories\Eloquent\UserEloquentRepository::create">create</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#14"><abbr title="App\Security\JwtIssuer::secret">secret</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#34"><abbr title="App\Security\JwtIssuer::issueAccessToken">issueAccessToken</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#62"><abbr title="App\Security\JwtIssuer::verify">verify</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/CarService.php.html#33"><abbr title="App\Services\Implementations\CarService::findCar">findCar</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/OrsRoutingClient.php.html#13"><abbr title="App\Services\Implementations\OrsRoutingClient::geocode">geocode</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/OrsRoutingClient.php.html#44"><abbr title="App\Services\Implementations\OrsRoutingClient::durationSeconds">durationSeconds</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/PersonService.php.html#27"><abbr title="App\Services\Implementations\PersonService::show">show</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/PersonService.php.html#33"><abbr title="App\Services\Implementations\PersonService::findById">findById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/PersonService.php.html#69"><abbr title="App\Services\Implementations\PersonService::createForUser">createForUser</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/PersonService.php.html#80"><abbr title="App\Services\Implementations\PersonService::updateUserRoleByPersonId">updateUserRoleByPersonId</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#50"><abbr title="App\Services\Implementations\TripService::searchTrips">searchTrips</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#61"><abbr title="App\Services\Implementations\TripService::getTripPassengers">getTripPassengers</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#163"><abbr title="App\Services\Implementations\TripService::cancelTrip">cancelTrip</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#173"><abbr title="App\Services\Implementations\TripService::deleteTripPermanently">deleteTripPermanently</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#216"><abbr title="App\Services\Implementations\TripService::cancelReservation">cancelReservation</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#238"><abbr title="App\Services\Implementations\TripService::getPersonById">getPersonById</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#253"><abbr title="App\Services\Implementations\TripService::invalidateTripReservationCaches">invalidateTripReservationCaches</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#109"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::search">search</abbr></a></td><td class="text-right">33%</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#146"><abbr title="App\Http\Middleware\LocalJwtAuth::bestEffortInvalidateCacheFromTokenParts">bestEffortInvalidateCacheFromTokenParts</abbr></a></td><td class="text-right">37%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#48"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::all">all</abbr></a></td><td class="text-right">50%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#246"><abbr title="App\Services\Implementations\TripService::assertTripNotStarted">assertTripNotStarted</abbr></a></td><td class="text-right">50%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#66"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::findById">findById</abbr></a></td><td class="text-right">57%</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#142"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::findById">findById</abbr></a></td><td class="text-right">57%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#175"><abbr title="App\Policies\TripPolicy::update">update</abbr></a></td><td class="text-right">60%</td></tr>
+       <tr><td><a href="Providers/RouteBindingServiceProvider.php.html#26"><abbr title="App\Providers\RouteBindingServiceProvider::boot">boot</abbr></a></td><td class="text-right">62%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#181"><abbr title="App\Services\Implementations\TripService::reserveSeat">reserveSeat</abbr></a></td><td class="text-right">63%</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#36"><abbr title="App\Policies\PersonPolicy::viewAny">viewAny</abbr></a></td><td class="text-right">66%</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#134"><abbr title="App\Policies\PersonPolicy::updateRole">updateRole</abbr></a></td><td class="text-right">66%</td></tr>
+       <tr><td><a href="Providers/AppServiceProvider.php.html#56"><abbr title="App\Providers\AppServiceProvider::boot">boot</abbr></a></td><td class="text-right">66%</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#30"><abbr title="App\Http\Middleware\LocalJwtAuth::handle">handle</abbr></a></td><td class="text-right">68%</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#137"><abbr title="App\Services\Implementations\TripService::updateTrip">updateTrip</abbr></a></td><td class="text-right">71%</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#122"><abbr title="App\Http\Middleware\LocalJwtAuth::ttlFromClaims">ttlFromClaims</abbr></a></td><td class="text-right">77%</td></tr>
+       <tr><td><a href="Services/Implementations/CarService.php.html#69"><abbr title="App\Services\Implementations\CarService::updateCar">updateCar</abbr></a></td><td class="text-right">78%</td></tr>
+       <tr><td><a href="DTOS/Car/CarCreateData.php.html#39"><abbr title="App\DTOS\Car\CarCreateData::fromArray">fromArray</abbr></a></td><td class="text-right">79%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#125"><abbr title="App\Policies\TripPolicy::create">create</abbr></a></td><td class="text-right">83%</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#266"><abbr title="App\Policies\TripPolicy::reserve">reserve</abbr></a></td><td class="text-right">88%</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+    <div class="col-md-6">
+     <h3>Project Risks</h3>
+     <div class="scrollbox">
+      <table class="table">
+       <thead>
+        <tr>
+         <th>Method</th>
+         <th class="text-right"><abbr title="Change Risk Anti-Patterns (CRAP) Index">CRAP</abbr></th>
+        </tr>
+       </thead>
+       <tbody>
+       <tr><td><a href="Http/Resources/TripResource.php.html#31"><abbr title="App\Http\Resources\TripResource::toArray">toArray</abbr></a></td><td class="text-right">110</td></tr>
+       <tr><td><a href="Services/Implementations/OrsRoutingClient.php.html#44"><abbr title="App\Services\Implementations\OrsRoutingClient::durationSeconds">durationSeconds</abbr></a></td><td class="text-right">90</td></tr>
+       <tr><td><a href="Http/Resources/PersonResource.php.html#31"><abbr title="App\Http\Resources\PersonResource::toArray">toArray</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="Services/Implementations/OrsRoutingClient.php.html#13"><abbr title="App\Services\Implementations\OrsRoutingClient::geocode">geocode</abbr></a></td><td class="text-right">56</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#83"><abbr title="App\Policies\TripPolicy::viewPassengers">viewPassengers</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#177"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::update">update</abbr></a></td><td class="text-right">42</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#62"><abbr title="App\Security\JwtIssuer::verify">verify</abbr></a></td><td class="text-right">30</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#322"><abbr title="App\Http\Controllers\TripController::cancelReservation">cancelReservation</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#372"><abbr title="App\Http\Controllers\TripController::reserve">reserve</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#59"><abbr title="App\Policies\CarPolicy::view">view</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#104"><abbr title="App\Policies\CarPolicy::update">update</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#129"><abbr title="App\Policies\CarPolicy::delete">delete</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#58"><abbr title="App\Policies\TripPolicy::view">view</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#148"><abbr title="App\Policies\TripPolicy::createFor">createFor</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#212"><abbr title="App\Policies\TripPolicy::cancel">cancel</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CityEloquentRepository.php.html#124"><abbr title="App\Repositories\Eloquent\CityEloquentRepository::firstOrCreate">firstOrCreate</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#65"><abbr title="App\Repositories\Eloquent\RefreshTokenEloquentRepository::hash">hash</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#137"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::update">update</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Security/JwtIssuer.php.html#14"><abbr title="App\Security\JwtIssuer::secret">secret</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#216"><abbr title="App\Services\Implementations\TripService::cancelReservation">cancelReservation</abbr></a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#30"><abbr title="App\Http\Middleware\LocalJwtAuth::handle">handle</abbr></a></td><td class="text-right">18</td></tr>
+       <tr><td><a href="DTOS/Car/CarCreateData.php.html#39"><abbr title="App\DTOS\Car\CarCreateData::fromArray">fromArray</abbr></a></td><td class="text-right">16</td></tr>
+       <tr><td><a href="Http/Controllers/TripController.php.html#155"><abbr title="App\Http\Controllers\TripController::store">store</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#83"><abbr title="App\Policies\CarPolicy::create">create</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#239"><abbr title="App\Policies\TripPolicy::cancelReservation">cancelReservation</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#160"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::update">update</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#145"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::createOrFirst">createOrFirst</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#146"><abbr title="App\Http\Middleware\LocalJwtAuth::bestEffortInvalidateCacheFromTokenParts">bestEffortInvalidateCacheFromTokenParts</abbr></a></td><td class="text-right">11</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#137"><abbr title="App\Services\Implementations\TripService::updateTrip">updateTrip</abbr></a></td><td class="text-right">9</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TripEloquentRepository.php.html#109"><abbr title="App\Repositories\Eloquent\TripEloquentRepository::search">search</abbr></a></td><td class="text-right">8</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#181"><abbr title="App\Services\Implementations\TripService::reserveSeat">reserveSeat</abbr></a></td><td class="text-right">7</td></tr>
+       <tr><td><a href="Services/Implementations/CarService.php.html#69"><abbr title="App\Services\Implementations\CarService::updateCar">updateCar</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Http/Controllers/PersonController.php.html#128"><abbr title="App\Http\Controllers\PersonController::store">store</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#29"><abbr title="App\Policies\CarPolicy::before">before</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Policies/CarPolicy.php.html#42"><abbr title="App\Policies\CarPolicy::viewAny">viewAny</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#64"><abbr title="App\Policies\PersonPolicy::viewTripsDriver">viewTripsDriver</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#78"><abbr title="App\Policies\PersonPolicy::viewTripsPassenger">viewTripsPassenger</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#196"><abbr title="App\Policies\TripPolicy::delete">delete</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/AddressEloquentRepository.php.html#68"><abbr title="App\Repositories\Eloquent\AddressEloquentRepository::findOrFail">findOrFail</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#96"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::all">all</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#208"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::findByName">findByName</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/CarModelEloquentRepository.php.html#231"><abbr title="App\Repositories\Eloquent\CarModelEloquentRepository::findByBrand">findByBrand</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#107"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::all">all</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#221"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::delete">delete</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#242"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::findByName">findByName</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/ColorEloquentRepository.php.html#266"><abbr title="App\Repositories\Eloquent\ColorEloquentRepository::findByHexCode">findByHexCode</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/RefreshTokenEloquentRepository.php.html#33"><abbr title="App\Repositories\Eloquent\RefreshTokenEloquentRepository::consume">consume</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#81"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::all">all</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#169"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::delete">delete</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Repositories/Eloquent/TypeEloquentRepository.php.html#188"><abbr title="App\Repositories\Eloquent\TypeEloquentRepository::findByType">findByType</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="Http/Middleware/LocalJwtAuth.php.html#122"><abbr title="App\Http\Middleware\LocalJwtAuth::ttlFromClaims">ttlFromClaims</abbr></a></td><td class="text-right">5</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#266"><abbr title="App\Policies\TripPolicy::reserve">reserve</abbr></a></td><td class="text-right">5</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#175"><abbr title="App\Policies\TripPolicy::update">update</abbr></a></td><td class="text-right">3</td></tr>
+       <tr><td><a href="Policies/TripPolicy.php.html#125"><abbr title="App\Policies\TripPolicy::create">create</abbr></a></td><td class="text-right">3</td></tr>
+       <tr><td><a href="Repositories/Eloquent/PersonEloquentRepository.php.html#48"><abbr title="App\Repositories\Eloquent\PersonEloquentRepository::all">all</abbr></a></td><td class="text-right">2</td></tr>
+       <tr><td><a href="Services/Implementations/TripService.php.html#246"><abbr title="App\Services\Implementations\TripService::assertTripNotStarted">assertTripNotStarted</abbr></a></td><td class="text-right">2</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#36"><abbr title="App\Policies\PersonPolicy::viewAny">viewAny</abbr></a></td><td class="text-right">2</td></tr>
+       <tr><td><a href="Policies/PersonPolicy.php.html#134"><abbr title="App\Policies\PersonPolicy::updateRole">updateRole</abbr></a></td><td class="text-right">2</td></tr>
+
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   <footer>
+    <hr/>
+    <p>
+     <small>Generated by <a href="https://github.com/sebastianbergmann/php-code-coverage" target="_top">php-code-coverage 11.0.12</a> using <a href="https://www.php.net/" target="_top">PHP 8.5.0</a> and <a href="https://phpunit.de/">PHPUnit 11.5.55</a> at Mon Feb 23 14:55:18 UTC 2026.</small>
+    </p>
+   </footer>
+  </div>
+  <script src="_js/jquery.min.js?v=11.0.12" type="text/javascript"></script>
+  <script src="_js/d3.min.js?v=11.0.12" type="text/javascript"></script>
+  <script src="_js/nv.d3.min.js?v=11.0.12" type="text/javascript"></script>
+  <script type="text/javascript">
+$(document).ready(function() {
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#classCoverageDistribution svg')
+      .datum(getCoverageDistributionData([15,0,1,2,0,2,1,4,1,2,2,22], "Class Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.multiBarChart();
+    chart.tooltips(false)
+      .showControls(false)
+      .showLegend(false)
+      .reduceXTicks(false)
+      .staggerLabels(true)
+      .yAxis.tickFormat(d3.format('d'));
+
+    d3.select('#methodCoverageDistribution svg')
+      .datum(getCoverageDistributionData([148,0,0,0,2,0,4,7,4,2,2,91], "Method Coverage"))
+      .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getCoverageDistributionData(data, label) {
+    var labels = [
+      '0%',
+      '0-10%',
+      '10-20%',
+      '20-30%',
+      '30-40%',
+      '40-50%',
+      '50-60%',
+      '60-70%',
+      '70-80%',
+      '80-90%',
+      '90-100%',
+      '100%'
+    ];
+    var values = [];
+    $.each(labels, function(key) {
+      values.push({x: labels[key], y: data[key]});
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Cyclomatic Complexity');
+
+    d3.select('#classComplexity svg')
+      .datum(getComplexityData([[80,16,"<a href=\"DTOS\/Car\/CarCreateData.php.html#7\">App\\DTOS\\Car\\CarCreateData<\/a>"],[97.5,18,"<a href=\"DTOS\/Car\/CarUpdateData.php.html#7\">App\\DTOS\\Car\\CarUpdateData<\/a>"],[100,1,"<a href=\"DTOS\/Car\/ResolvedCarRefs.php.html#9\">App\\DTOS\\Car\\ResolvedCarRefs<\/a>"],[100,4,"<a href=\"Http\/Controllers\/AuthController.php.html#16\">App\\Http\\Controllers\\AuthController<\/a>"],[100,3,"<a href=\"Http\/Controllers\/BrandController.php.html#15\">App\\Http\\Controllers\\BrandController<\/a>"],[51.28205128205128,8,"<a href=\"Http\/Controllers\/CarController.php.html#22\">App\\Http\\Controllers\\CarController<\/a>"],[100,0,"<a href=\"Http\/Controllers\/Controller.php.html#9\">App\\Http\\Controllers\\Controller<\/a>"],[0,10,"<a href=\"Http\/Controllers\/PersonController.php.html#18\">App\\Http\\Controllers\\PersonController<\/a>"],[0,18,"<a href=\"Http\/Controllers\/TripController.php.html#25\">App\\Http\\Controllers\\TripController<\/a>"],[66.66666666666666,25,"<a href=\"Http\/Middleware\/LocalJwtAuth.php.html#14\">App\\Http\\Middleware\\LocalJwtAuth<\/a>"],[100,1,"<a href=\"Http\/Resources\/AuthTokenResource.php.html#13\">App\\Http\\Resources\\AuthTokenResource<\/a>"],[100,1,"<a href=\"Http\/Resources\/BrandResource.php.html#14\">App\\Http\\Resources\\BrandResource<\/a>"],[100,3,"<a href=\"Http\/Resources\/CarResource.php.html#20\">App\\Http\\Resources\\CarResource<\/a>"],[0,7,"<a href=\"Http\/Resources\/PersonResource.php.html#23\">App\\Http\\Resources\\PersonResource<\/a>"],[0,10,"<a href=\"Http\/Resources\/TripResource.php.html#23\">App\\Http\\Resources\\TripResource<\/a>"],[100,1,"<a href=\"Models\/Address.php.html#29\">App\\Models\\Address<\/a>"],[100,1,"<a href=\"Models\/Brand.php.html#28\">App\\Models\\Brand<\/a>"],[100,2,"<a href=\"Models\/Car.php.html#30\">App\\Models\\Car<\/a>"],[100,2,"<a href=\"Models\/CarModel.php.html#32\">App\\Models\\CarModel<\/a>"],[100,1,"<a href=\"Models\/City.php.html#29\">App\\Models\\City<\/a>"],[100,0,"<a href=\"Models\/Color.php.html#21\">App\\Models\\Color<\/a>"],[75,4,"<a href=\"Models\/Person.php.html#42\">App\\Models\\Person<\/a>"],[0,1,"<a href=\"Models\/RefreshToken.php.html#8\">App\\Models\\RefreshToken<\/a>"],[100,0,"<a href=\"Models\/Role.php.html#20\">App\\Models\\Role<\/a>"],[100,4,"<a href=\"Models\/Trip.php.html#40\">App\\Models\\Trip<\/a>"],[100,0,"<a href=\"Models\/Type.php.html#20\">App\\Models\\Type<\/a>"],[100,3,"<a href=\"Models\/User.php.html#32\">App\\Models\\User<\/a>"],[0,19,"<a href=\"Policies\/CarPolicy.php.html#19\">App\\Policies\\CarPolicy<\/a>"],[65.21739130434783,17,"<a href=\"Policies\/PersonPolicy.php.html#15\">App\\Policies\\PersonPolicy<\/a>"],[29.850746268656714,38,"<a href=\"Policies\/TripPolicy.php.html#21\">App\\Policies\\TripPolicy<\/a>"],[91.66666666666666,2,"<a href=\"Providers\/AppServiceProvider.php.html#26\">App\\Providers\\AppServiceProvider<\/a>"],[100,2,"<a href=\"Providers\/AuthServiceProvider.php.html#15\">App\\Providers\\AuthServiceProvider<\/a>"],[100,2,"<a href=\"Providers\/RepositoryProvider.php.html#29\">App\\Providers\\RepositoryProvider<\/a>"],[63.63636363636363,2,"<a href=\"Providers\/RouteBindingServiceProvider.php.html#13\">App\\Providers\\RouteBindingServiceProvider<\/a>"],[0,6,"<a href=\"Repositories\/Eloquent\/AddressEloquentRepository.php.html#14\">App\\Repositories\\Eloquent\\AddressEloquentRepository<\/a>"],[100,9,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#15\">App\\Repositories\\Eloquent\\BrandEloquentRepository<\/a>"],[0,21,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#21\">App\\Repositories\\Eloquent\\CarModelEloquentRepository<\/a>"],[45.94594594594595,11,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#20\">App\\Repositories\\Eloquent\\CarRepositoryEloquent<\/a>"],[0,13,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#20\">App\\Repositories\\Eloquent\\CityEloquentRepository<\/a>"],[0,28,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#21\">App\\Repositories\\Eloquent\\ColorEloquentRepository<\/a>"],[28.888888888888886,11,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#17\">App\\Repositories\\Eloquent\\PersonEloquentRepository<\/a>"],[0,8,"<a href=\"Repositories\/Eloquent\/RefreshTokenEloquentRepository.php.html#11\">App\\Repositories\\Eloquent\\RefreshTokenEloquentRepository<\/a>"],[19.81981981981982,24,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#22\">App\\Repositories\\Eloquent\\TripEloquentRepository<\/a>"],[0,19,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#20\">App\\Repositories\\Eloquent\\TypeEloquentRepository<\/a>"],[0,4,"<a href=\"Repositories\/Eloquent\/UserEloquentRepository.php.html#8\">App\\Repositories\\Eloquent\\UserEloquentRepository<\/a>"],[0,10,"<a href=\"Security\/JwtIssuer.php.html#10\">App\\Security\\JwtIssuer<\/a>"],[100,11,"<a href=\"Services\/Implementations\/AuthService.php.html#17\">App\\Services\\Implementations\\AuthService<\/a>"],[100,3,"<a href=\"Services\/Implementations\/BrandService.php.html#10\">App\\Services\\Implementations\\BrandService<\/a>"],[86.36363636363636,12,"<a href=\"Services\/Implementations\/CarService.php.html#18\">App\\Services\\Implementations\\CarService<\/a>"],[0,16,"<a href=\"Services\/Implementations\/OrsRoutingClient.php.html#10\">App\\Services\\Implementations\\OrsRoutingClient<\/a>"],[47.368421052631575,11,"<a href=\"Services\/Implementations\/PersonService.php.html#13\">App\\Services\\Implementations\\PersonService<\/a>"],[66.07142857142857,32,"<a href=\"Services\/Implementations\/TripService.php.html#35\">App\\Services\\Implementations\\TripService<\/a>"]], 'Class Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  nv.addGraph(function() {
+    var chart = nv.models.scatterChart()
+      .showDistX(true)
+      .showDistY(true)
+      .showLegend(false)
+      .forceX([0, 100]);
+    chart.tooltipContent(function(graph) {
+      return '<p>' + graph.point.class + '</p>';
+    });
+
+    chart.xAxis.axisLabel('Code Coverage (in percent)');
+    chart.yAxis.axisLabel('Method Complexity');
+
+    d3.select('#methodComplexity svg')
+      .datum(getComplexityData([[100,1,"<a href=\"DTOS\/Car\/CarCreateData.php.html#18\">App\\DTOS\\Car\\CarCreateData::__construct<\/a>"],[79.41176470588235,15,"<a href=\"DTOS\/Car\/CarCreateData.php.html#39\">App\\DTOS\\Car\\CarCreateData::fromArray<\/a>"],[100,1,"<a href=\"DTOS\/Car\/CarUpdateData.php.html#17\">App\\DTOS\\Car\\CarUpdateData::__construct<\/a>"],[96.96969696969697,11,"<a href=\"DTOS\/Car\/CarUpdateData.php.html#37\">App\\DTOS\\Car\\CarUpdateData::fromArray<\/a>"],[100,6,"<a href=\"DTOS\/Car\/CarUpdateData.php.html#88\">App\\DTOS\\Car\\CarUpdateData::isEmpty<\/a>"],[100,1,"<a href=\"DTOS\/Car\/ResolvedCarRefs.php.html#17\">App\\DTOS\\Car\\ResolvedCarRefs::__construct<\/a>"],[100,1,"<a href=\"Http\/Controllers\/AuthController.php.html#19\">App\\Http\\Controllers\\AuthController::__construct<\/a>"],[100,1,"<a href=\"Http\/Controllers\/AuthController.php.html#23\">App\\Http\\Controllers\\AuthController::register<\/a>"],[100,1,"<a href=\"Http\/Controllers\/AuthController.php.html#47\">App\\Http\\Controllers\\AuthController::login<\/a>"],[100,1,"<a href=\"Http\/Controllers\/AuthController.php.html#72\">App\\Http\\Controllers\\AuthController::refresh<\/a>"],[100,1,"<a href=\"Http\/Controllers\/BrandController.php.html#21\">App\\Http\\Controllers\\BrandController::__construct<\/a>"],[100,1,"<a href=\"Http\/Controllers\/BrandController.php.html#30\">App\\Http\\Controllers\\BrandController::index<\/a>"],[100,1,"<a href=\"Http\/Controllers\/BrandController.php.html#56\">App\\Http\\Controllers\\BrandController::show<\/a>"],[100,1,"<a href=\"Http\/Controllers\/CarController.php.html#28\">App\\Http\\Controllers\\CarController::__construct<\/a>"],[100,3,"<a href=\"Http\/Controllers\/CarController.php.html#39\">App\\Http\\Controllers\\CarController::index<\/a>"],[100,1,"<a href=\"Http\/Controllers\/CarController.php.html#81\">App\\Http\\Controllers\\CarController::show<\/a>"],[0,1,"<a href=\"Http\/Controllers\/CarController.php.html#115\">App\\Http\\Controllers\\CarController::store<\/a>"],[0,1,"<a href=\"Http\/Controllers\/CarController.php.html#157\">App\\Http\\Controllers\\CarController::update<\/a>"],[0,1,"<a href=\"Http\/Controllers\/CarController.php.html#198\">App\\Http\\Controllers\\CarController::destroy<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#21\">App\\Http\\Controllers\\PersonController::__construct<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#25\">App\\Http\\Controllers\\PersonController::index<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#48\">App\\Http\\Controllers\\PersonController::show<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#71\">App\\Http\\Controllers\\PersonController::tripsDriver<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#96\">App\\Http\\Controllers\\PersonController::tripsPassenger<\/a>"],[0,2,"<a href=\"Http\/Controllers\/PersonController.php.html#128\">App\\Http\\Controllers\\PersonController::store<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#166\">App\\Http\\Controllers\\PersonController::update<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#194\">App\\Http\\Controllers\\PersonController::destroy<\/a>"],[0,1,"<a href=\"Http\/Controllers\/PersonController.php.html#217\">App\\Http\\Controllers\\PersonController::updateRole<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#31\">App\\Http\\Controllers\\TripController::__construct<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#45\">App\\Http\\Controllers\\TripController::index<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#86\">App\\Http\\Controllers\\TripController::show<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#121\">App\\Http\\Controllers\\TripController::passengers<\/a>"],[0,3,"<a href=\"Http\/Controllers\/TripController.php.html#155\">App\\Http\\Controllers\\TripController::store<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#204\">App\\Http\\Controllers\\TripController::update<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#249\">App\\Http\\Controllers\\TripController::destroy<\/a>"],[0,1,"<a href=\"Http\/Controllers\/TripController.php.html#285\">App\\Http\\Controllers\\TripController::cancel<\/a>"],[0,4,"<a href=\"Http\/Controllers\/TripController.php.html#322\">App\\Http\\Controllers\\TripController::cancelReservation<\/a>"],[0,4,"<a href=\"Http\/Controllers\/TripController.php.html#372\">App\\Http\\Controllers\\TripController::reserve<\/a>"],[100,1,"<a href=\"Http\/Middleware\/LocalJwtAuth.php.html#18\">App\\Http\\Middleware\\LocalJwtAuth::__construct<\/a>"],[68.08510638297872,13,"<a href=\"Http\/Middleware\/LocalJwtAuth.php.html#30\">App\\Http\\Middleware\\LocalJwtAuth::handle<\/a>"],[100,1,"<a href=\"Http\/Middleware\/LocalJwtAuth.php.html#114\">App\\Http\\Middleware\\LocalJwtAuth::tokenFingerprint<\/a>"],[77.77777777777779,5,"<a href=\"Http\/Middleware\/LocalJwtAuth.php.html#122\">App\\Http\\Middleware\\LocalJwtAuth::ttlFromClaims<\/a>"],[37.5,5,"<a href=\"Http\/Middleware\/LocalJwtAuth.php.html#146\">App\\Http\\Middleware\\LocalJwtAuth::bestEffortInvalidateCacheFromTokenParts<\/a>"],[100,1,"<a href=\"Http\/Resources\/AuthTokenResource.php.html#15\">App\\Http\\Resources\\AuthTokenResource::toArray<\/a>"],[100,1,"<a href=\"Http\/Resources\/BrandResource.php.html#22\">App\\Http\\Resources\\BrandResource::toArray<\/a>"],[100,3,"<a href=\"Http\/Resources\/CarResource.php.html#28\">App\\Http\\Resources\\CarResource::toArray<\/a>"],[0,7,"<a href=\"Http\/Resources\/PersonResource.php.html#31\">App\\Http\\Resources\\PersonResource::toArray<\/a>"],[0,10,"<a href=\"Http\/Resources\/TripResource.php.html#31\">App\\Http\\Resources\\TripResource::toArray<\/a>"],[100,1,"<a href=\"Models\/Address.php.html#71\">App\\Models\\Address::city<\/a>"],[100,1,"<a href=\"Models\/Brand.php.html#62\">App\\Models\\Brand::models<\/a>"],[100,1,"<a href=\"Models\/Car.php.html#72\">App\\Models\\Car::model<\/a>"],[100,1,"<a href=\"Models\/Car.php.html#85\">App\\Models\\Car::color<\/a>"],[100,1,"<a href=\"Models\/CarModel.php.html#79\">App\\Models\\CarModel::brand<\/a>"],[100,1,"<a href=\"Models\/CarModel.php.html#92\">App\\Models\\CarModel::type<\/a>"],[100,1,"<a href=\"Models\/City.php.html#66\">App\\Models\\City::addresses<\/a>"],[0,1,"<a href=\"Models\/Person.php.html#64\">App\\Models\\Person::user<\/a>"],[100,1,"<a href=\"Models\/Person.php.html#69\">App\\Models\\Person::car<\/a>"],[100,1,"<a href=\"Models\/Person.php.html#74\">App\\Models\\Person::trips<\/a>"],[100,1,"<a href=\"Models\/Person.php.html#79\">App\\Models\\Person::reservations<\/a>"],[0,1,"<a href=\"Models\/RefreshToken.php.html#24\">App\\Models\\RefreshToken::user<\/a>"],[100,1,"<a href=\"Models\/Trip.php.html#99\">App\\Models\\Trip::driver<\/a>"],[100,1,"<a href=\"Models\/Trip.php.html#109\">App\\Models\\Trip::passengers<\/a>"],[100,1,"<a href=\"Models\/Trip.php.html#114\">App\\Models\\Trip::departureAddress<\/a>"],[100,1,"<a href=\"Models\/Trip.php.html#119\">App\\Models\\Trip::arrivalAddress<\/a>"],[100,1,"<a href=\"Models\/User.php.html#53\">App\\Models\\User::person<\/a>"],[100,1,"<a href=\"Models\/User.php.html#58\">App\\Models\\User::role<\/a>"],[100,1,"<a href=\"Models\/User.php.html#63\">App\\Models\\User::isAdmin<\/a>"],[0,2,"<a href=\"Policies\/CarPolicy.php.html#29\">App\\Policies\\CarPolicy::before<\/a>"],[0,2,"<a href=\"Policies\/CarPolicy.php.html#42\">App\\Policies\\CarPolicy::viewAny<\/a>"],[0,4,"<a href=\"Policies\/CarPolicy.php.html#59\">App\\Policies\\CarPolicy::view<\/a>"],[0,3,"<a href=\"Policies\/CarPolicy.php.html#83\">App\\Policies\\CarPolicy::create<\/a>"],[0,4,"<a href=\"Policies\/CarPolicy.php.html#104\">App\\Policies\\CarPolicy::update<\/a>"],[0,4,"<a href=\"Policies\/CarPolicy.php.html#129\">App\\Policies\\CarPolicy::delete<\/a>"],[100,2,"<a href=\"Policies\/PersonPolicy.php.html#25\">App\\Policies\\PersonPolicy::before<\/a>"],[66.66666666666666,2,"<a href=\"Policies\/PersonPolicy.php.html#36\">App\\Policies\\PersonPolicy::viewAny<\/a>"],[100,2,"<a href=\"Policies\/PersonPolicy.php.html#50\">App\\Policies\\PersonPolicy::view<\/a>"],[0,2,"<a href=\"Policies\/PersonPolicy.php.html#64\">App\\Policies\\PersonPolicy::viewTripsDriver<\/a>"],[0,2,"<a href=\"Policies\/PersonPolicy.php.html#78\">App\\Policies\\PersonPolicy::viewTripsPassenger<\/a>"],[100,2,"<a href=\"Policies\/PersonPolicy.php.html#93\">App\\Policies\\PersonPolicy::create<\/a>"],[100,2,"<a href=\"Policies\/PersonPolicy.php.html#107\">App\\Policies\\PersonPolicy::update<\/a>"],[100,1,"<a href=\"Policies\/PersonPolicy.php.html#123\">App\\Policies\\PersonPolicy::delete<\/a>"],[66.66666666666666,2,"<a href=\"Policies\/PersonPolicy.php.html#134\">App\\Policies\\PersonPolicy::updateRole<\/a>"],[100,2,"<a href=\"Policies\/TripPolicy.php.html#31\">App\\Policies\\TripPolicy::before<\/a>"],[100,2,"<a href=\"Policies\/TripPolicy.php.html#42\">App\\Policies\\TripPolicy::viewAny<\/a>"],[0,4,"<a href=\"Policies\/TripPolicy.php.html#58\">App\\Policies\\TripPolicy::view<\/a>"],[0,6,"<a href=\"Policies\/TripPolicy.php.html#83\">App\\Policies\\TripPolicy::viewPassengers<\/a>"],[83.33333333333334,3,"<a href=\"Policies\/TripPolicy.php.html#125\">App\\Policies\\TripPolicy::create<\/a>"],[0,4,"<a href=\"Policies\/TripPolicy.php.html#148\">App\\Policies\\TripPolicy::createFor<\/a>"],[60,3,"<a href=\"Policies\/TripPolicy.php.html#175\">App\\Policies\\TripPolicy::update<\/a>"],[0,2,"<a href=\"Policies\/TripPolicy.php.html#196\">App\\Policies\\TripPolicy::delete<\/a>"],[0,4,"<a href=\"Policies\/TripPolicy.php.html#212\">App\\Policies\\TripPolicy::cancel<\/a>"],[0,3,"<a href=\"Policies\/TripPolicy.php.html#239\">App\\Policies\\TripPolicy::cancelReservation<\/a>"],[88.88888888888889,5,"<a href=\"Policies\/TripPolicy.php.html#266\">App\\Policies\\TripPolicy::reserve<\/a>"],[100,1,"<a href=\"Providers\/AppServiceProvider.php.html#31\">App\\Providers\\AppServiceProvider::register<\/a>"],[66.66666666666666,1,"<a href=\"Providers\/AppServiceProvider.php.html#56\">App\\Providers\\AppServiceProvider::boot<\/a>"],[100,1,"<a href=\"Providers\/AuthServiceProvider.php.html#32\">App\\Providers\\AuthServiceProvider::boot<\/a>"],[100,1,"<a href=\"Providers\/AuthServiceProvider.php.html#40\">App\\Providers\\AuthServiceProvider::register<\/a>"],[100,1,"<a href=\"Providers\/RepositoryProvider.php.html#34\">App\\Providers\\RepositoryProvider::register<\/a>"],[100,1,"<a href=\"Providers\/RepositoryProvider.php.html#95\">App\\Providers\\RepositoryProvider::boot<\/a>"],[100,1,"<a href=\"Providers\/RouteBindingServiceProvider.php.html#18\">App\\Providers\\RouteBindingServiceProvider::register<\/a>"],[62.5,1,"<a href=\"Providers\/RouteBindingServiceProvider.php.html#26\">App\\Providers\\RouteBindingServiceProvider::boot<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/AddressEloquentRepository.php.html#24\">App\\Repositories\\Eloquent\\AddressEloquentRepository::tagAddresses<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/AddressEloquentRepository.php.html#29\">App\\Repositories\\Eloquent\\AddressEloquentRepository::tagAddress<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/AddressEloquentRepository.php.html#40\">App\\Repositories\\Eloquent\\AddressEloquentRepository::keyById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/AddressEloquentRepository.php.html#54\">App\\Repositories\\Eloquent\\AddressEloquentRepository::create<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/AddressEloquentRepository.php.html#68\">App\\Repositories\\Eloquent\\AddressEloquentRepository::findOrFail<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#22\">App\\Repositories\\Eloquent\\BrandEloquentRepository::tagBrands<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#31\">App\\Repositories\\Eloquent\\BrandEloquentRepository::tagBrand<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#36\">App\\Repositories\\Eloquent\\BrandEloquentRepository::keyAll<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#41\">App\\Repositories\\Eloquent\\BrandEloquentRepository::keyById<\/a>"],[100,2,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#47\">App\\Repositories\\Eloquent\\BrandEloquentRepository::all<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#67\">App\\Repositories\\Eloquent\\BrandEloquentRepository::findById<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#79\">App\\Repositories\\Eloquent\\BrandEloquentRepository::createOrFirst<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/BrandEloquentRepository.php.html#98\">App\\Repositories\\Eloquent\\BrandEloquentRepository::delete<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#30\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::tagModels<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#39\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::tagModel<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#48\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::tagBrand<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#57\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::tagName<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#64\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::keyAll<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#69\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::keyById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#74\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::keyByBrand<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#79\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::keyByName<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#90\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::normalizeName<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#96\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::all<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#119\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::findById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#133\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::createOrFirst<\/a>"],[0,3,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#160\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::update<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#190\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::delete<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#208\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::findByName<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/CarModelEloquentRepository.php.html#231\">App\\Repositories\\Eloquent\\CarModelEloquentRepository::findByBrand<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#27\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::tagCars<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#36\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::tagCar<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#41\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::keyAll<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#46\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::keyById<\/a>"],[100,2,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#52\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::all<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#70\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::find<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#82\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::findOrFail<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#94\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::create<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#107\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::update<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CarRepositoryEloquent.php.html#121\">App\\Repositories\\Eloquent\\CarRepositoryEloquent::delete<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#29\">App\\Repositories\\Eloquent\\CityEloquentRepository::tagCities<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#41\">App\\Repositories\\Eloquent\\CityEloquentRepository::tagCity<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#52\">App\\Repositories\\Eloquent\\CityEloquentRepository::tagPostcodes<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#59\">App\\Repositories\\Eloquent\\CityEloquentRepository::keyPostcodes<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#64\">App\\Repositories\\Eloquent\\CityEloquentRepository::keyCity<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#75\">App\\Repositories\\Eloquent\\CityEloquentRepository::normalizeName<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#81\">App\\Repositories\\Eloquent\\CityEloquentRepository::create<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#99\">App\\Repositories\\Eloquent\\CityEloquentRepository::delete<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#108\">App\\Repositories\\Eloquent\\CityEloquentRepository::getPostcodes<\/a>"],[0,4,"<a href=\"Repositories\/Eloquent\/CityEloquentRepository.php.html#124\">App\\Repositories\\Eloquent\\CityEloquentRepository::firstOrCreate<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#30\">App\\Repositories\\Eloquent\\ColorEloquentRepository::tagColors<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#39\">App\\Repositories\\Eloquent\\ColorEloquentRepository::tagColor<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#48\">App\\Repositories\\Eloquent\\ColorEloquentRepository::tagHex<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#57\">App\\Repositories\\Eloquent\\ColorEloquentRepository::tagName<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#64\">App\\Repositories\\Eloquent\\ColorEloquentRepository::keyAll<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#69\">App\\Repositories\\Eloquent\\ColorEloquentRepository::keyById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#74\">App\\Repositories\\Eloquent\\ColorEloquentRepository::keyByHex<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#79\">App\\Repositories\\Eloquent\\ColorEloquentRepository::keyByName<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#90\">App\\Repositories\\Eloquent\\ColorEloquentRepository::normalizeHex<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#101\">App\\Repositories\\Eloquent\\ColorEloquentRepository::normalizeName<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#107\">App\\Repositories\\Eloquent\\ColorEloquentRepository::all<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#133\">App\\Repositories\\Eloquent\\ColorEloquentRepository::findById<\/a>"],[0,3,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#145\">App\\Repositories\\Eloquent\\ColorEloquentRepository::createOrFirst<\/a>"],[0,6,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#177\">App\\Repositories\\Eloquent\\ColorEloquentRepository::update<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#221\">App\\Repositories\\Eloquent\\ColorEloquentRepository::delete<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#242\">App\\Repositories\\Eloquent\\ColorEloquentRepository::findByName<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/ColorEloquentRepository.php.html#266\">App\\Repositories\\Eloquent\\ColorEloquentRepository::findByHexCode<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#24\">App\\Repositories\\Eloquent\\PersonEloquentRepository::tagPersons<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#33\">App\\Repositories\\Eloquent\\PersonEloquentRepository::tagPerson<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#38\">App\\Repositories\\Eloquent\\PersonEloquentRepository::keyAll<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#43\">App\\Repositories\\Eloquent\\PersonEloquentRepository::keyById<\/a>"],[50,2,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#48\">App\\Repositories\\Eloquent\\PersonEloquentRepository::all<\/a>"],[57.14285714285714,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#66\">App\\Repositories\\Eloquent\\PersonEloquentRepository::findById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#79\">App\\Repositories\\Eloquent\\PersonEloquentRepository::create<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#93\">App\\Repositories\\Eloquent\\PersonEloquentRepository::update<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#106\">App\\Repositories\\Eloquent\\PersonEloquentRepository::delete<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/PersonEloquentRepository.php.html#115\">App\\Repositories\\Eloquent\\PersonEloquentRepository::attachCar<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/RefreshTokenEloquentRepository.php.html#16\">App\\Repositories\\Eloquent\\RefreshTokenEloquentRepository::store<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/RefreshTokenEloquentRepository.php.html#33\">App\\Repositories\\Eloquent\\RefreshTokenEloquentRepository::consume<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/RefreshTokenEloquentRepository.php.html#57\">App\\Repositories\\Eloquent\\RefreshTokenEloquentRepository::consumeAndRotate<\/a>"],[0,4,"<a href=\"Repositories\/Eloquent\/RefreshTokenEloquentRepository.php.html#65\">App\\Repositories\\Eloquent\\RefreshTokenEloquentRepository::hash<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#34\">App\\Repositories\\Eloquent\\TripEloquentRepository::tagTrips<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#43\">App\\Repositories\\Eloquent\\TripEloquentRepository::tagTrip<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#51\">App\\Repositories\\Eloquent\\TripEloquentRepository::tagSearch<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#60\">App\\Repositories\\Eloquent\\TripEloquentRepository::tagPerson<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#69\">App\\Repositories\\Eloquent\\TripEloquentRepository::tagPassengers<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#76\">App\\Repositories\\Eloquent\\TripEloquentRepository::keyTrip<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#81\">App\\Repositories\\Eloquent\\TripEloquentRepository::keyPassengers<\/a>"],[100,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#86\">App\\Repositories\\Eloquent\\TripEloquentRepository::keySearch<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#98\">App\\Repositories\\Eloquent\\TripEloquentRepository::keyDriverTrips<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#103\">App\\Repositories\\Eloquent\\TripEloquentRepository::keyPassengerTrips<\/a>"],[33.33333333333333,4,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#109\">App\\Repositories\\Eloquent\\TripEloquentRepository::search<\/a>"],[57.14285714285714,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#142\">App\\Repositories\\Eloquent\\TripEloquentRepository::findById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#156\">App\\Repositories\\Eloquent\\TripEloquentRepository::findByIdOrFail<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#170\">App\\Repositories\\Eloquent\\TripEloquentRepository::findByIdForUpdate<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#180\">App\\Repositories\\Eloquent\\TripEloquentRepository::create<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#193\">App\\Repositories\\Eloquent\\TripEloquentRepository::update<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#209\">App\\Repositories\\Eloquent\\TripEloquentRepository::delete<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#225\">App\\Repositories\\Eloquent\\TripEloquentRepository::forceDelete<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#239\">App\\Repositories\\Eloquent\\TripEloquentRepository::passengers<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#253\">App\\Repositories\\Eloquent\\TripEloquentRepository::listByDriver<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TripEloquentRepository.php.html#271\">App\\Repositories\\Eloquent\\TripEloquentRepository::listByPassenger<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#29\">App\\Repositories\\Eloquent\\TypeEloquentRepository::tagTypes<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#38\">App\\Repositories\\Eloquent\\TypeEloquentRepository::tagTypeId<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#47\">App\\Repositories\\Eloquent\\TypeEloquentRepository::tagTypeValue<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#54\">App\\Repositories\\Eloquent\\TypeEloquentRepository::keyAll<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#59\">App\\Repositories\\Eloquent\\TypeEloquentRepository::keyById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#64\">App\\Repositories\\Eloquent\\TypeEloquentRepository::keyByType<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#75\">App\\Repositories\\Eloquent\\TypeEloquentRepository::normalizeType<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#81\">App\\Repositories\\Eloquent\\TypeEloquentRepository::all<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#104\">App\\Repositories\\Eloquent\\TypeEloquentRepository::findById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#116\">App\\Repositories\\Eloquent\\TypeEloquentRepository::createOrFirst<\/a>"],[0,4,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#137\">App\\Repositories\\Eloquent\\TypeEloquentRepository::update<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#169\">App\\Repositories\\Eloquent\\TypeEloquentRepository::delete<\/a>"],[0,2,"<a href=\"Repositories\/Eloquent\/TypeEloquentRepository.php.html#188\">App\\Repositories\\Eloquent\\TypeEloquentRepository::findByType<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/UserEloquentRepository.php.html#10\">App\\Repositories\\Eloquent\\UserEloquentRepository::existsByEmail<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/UserEloquentRepository.php.html#17\">App\\Repositories\\Eloquent\\UserEloquentRepository::findByEmail<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/UserEloquentRepository.php.html#27\">App\\Repositories\\Eloquent\\UserEloquentRepository::findById<\/a>"],[0,1,"<a href=\"Repositories\/Eloquent\/UserEloquentRepository.php.html#38\">App\\Repositories\\Eloquent\\UserEloquentRepository::create<\/a>"],[0,4,"<a href=\"Security\/JwtIssuer.php.html#14\">App\\Security\\JwtIssuer::secret<\/a>"],[0,1,"<a href=\"Security\/JwtIssuer.php.html#34\">App\\Security\\JwtIssuer::issueAccessToken<\/a>"],[0,5,"<a href=\"Security\/JwtIssuer.php.html#62\">App\\Security\\JwtIssuer::verify<\/a>"],[100,1,"<a href=\"Services\/Implementations\/AuthService.php.html#19\">App\\Services\\Implementations\\AuthService::__construct<\/a>"],[100,2,"<a href=\"Services\/Implementations\/AuthService.php.html#27\">App\\Services\\Implementations\\AuthService::register<\/a>"],[100,4,"<a href=\"Services\/Implementations\/AuthService.php.html#46\">App\\Services\\Implementations\\AuthService::login<\/a>"],[100,3,"<a href=\"Services\/Implementations\/AuthService.php.html#59\">App\\Services\\Implementations\\AuthService::refresh<\/a>"],[100,1,"<a href=\"Services\/Implementations\/AuthService.php.html#79\">App\\Services\\Implementations\\AuthService::issueSession<\/a>"],[100,1,"<a href=\"Services\/Implementations\/BrandService.php.html#12\">App\\Services\\Implementations\\BrandService::__construct<\/a>"],[100,1,"<a href=\"Services\/Implementations\/BrandService.php.html#17\">App\\Services\\Implementations\\BrandService::getBrands<\/a>"],[100,1,"<a href=\"Services\/Implementations\/BrandService.php.html#23\">App\\Services\\Implementations\\BrandService::getBrand<\/a>"],[100,1,"<a href=\"Services\/Implementations\/CarService.php.html#20\">App\\Services\\Implementations\\CarService::__construct<\/a>"],[100,1,"<a href=\"Services\/Implementations\/CarService.php.html#27\">App\\Services\\Implementations\\CarService::getCars<\/a>"],[0,1,"<a href=\"Services\/Implementations\/CarService.php.html#33\">App\\Services\\Implementations\\CarService::findCar<\/a>"],[100,2,"<a href=\"Services\/Implementations\/CarService.php.html#39\">App\\Services\\Implementations\\CarService::createCar<\/a>"],[78.26086956521739,6,"<a href=\"Services\/Implementations\/CarService.php.html#69\">App\\Services\\Implementations\\CarService::updateCar<\/a>"],[100,1,"<a href=\"Services\/Implementations\/CarService.php.html#115\">App\\Services\\Implementations\\CarService::deleteCar<\/a>"],[0,7,"<a href=\"Services\/Implementations\/OrsRoutingClient.php.html#13\">App\\Services\\Implementations\\OrsRoutingClient::geocode<\/a>"],[0,9,"<a href=\"Services\/Implementations\/OrsRoutingClient.php.html#44\">App\\Services\\Implementations\\OrsRoutingClient::durationSeconds<\/a>"],[100,1,"<a href=\"Services\/Implementations\/PersonService.php.html#15\">App\\Services\\Implementations\\PersonService::__construct<\/a>"],[100,1,"<a href=\"Services\/Implementations\/PersonService.php.html#21\">App\\Services\\Implementations\\PersonService::list<\/a>"],[0,1,"<a href=\"Services\/Implementations\/PersonService.php.html#27\">App\\Services\\Implementations\\PersonService::show<\/a>"],[0,1,"<a href=\"Services\/Implementations\/PersonService.php.html#33\">App\\Services\\Implementations\\PersonService::findById<\/a>"],[100,1,"<a href=\"Services\/Implementations\/PersonService.php.html#39\">App\\Services\\Implementations\\PersonService::tripsAsDriver<\/a>"],[100,1,"<a href=\"Services\/Implementations\/PersonService.php.html#45\">App\\Services\\Implementations\\PersonService::tripsAsPassenger<\/a>"],[100,2,"<a href=\"Services\/Implementations\/PersonService.php.html#51\">App\\Services\\Implementations\\PersonService::update<\/a>"],[100,1,"<a href=\"Services\/Implementations\/PersonService.php.html#63\">App\\Services\\Implementations\\PersonService::softDelete<\/a>"],[0,1,"<a href=\"Services\/Implementations\/PersonService.php.html#69\">App\\Services\\Implementations\\PersonService::createForUser<\/a>"],[0,1,"<a href=\"Services\/Implementations\/PersonService.php.html#80\">App\\Services\\Implementations\\PersonService::updateUserRoleByPersonId<\/a>"],[100,1,"<a href=\"Services\/Implementations\/TripService.php.html#37\">App\\Services\\Implementations\\TripService::__construct<\/a>"],[0,1,"<a href=\"Services\/Implementations\/TripService.php.html#50\">App\\Services\\Implementations\\TripService::searchTrips<\/a>"],[0,1,"<a href=\"Services\/Implementations\/TripService.php.html#61\">App\\Services\\Implementations\\TripService::getTripPassengers<\/a>"],[98.0392156862745,5,"<a href=\"Services\/Implementations\/TripService.php.html#67\">App\\Services\\Implementations\\TripService::createTrip<\/a>"],[71.42857142857143,8,"<a href=\"Services\/Implementations\/TripService.php.html#137\">App\\Services\\Implementations\\TripService::updateTrip<\/a>"],[0,1,"<a href=\"Services\/Implementations\/TripService.php.html#163\">App\\Services\\Implementations\\TripService::cancelTrip<\/a>"],[0,1,"<a href=\"Services\/Implementations\/TripService.php.html#173\">App\\Services\\Implementations\\TripService::deleteTripPermanently<\/a>"],[63.1578947368421,6,"<a href=\"Services\/Implementations\/TripService.php.html#181\">App\\Services\\Implementations\\TripService::reserveSeat<\/a>"],[0,4,"<a href=\"Services\/Implementations\/TripService.php.html#216\">App\\Services\\Implementations\\TripService::cancelReservation<\/a>"],[0,1,"<a href=\"Services\/Implementations\/TripService.php.html#238\">App\\Services\\Implementations\\TripService::getPersonById<\/a>"],[50,2,"<a href=\"Services\/Implementations\/TripService.php.html#246\">App\\Services\\Implementations\\TripService::assertTripNotStarted<\/a>"],[0,1,"<a href=\"Services\/Implementations\/TripService.php.html#253\">App\\Services\\Implementations\\TripService::invalidateTripReservationCaches<\/a>"]], 'Method Complexity'))
+      .transition()
+      .duration(500)
+      .call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+
+  function getComplexityData(data, label) {
+    var values = [];
+    $.each(data, function(key) {
+      var value = Math.round(data[key][0]*100) / 100;
+      values.push({
+        x: value,
+        y: data[key][1],
+        class: data[key][2],
+        size: 0.05,
+        shape: 'diamond'
+      });
+    });
+
+    return [
+      {
+        key: label,
+        values: values,
+        color: "#4572A7"
+      }
+    ];
+  }
+});
+  </script>
+ </body>
+</html>

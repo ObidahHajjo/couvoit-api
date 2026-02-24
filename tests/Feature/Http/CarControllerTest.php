@@ -9,6 +9,7 @@ use App\Models\CarModel;
 use App\Models\Color;
 use App\Models\Person;
 use App\Models\Type;
+use App\Models\User;
 use App\Services\Interfaces\CarServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -16,6 +17,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 use Throwable;
 
@@ -28,13 +31,6 @@ class CarControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * Setup deterministic test routes with implicit binding enabled.
-     *
-     * @return void
-     *
-     * @throws Throwable
-     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -48,14 +44,10 @@ class CarControllerTest extends TestCase
     /**
      * Seed roles with stable IDs (1=user, 2=admin).
      *
-     * @return void
-     *
      * @throws Throwable
      */
     private function seedRoles(): void
     {
-        // Role model has guarded id in your project; insert via query and accept auto ids,
-        // but your Person::ROLE_* constants assume 1/2, so set explicitly using DB is best.
         DB::table('roles')->insertOrIgnore([
             ['id' => 1, 'name' => 'user'],
             ['id' => 2, 'name' => 'admin'],
@@ -64,8 +56,6 @@ class CarControllerTest extends TestCase
 
     /**
      * Create a full car graph used by CarResource.
-     *
-     * @return Car
      *
      * @throws Throwable
      */
@@ -89,10 +79,40 @@ class CarControllerTest extends TestCase
     }
 
     /**
-     * index() for a normal user should return only his car (or empty list).
+     * Create a Person profile (non-auth).
      *
-     * @return void
+     * @throws Throwable
+     */
+    private function makePersonProfile(array $overrides = []): Person
+    {
+        $suffix = Str::lower(Str::random(8));
+
+        return Person::query()->create(array_merge([
+            'first_name' => 'First',
+            'last_name' => 'Last',
+            'pseudo' => "pseudo_$suffix",
+            'phone' => '+336' . random_int(10000000, 99999999),
+            'car_id' => null,
+        ], $overrides));
+    }
+
+    /**
+     * Create an auth User linked to a Person profile.
      *
+     * @throws Throwable
+     */
+    private function makeUser(int $roleId, bool $isActive, Person $person, string $email): User
+    {
+        return User::query()->create([
+            'email' => $email,
+            'password' => Hash::make('secret12345'),
+            'role_id' => $roleId,
+            'is_active' => $isActive,
+            'person_id' => $person->id,
+        ]);
+    }
+
+    /**
      * @throws Throwable
      */
     public function test_index_user_returns_only_own_car(): void
@@ -101,22 +121,21 @@ class CarControllerTest extends TestCase
 
         $car = $this->makeCarGraph();
 
-        $person = Person::query()->create([
-            'supabase_user_id' => '00000000-0000-0000-0000-000000000111',
-            'email' => 'u@example.com',
-            'pseudo' => 'user1',
-            'role_id' => 1,
-            'is_active' => true,
-            'car_id' => $car->id,
-        ]);
+        $person = $this->makePersonProfile(['car_id' => $car->id]);
 
-        // Allow authorize('viewAny', Car::class)
+        $user = $this->makeUser(
+            roleId: 1,
+            isActive: true,
+            person: $person,
+            email: 'u@example.com'
+        );
+
         Gate::shouldReceive('authorize')->andReturnTrue();
 
         // CarService not used for non-admin index
         $this->mock(CarServiceInterface::class, fn($m) => $m->shouldIgnoreMissing());
 
-        $res = $this->actingAs($person)->getJson('/cars');
+        $res = $this->actingAs($user)->getJson('/cars');
 
         $res->assertOk();
         $res->assertJsonCount(1, 'data');
@@ -125,10 +144,6 @@ class CarControllerTest extends TestCase
     }
 
     /**
-     * index() for admin should delegate to service->getCars().
-     *
-     * @return void
-     *
      * @throws Throwable
      */
     public function test_index_admin_delegates_to_service(): void
@@ -137,14 +152,14 @@ class CarControllerTest extends TestCase
 
         $car = $this->makeCarGraph();
 
-        $admin = Person::query()->create([
-            'supabase_user_id' => '00000000-0000-0000-0000-000000000222',
-            'email' => 'a@example.com',
-            'pseudo' => 'admin1',
-            'role_id' => 2,
-            'is_active' => true,
-            'car_id' => null,
-        ]);
+        $person = $this->makePersonProfile(['car_id' => null]);
+
+        $adminUser = $this->makeUser(
+            roleId: 2,
+            isActive: true,
+            person: $person,
+            email: 'a@example.com'
+        );
 
         Gate::shouldReceive('authorize')->andReturnTrue();
 
@@ -154,7 +169,7 @@ class CarControllerTest extends TestCase
                 ->andReturn(new Collection([$car]));
         });
 
-        $res = $this->actingAs($admin)->getJson('/cars');
+        $res = $this->actingAs($adminUser)->getJson('/cars');
 
         $res->assertOk();
         $res->assertJsonCount(1, 'data');
@@ -162,10 +177,6 @@ class CarControllerTest extends TestCase
     }
 
     /**
-     * show() should return 200 and car payload when authorized.
-     *
-     * @return void
-     *
      * @throws Throwable
      */
     public function test_show_returns_ok_with_car_resource(): void
@@ -174,20 +185,20 @@ class CarControllerTest extends TestCase
 
         $car = $this->makeCarGraph();
 
-        $person = Person::query()->create([
-            'supabase_user_id' => '00000000-0000-0000-0000-000000000333',
-            'email' => 'u2@example.com',
-            'pseudo' => 'user2',
-            'role_id' => 2, // make admin to avoid policy complexity
-            'is_active' => true,
-            'car_id' => null,
-        ]);
+        $person = $this->makePersonProfile(['car_id' => null]);
+
+        $adminUser = $this->makeUser(
+            roleId: 2,
+            isActive: true,
+            person: $person,
+            email: 'admin2@example.com'
+        );
 
         Gate::shouldReceive('authorize')->andReturnTrue();
 
         $this->mock(CarServiceInterface::class, fn($m) => $m->shouldIgnoreMissing());
 
-        $res = $this->actingAs($person)->getJson("/cars/$car->id");
+        $res = $this->actingAs($adminUser)->getJson("/cars/$car->id");
 
         $res->assertOk();
         $res->assertJsonPath('data.id', $car->id);

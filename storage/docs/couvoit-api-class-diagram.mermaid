@@ -1,0 +1,400 @@
+classDiagram
+
+    %% ─────────── DOMAIN MODELS ───────────
+
+    class Person {
+        +int id
+        +string supabase_user_id
+        +string first_name
+        +string last_name
+        +string email
+        +int role_id
+        +bool is_active
+        +timestamps()
+        +isAdmin() bool
+        +car() Car
+        +role() Role
+        +tripsAsDriver() Trip[]
+        +tripsAsPassenger() Trip[]
+        +reservations() Reservation[]
+    }
+
+    class Role {
+        +int id
+        +string name
+        +persons() Person[]
+    }
+
+    class Car {
+        +int id
+        +int person_id
+        +int brand_id
+        +int car_model_id
+        +int type_id
+        +int color_id
+        +string license_plate
+        +int year
+        +timestamps()
+        +person() Person
+        +brand() Brand
+        +carModel() CarModel
+        +type() Type
+        +color() Color
+        +trips() Trip[]
+    }
+
+    class Brand {
+        +int id
+        +string name
+        +carModels() CarModel[]
+        +cars() Car[]
+    }
+
+    class CarModel {
+        +int id
+        +int brand_id
+        +string name
+        +brand() Brand
+        +cars() Car[]
+    }
+
+    class Type {
+        +int id
+        +string name
+        +cars() Car[]
+    }
+
+    class Color {
+        +int id
+        +string name
+        +cars() Car[]
+    }
+
+    class Trip {
+        +int id
+        +int car_id
+        +int departure_address_id
+        +int arrival_address_id
+        +datetime departure_at
+        +int available_seats
+        +float price
+        +float distance_km
+        +int duration_min
+        +string status
+        +timestamps()
+        +car() Car
+        +driver() Person
+        +departureAddress() Address
+        +arrivalAddress() Address
+        +reservations() Reservation[]
+        +passengers() Person[]
+        +cancel() void
+    }
+
+    class Reservation {
+        +int person_id
+        +int trip_id
+        +timestamps()
+        +person() Person
+        +trip() Trip
+    }
+
+    class Address {
+        +int id
+        +string street
+        +float latitude
+        +float longitude
+        +int city_id
+        +city() City
+        +departureTrips() Trip[]
+        +arrivalTrips() Trip[]
+    }
+
+    class City {
+        +int id
+        +string name
+        +string postal_code
+        +addresses() Address[]
+    }
+
+    %% ─────────── SERVICES ───────────
+
+    class TripService {
+        -TripRepositoryInterface tripRepo
+        -PersonRepositoryInterface personRepo
+        -ORSClient orsClient
+        +index() Trip[]
+        +show(int id) Trip
+        +store(TripDTO dto) Trip
+        +update(int id, TripDTO dto) Trip
+        +cancel(int id) Trip
+        +destroy(int id) void
+        +getPassengers(int id) Person[]
+        +addReservation(int tripId, int personId) Reservation
+        +cancelReservation(int tripId, int personId) void
+    }
+
+    class PersonService {
+        -PersonRepositoryInterface personRepo
+        +index() Person[]
+        +show(int id) Person
+        +store(PersonDTO dto) Person
+        +update(int id, PersonDTO dto) Person
+        +updateRole(int id, string role) Person
+        +destroy(int id) void
+        +getTripsAsDriver(int id) Trip[]
+        +getTripsAsPassenger(int id) Trip[]
+    }
+
+    class CarService {
+        -CarRepositoryInterface carRepo
+        -CarResolver resolver
+        +index() Car[]
+        +show(int id) Car
+        +store(CarDTO dto) Car
+        +update(int id, CarDTO dto) Car
+        +destroy(int id) void
+    }
+
+    %% ─────────── DTOs ───────────
+
+    class TripDTO {
+        +int car_id
+        +string departure_street
+        +string departure_city
+        +string departure_postal
+        +string arrival_street
+        +string arrival_city
+        +string arrival_postal
+        +datetime departure_at
+        +int available_seats
+        +float price
+    }
+
+    class PersonDTO {
+        +string supabase_user_id
+        +string first_name
+        +string last_name
+        +string email
+        +int role_id
+    }
+
+    class CarDTO {
+        +int person_id
+        +string brand
+        +string model
+        +string type
+        +string color
+        +string license_plate
+        +int year
+    }
+
+    %% ─────────── REPOSITORIES ───────────
+
+    class TripRepositoryInterface {
+        <<interface>>
+        +all() Trip[]
+        +findById(int id) Trip
+        +create(array data) Trip
+        +update(int id, array data) Trip
+        +delete(int id) void
+    }
+
+    class PersonRepositoryInterface {
+        <<interface>>
+        +all() Person[]
+        +findById(int id) Person
+        +findBySupabaseId(string uuid) Person
+        +create(array data) Person
+        +update(int id, array data) Person
+        +delete(int id) void
+    }
+
+    class CarRepositoryInterface {
+        <<interface>>
+        +all() Car[]
+        +findById(int id) Car
+        +create(array data) Car
+        +update(int id, array data) Car
+        +delete(int id) void
+    }
+
+    class EloquentTripRepository {
+        +all() Trip[]
+        +findById(int id) Trip
+        +create(array data) Trip
+        +update(int id, array data) Trip
+        +delete(int id) void
+    }
+
+    class EloquentPersonRepository {
+        +all() Person[]
+        +findById(int id) Person
+        +findBySupabaseId(string uuid) Person
+        +create(array data) Person
+        +update(int id, array data) Person
+        +delete(int id) void
+    }
+
+    class EloquentCarRepository {
+        +all() Car[]
+        +findById(int id) Car
+        +create(array data) Car
+        +update(int id, array data) Car
+        +delete(int id) void
+    }
+
+    %% ─────────── POLICIES ───────────
+
+    class TripPolicy {
+        +before(Person user) bool
+        +view(Person user, Trip trip) bool
+        +create(Person user) bool
+        +update(Person user, Trip trip) bool
+        +delete(Person user, Trip trip) bool
+        +cancel(Person user, Trip trip) bool
+    }
+
+    class CarPolicy {
+        +before(Person user) bool
+        +view(Person user, Car car) bool
+        +create(Person user) bool
+        +update(Person user, Car car) bool
+        +delete(Person user, Car car) bool
+    }
+
+    class PersonPolicy {
+        +before(Person user) bool
+        +view(Person user, Person target) bool
+        +update(Person user, Person target) bool
+        +delete(Person user, Person target) bool
+    }
+
+    %% ─────────── EXTERNAL CLIENTS ───────────
+
+    class ORSClient {
+        +geocode(string address) Coordinates
+        +calculateRoute(Coordinates from, Coordinates to) RouteResult
+    }
+
+    class SupabaseClient {
+        +validateToken(string jwt) Claims
+        +getUserById(string uuid) SupabaseUser
+    }
+
+    %% ─────────── RESOLVERS ───────────
+
+    class CarResolver {
+        +resolveBrand(string name) Brand
+        +resolveModel(int brandId, string name) CarModel
+        +resolveType(string name) Type
+        +resolveColor(string name) Color
+    }
+
+    %% ─────────── CONTROLLERS ───────────
+
+    class TripController {
+        -TripService service
+        +index() JsonResponse
+        +show(int id) JsonResponse
+        +store(Request) JsonResponse
+        +update(int id, Request) JsonResponse
+        +cancel(int id) JsonResponse
+        +destroy(int id) JsonResponse
+        +passengers(int id) JsonResponse
+        +reserve(int id, Request) JsonResponse
+        +cancelReservation(int id) JsonResponse
+    }
+
+    class PersonController {
+        -PersonService service
+        +index() JsonResponse
+        +show(int id) JsonResponse
+        +store(Request) JsonResponse
+        +update(int id, Request) JsonResponse
+        +updateRole(Request) JsonResponse
+        +destroy(int id) JsonResponse
+        +tripsAsDriver(int id) JsonResponse
+        +tripsAsPassenger(int id) JsonResponse
+    }
+
+    class CarController {
+        -CarService service
+        +index() JsonResponse
+        +show(int id) JsonResponse
+        +store(Request) JsonResponse
+        +update(int id, Request) JsonResponse
+        +destroy(int id) JsonResponse
+    }
+
+    class BrandController {
+        +index() JsonResponse
+        +show(int id) JsonResponse
+    }
+
+    class AuthController {
+        +register(Request) JsonResponse
+        +login(Request) JsonResponse
+        +refresh(Request) JsonResponse
+    }
+
+    %% ─────────── RELATIONSHIPS ───────────
+
+    Person "1" --> "0..1" Car : owns
+    Person "1" --> "1" Role : has
+    Person "many" -- "many" Trip : reserves (Reservation)
+
+    Car "1" --> "1" Person : belongs to
+    Car "1" --> "1" Brand : has
+    Car "1" --> "1" CarModel : has
+    Car "1" --> "1" Type : has
+    Car "1" --> "1" Color : has
+    Car "1" --> "many" Trip : used in
+
+    CarModel "many" --> "1" Brand : belongs to
+
+    Trip "1" --> "1" Car : uses
+    Trip "1" --> "1" Address : departure
+    Trip "1" --> "1" Address : arrival
+    Trip "1" --> "many" Reservation : has
+
+    Reservation "many" --> "1" Person : by
+    Reservation "many" --> "1" Trip : for
+
+    Address "many" --> "1" City : in
+
+    %% Service → Repository
+    TripService --> TripRepositoryInterface : uses
+    TripService --> PersonRepositoryInterface : uses
+    TripService --> ORSClient : uses
+    PersonService --> PersonRepositoryInterface : uses
+    CarService --> CarRepositoryInterface : uses
+    CarService --> CarResolver : uses
+
+    %% Repository implementations
+    EloquentTripRepository ..|> TripRepositoryInterface : implements
+    EloquentPersonRepository ..|> PersonRepositoryInterface : implements
+    EloquentCarRepository ..|> CarRepositoryInterface : implements
+
+    %% Controller → Service
+    TripController --> TripService : uses
+    PersonController --> PersonService : uses
+    CarController --> CarService : uses
+
+    %% Policies
+    TripPolicy --> Person : checks
+    TripPolicy --> Trip : guards
+    CarPolicy --> Person : checks
+    CarPolicy --> Car : guards
+    PersonPolicy --> Person : checks
+
+    %% DTOs used by services
+    TripService --> TripDTO : receives
+    PersonService --> PersonDTO : receives
+    CarService --> CarDTO : receives
+
+    %% Resolver
+    CarResolver --> Brand : resolves
+    CarResolver --> CarModel : resolves
+    CarResolver --> Type : resolves
+    CarResolver --> Color : resolves

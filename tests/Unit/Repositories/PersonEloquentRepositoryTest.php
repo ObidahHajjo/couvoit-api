@@ -89,45 +89,4 @@ final class PersonEloquentRepositoryTest extends TestCase
 
         self::assertSame($person, $res);
     }
-
-    /**
-     * @throws Throwable
-     */
-    #[Test]
-    public function find_by_supabase_user_id_uses_tagged_cache_and_key_persons_supabase_uuid_and_warms_id_cache(): void
-    {
-        $uuid = 'abc-uuid';
-
-        $person = new Person();
-        $person->id = 77;
-        $person->supabase_user_id = $uuid;
-
-        // 1) Main remember on supabase tag
-        $taggedSupabase = Mockery::mock();
-        $taggedSupabase->shouldReceive('remember')
-            ->once()
-            ->with("persons:supabase:$uuid", 3600, Mockery::type('callable'))
-            ->andReturn($person);
-
-        // 2) Warm ID cache on person tag
-        $taggedPerson = Mockery::mock();
-        $taggedPerson->shouldReceive('put')
-            ->once()
-            ->with("persons:$person->id",  $person, 3600)
-            ->andReturnTrue();
-
-        Cache::shouldReceive('tags')
-            ->once()
-            ->with(['persons', "supabase:$uuid"])
-            ->andReturn($taggedSupabase);
-
-        Cache::shouldReceive('tags')
-            ->once()
-            ->with(['persons', "person:$person->id"])
-            ->andReturn($taggedPerson);
-
-        $res = $this->repo->findBySupabaseUserId($uuid);
-
-        self::assertSame($person, $res);
-    }
 }

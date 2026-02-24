@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Person;
+use App\Models\User;
 use App\Models\Trip;
 use Illuminate\Auth\Access\Response;
 
@@ -24,11 +25,10 @@ class TripPolicy
      *
      * Returning true authorizes, returning null defers to ability methods.
      *
-     * @param Person $user
-     * @param string $ability
+     * @param User $user
      * @return bool|null
      */
-    public function before(Person $user, string $ability): ?bool
+    public function before(User $user): ?bool
     {
         return $user->isAdmin() ? true : null;
     }
@@ -36,10 +36,10 @@ class TripPolicy
     /**
      * Determine whether the user can list trips.
      *
-     * @param Person $user
+     * @param User $user
      * @return Response
      */
-    public function viewAny(Person $user): Response
+    public function viewAny(User $user): Response
     {
         if (! $user->is_active) {
             return Response::deny("Inactive users cannot view the list of trips.");
@@ -51,15 +51,24 @@ class TripPolicy
     /**
      * Determine whether the user can view a specific trip.
      *
-     * @param Person $user
+     * @param User $user
      * @param Trip   $trip
      * @return Response
      */
-    public function view(Person $user, Trip $trip): Response
+    public function view(User $user, Trip $trip): Response
     {
         if (! $user->is_active) {
             return Response::deny("Inactive users cannot view trips.");
         }
+
+        $person = $user->person;
+
+        if (! $person) {
+            return Response::deny("User has no profile.");
+        }
+
+        // Driver can see passengers
+        if ($trip->person_id === $person->id) return Response::allow();
 
         return Response::allow();
     }
@@ -67,17 +76,40 @@ class TripPolicy
     /**
      * Determine whether the user can view the passengers of a trip.
      *
-     * @param Person $user
+     * @param User $user
      * @param Trip   $trip
      * @return Response
      */
-    public function viewPassengers(Person $user, Trip $trip): Response
+    public function viewPassengers(User $user, Trip $trip): Response
     {
         if (! $user->is_active) {
             return Response::deny("Inactive users cannot view passengers.");
         }
 
-        return Response::allow();
+        $person = $user->person;
+
+        if (! $person) {
+            return Response::deny("User has no profile.");
+        }
+
+        // Driver can see passengers
+        if ($trip->person_id === $person->id) return Response::allow();
+
+        // Passenger of this trip can see passengers
+        $isPassenger = $trip->passengers()
+            ->where('person_id', $person->id)
+            ->exists();
+
+        if ($isPassenger) {
+            return Response::allow();
+        }
+
+        // Optional: admin override
+        if ($user->isAdmin()) {
+            return Response::allow();
+        }
+
+        return Response::deny("You are not allowed to view this passenger list.");
     }
 
     /**
@@ -87,16 +119,17 @@ class TripPolicy
      * - user must be active
      * - user must have a car
      *
-     * @param Person $user
+     * @param User $user
      * @return Response
      */
-    public function create(Person $user): Response
+    public function create(User $user): Response
     {
         if (! $user->is_active) {
             return Response::deny("Only active users can create trips.");
         }
 
-        if (is_null($user->car_id)) {
+        $person = $user->person;
+        if (is_null($person->car_id)) {
             return Response::deny("Only drivers (users with a car) can create trips.");
         }
 
@@ -108,21 +141,22 @@ class TripPolicy
      *
      * Non-admin users may only create trips for themselves.
      *
-     * @param Person $user
+     * @param User $user
      * @param Person $driver
      * @return Response
      */
-    public function createFor(Person $user, Person $driver): Response
+    public function createFor(User $user, Person $driver): Response
     {
         if (! $user->is_active) {
             return Response::deny("Only active users can create trips.");
         }
 
-        if ($driver->id !== $user->id) {
+        if ($driver->id !== $user->person_id) {
             return Response::deny("You cannot create a trip for another user.");
         }
 
-        if (is_null($driver->car_id)) {
+        $person = $user->person;
+        if (is_null($person->car_id)) {
             return Response::deny("Only drivers (users with a car) can create trips.");
         }
 
@@ -134,17 +168,17 @@ class TripPolicy
      *
      * Only the driver of the trip (or admin via before) may update it.
      *
-     * @param Person $user
+     * @param User $user
      * @param Trip   $trip
      * @return Response
      */
-    public function update(Person $user, Trip $trip): Response
+    public function update(User $user, Trip $trip): Response
     {
         if (! $user->is_active) {
             return Response::deny("Only active users can update trips.");
         }
 
-        if ($trip->person_id !== $user->id) {
+        if ($trip->person_id !== $user->person_id) {
             return Response::deny("Only the driver of this trip can update it.");
         }
 
@@ -156,12 +190,13 @@ class TripPolicy
      *
      * Admins are granted via before(); non-admins are denied.
      *
-     * @param Person $user
+     * @param User $user
      * @return Response
      */
-    public function delete(Person $user): Response
+    public function delete(User $user): Response
     {
-        return Response::deny("You cannot delete trips.");
+        if(!$user->isAdmin()) return Response::deny('You are not allowed to delete trips.');
+        return Response::allow();
     }
 
     /**
@@ -170,11 +205,11 @@ class TripPolicy
      * Only the driver of the trip (or admin via before) may cancel it,
      * and only if the trip has not started.
      *
-     * @param Person $user
+     * @param User $user
      * @param Trip   $trip
      * @return Response
      */
-    public function cancel(Person $user, Trip $trip): Response
+    public function cancel(User $user, Trip $trip): Response
     {
         if ($trip->departure_time <= now()) {
             return Response::deny('Trip already started; reservations are closed.');
@@ -184,7 +219,7 @@ class TripPolicy
             return Response::deny("Only active users can cancel trips.");
         }
 
-        if ($trip->person_id !== $user->id) {
+        if ($trip->person_id !== $user->person_id) {
             return Response::deny("Only the driver of this trip can cancel it.");
         }
 
@@ -197,11 +232,11 @@ class TripPolicy
      * Trip must not have started. The "which passenger" decision is handled
      * by controller/service (admin may cancel any, passenger only own).
      *
-     * @param Person $user
+     * @param User $user
      * @param Trip   $trip
      * @return Response
      */
-    public function cancelReservation(Person $user, Trip $trip): Response
+    public function cancelReservation(User $user, Trip $trip): Response
     {
         if ($trip->departure_time <= now()) {
             return Response::deny('Trip already started; reservation cannot be canceled.');
@@ -223,12 +258,12 @@ class TripPolicy
      * - non-admin users can only reserve for themselves
      * - driver cannot reserve their own trip
      *
-     * @param Person $user
+     * @param User $user
      * @param Trip   $trip
      * @param Person $passenger
      * @return Response
      */
-    public function reserve(Person $user, Trip $trip, Person $passenger): Response
+    public function reserve(User $user, Trip $trip, Person $passenger): Response
     {
         if ($trip->departure_time <= now()) {
             return Response::deny('Trip already started; reservations are closed.');
@@ -238,7 +273,7 @@ class TripPolicy
             return Response::deny("Only active users can reserve seats.");
         }
 
-        if ($passenger->id !== $user->id) {
+        if ($passenger->id !== $user->person_id) {
             return Response::deny("You can only reserve a seat for yourself.");
         }
 

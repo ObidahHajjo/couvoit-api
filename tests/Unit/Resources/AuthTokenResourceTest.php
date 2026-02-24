@@ -46,20 +46,15 @@ class AuthTokenResourceTest extends TestCase
         $resource = new AuthTokenResource([
             'access_token' => 'a',
             'token_type' => 'bearer',
-            'expires_in' => 3600,
+            'expires_in' => 900,
             'refresh_token' => 'r',
-            'user' => ['id' => 'uuid', 'email' => 'x@example.com', 'extra' => 'ignored'],
         ]);
 
         $arr = $resource->toArray($this->request);
-
-        $this->assertSame('a', $arr['access_token']);
-        $this->assertSame('bearer', $arr['token_type']);
-        $this->assertSame(3600, $arr['expires_in']);
-        $this->assertSame('r', $arr['refresh_token']);
-        $this->assertSame('uuid', $arr['user']['id']);
-        $this->assertSame('x@example.com', $arr['user']['email']);
-        $this->assertArrayNotHasKey('extra', $arr['user']);
+        self::assertEquals('a', $arr['access_token']);
+        self::assertEquals('bearer', $arr['token_type']);
+        self::assertEquals(900, $arr['expires_in']);
+        self::assertEquals('r', $arr['refresh_token']);
     }
 
     /**
@@ -76,9 +71,8 @@ class AuthTokenResourceTest extends TestCase
         $arr = $resource->toArray($this->request);
 
         $this->assertNull($arr['access_token']);
-        $this->assertNull($arr['token_type']);
+        $this->assertEquals('Bearer',$arr['token_type']);
         $this->assertNull($arr['expires_in']);
         $this->assertNull($arr['refresh_token']);
-        $this->assertNull($arr['user']);
     }
 }

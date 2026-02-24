@@ -9,6 +9,7 @@ use App\Http\Requests\Car\UpdateCarRequest;
 use App\Http\Resources\CarResource;
 use App\Models\Car;
 use App\Models\Person;
+use App\Models\User;
 use App\Services\Interfaces\CarServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -51,10 +52,11 @@ class CarController extends Controller
     {
         $this->authorize('viewAny', Car::class);
 
-        /** @var Person $authPerson */
-        $authPerson = auth()->user();
+        /** @var User $authUser */
+        $authUser = auth()->user();
 
-        if (! $authPerson->isAdmin()) {
+        if (! $authUser->isAdmin()) {
+            $authPerson = $authUser->person;
             $authPerson->loadMissing(['car.model.brand', 'car.model.type', 'car.color']);
             $myCar = $authPerson->car;
 
@@ -94,7 +96,8 @@ class CarController extends Controller
     )]
     public function show(Car $car): JsonResponse
     {
-        $this->authorize('view', $car);
+        $person = auth()->user()->person;
+        $this->authorize('view', [$person,$car]);
         $car->loadMissing(['model.brand', 'model.type', 'color']);
 
         return (new CarResource($car))
@@ -128,10 +131,10 @@ class CarController extends Controller
     )]
     public function store(StoreCarRequest $request): JsonResponse
     {
-        $this->authorize('create', Car::class);
-
-        /** @var Person $person */
-        $person = auth()->user();
+        /** @var User $user */
+        $user = auth()->user();
+        $person = $user->person;
+        $this->authorize('create', [Car::class, $person]);
 
         $dto = CarCreateData::fromArray($request->validated());
         $car = $this->cars->createCar($dto, $person);
