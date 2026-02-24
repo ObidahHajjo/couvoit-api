@@ -61,7 +61,7 @@ class PersonController extends Controller
     )]
     public function show(Person $person): JsonResponse
     {
-        $this->authorize('view', $person);
+        $this->authorize('view', [Person::class,$person]);
 
         return PersonResource::make($person)
             ->response()
@@ -84,7 +84,7 @@ class PersonController extends Controller
     )]
     public function tripsDriver(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsDriver', $person);
+        $this->authorize('viewTripsDriver', [Person::class,$person]);
 
         $trips = $this->persons->tripsAsDriver($person);
 
@@ -109,7 +109,7 @@ class PersonController extends Controller
     )]
     public function tripsPassenger(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsPassenger', $person);
+        $this->authorize('viewTripsPassenger', [Person::class,$person]);
 
         $trips = $this->persons->tripsAsPassenger($person);
 
@@ -181,7 +181,7 @@ class PersonController extends Controller
     )]
     public function update(UpdatePersonRequest $request, Person $person): JsonResponse
     {
-        $this->authorize('update', $person);
+        $this->authorize('update', [Person::class,$person]);
 
         $updated = $this->persons->update($person, $request->validated());
         $updated->loadMissing(['car', 'user.role']);
@@ -207,7 +207,7 @@ class PersonController extends Controller
     )]
     public function destroy(Person $person): Response
     {
-        $this->authorize('delete', $person);
+        $this->authorize('delete', [Person::class,$person]);
 
         $this->persons->softDelete($person);
 

@@ -8,7 +8,6 @@ use App\Http\Requests\Car\StoreCarRequest;
 use App\Http\Requests\Car\UpdateCarRequest;
 use App\Http\Resources\CarResource;
 use App\Models\Car;
-use App\Models\Person;
 use App\Models\User;
 use App\Services\Interfaces\CarServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -177,7 +176,7 @@ class CarController extends Controller
     )]
     public function update(UpdateCarRequest $request, Car $car): JsonResponse
     {
-        $this->authorize('update', $car);
+        $this->authorize('update', [Car::class,$car]);
 
         $dto = CarUpdateData::fromArray($request->validated());
         $updatedCar = $this->cars->updateCar($car, $dto);
@@ -213,7 +212,7 @@ class CarController extends Controller
     )]
     public function destroy(Car $car): Response
     {
-        $this->authorize('delete', $car);
+        $this->authorize('delete', [Car::class,$car]);
 
         $this->cars->deleteCar($car);
 
