@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
-use App\Security\JwtIssuer;
 use App\Security\JwtIssuerInterface;
 use App\Services\Interfaces\AuthServiceInterface;
 use Carbon\CarbonImmutable;
@@ -46,7 +45,7 @@ final readonly class AuthService implements AuthServiceInterface
             ]);
 
             // If this throws → everything rolls back automatically
-            return $this->issueSession($user);
+            return $this->issueSession($user, $person->id);
         });
     }
 
@@ -59,8 +58,8 @@ final readonly class AuthService implements AuthServiceInterface
         $user  = $this->userRepository->findByEmail($email);
         if (!$user || !Hash::check($password, $user->password)) throw new UnauthorizedException('Invalid credentials.');
         if (!$user->is_active) throw new UnauthorizedException('Account inactive.');
-
-        return $this->issueSession($user);
+        $person = $this->personRepository->findById($user->person_id);
+        return $this->issueSession($user, $person->id);
     }
 
     /** @inheritDoc */
@@ -84,7 +83,7 @@ final readonly class AuthService implements AuthServiceInterface
         ];
     }
 
-    private function issueSession(User $user): array
+    private function issueSession(User $user, int $person_id): array
     {
         $access = $this->jwt->issueAccessToken($user);
 
@@ -98,6 +97,8 @@ final readonly class AuthService implements AuthServiceInterface
             'refresh_token' => $refreshPlain,
             'token_type' => 'Bearer',
             'expires_in' => (int) config('jwt.access_ttl', 900),
+            'role_id' => $user->role_id,
+            'person_id' => $person_id,
         ];
     }
 }
