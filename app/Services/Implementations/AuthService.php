@@ -12,6 +12,7 @@ use App\Security\JwtIssuer;
 use App\Security\JwtIssuerInterface;
 use App\Services\Interfaces\AuthServiceInterface;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 final readonly class AuthService implements AuthServiceInterface
@@ -26,20 +27,27 @@ final readonly class AuthService implements AuthServiceInterface
     /** @inheritDoc */
     public function register(string $email, string $password): array
     {
-        $email = strtolower(trim($email));
+        return DB::transaction(function () use ($email, $password) {
 
-        if ($this->userRepository->existsByEmail($email)) throw new ConflictException('User already exists');
+            $email = strtolower(trim($email));
 
-        $person = $this->personRepository->create([]);
-        $user = $this->userRepository->create([
-            'email' => $email,
-            'password' => Hash::make($password),
-            'role_id' => 1,
-            'is_active' => true,
-            'person_id' => $person->id,
-        ]);
+            if ($this->userRepository->existsByEmail($email)) {
+                throw new ConflictException('User already exists');
+            }
 
-        return $this->issueSession($user);
+            $person = $this->personRepository->create([]);
+
+            $user = $this->userRepository->create([
+                'email' => $email,
+                'password' => Hash::make($password),
+                'role_id' => 1,
+                'is_active' => true,
+                'person_id' => $person->id,
+            ]);
+
+            // If this throws → everything rolls back automatically
+            return $this->issueSession($user);
+        });
     }
 
     /** @inheritDoc */
