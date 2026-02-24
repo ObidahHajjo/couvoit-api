@@ -96,8 +96,8 @@ class CarController extends Controller
     )]
     public function show(Car $car): JsonResponse
     {
-        $person = auth()->user()->person;
-        $this->authorize('view', [$person,$car]);
+        $this->authorize('view', $car);
+
         $car->loadMissing(['model.brand', 'model.type', 'color']);
 
         return (new CarResource($car))

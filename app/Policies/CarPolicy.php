@@ -53,20 +53,21 @@ class CarPolicy
      *
      * @param User $user
      * @param Car    $car
-     * @param Person $person
      * @return Response
      */
-    public function view(User $user, Person $person, Car $car): Response
+    public function view(User $user, Car $car): Response
     {
         if (! $user->is_active) {
             return Response::deny("Compte inactif : accès aux voitures interdit.");
         }
 
-        if (is_null($person->car_id)) {
+        $person = $user->person;
+
+        if (is_null($person?->car_id)) {
             return Response::deny("Vous n'avez pas de voiture associée à votre compte.");
         }
 
-        if ($person->car_id !== $car->id) {
+        if ((int) $person->car_id !== (int) $car->id) {
             return Response::deny("Vous ne pouvez consulter que votre propre voiture.");
         }
 
