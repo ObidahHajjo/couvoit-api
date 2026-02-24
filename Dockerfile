@@ -3,6 +3,8 @@ FROM php:8.5-apache
 RUN apt-get update && apt-get install -y \
     git unzip libpq-dev libzip-dev \
  && docker-php-ext-install pdo pdo_pgsql zip \
+ && pecl install redis \
+ && docker-php-ext-enable redis \
  && a2enmod rewrite headers \
  && echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
  && a2enconf servername \
