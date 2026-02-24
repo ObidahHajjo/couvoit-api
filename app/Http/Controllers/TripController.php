@@ -397,9 +397,11 @@ class TripController extends Controller
         $authUser = auth()->user();
         $authPerson = $authUser->person;
 
+        $requestPersonId = $request->validated('person_id');
+
         $personId = $authUser->isAdmin()
-            ? (int) $request->validated('person_id')
-            : $authPerson->id;
+            ? (int)$requestPersonId
+            : (is_null($requestPersonId) ? $authPerson->id : (int)$requestPersonId);
 
         Log::info("person id");
         $passenger = $this->trips->getPersonById($personId);
