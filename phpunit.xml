@@ -16,6 +16,21 @@
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <directory>app/Http/Requests</directory>
+            <!-- Infrastructure -->
+            <directory>app/Console</directory>
+            <directory>app/Exceptions</directory>
+
+            <!-- OpenAPI / Swagger -->
+            <directory>app/Swagger</directory>
+
+            <!-- External clients -->
+            <directory>app/Clients</directory>
+
+            <!-- If you consider these thin layers -->
+            <directory>app/Resolvers</directory>
+        </exclude>
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
