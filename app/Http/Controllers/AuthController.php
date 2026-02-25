@@ -8,16 +8,32 @@ use App\Http\Resources\AuthTokenResource;
 use App\Services\Interfaces\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use OpenApi\Attributes as OA;
 
+/**
+ * Auth endpoints (Local JWT).
+ */
+#[OA\Tag(name: 'Auth', description: 'Authentication endpoints (register/login/refresh).')]
 class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthServiceInterface $authService
     ) {}
 
-    /**
-     * POST /register
-     */
+    #[OA\Post(
+        path: '/api/register',
+        operationId: 'authRegister',
+        summary: 'Register',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/AuthRequestPayload')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 201, description: 'Created', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function register(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -28,9 +44,21 @@ class AuthController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * POST /login
-     */
+    #[OA\Post(
+        path: '/api/login',
+        operationId: 'authLogin',
+        summary: 'Login',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/AuthRequestPayload')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function login(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -41,9 +69,21 @@ class AuthController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * POST /refresh
-     */
+    #[OA\Post(
+        path: '/api/refresh',
+        operationId: 'authRefresh',
+        summary: 'Refresh token',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/RefreshRequestPayload')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function refresh(RefreshRequest $request): JsonResponse
     {
         $data = $request->validated();

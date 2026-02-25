@@ -8,14 +8,14 @@ use Illuminate\Support\Collection;
 interface CarRepositoryInterface
 {
     /**
-     * Retrieve all cars with required relations.
+     * Retrieve all cars.
      *
      * @return Collection<int,Car>
      */
     public function all(): Collection;
 
     /**
-     * Find a car by id (with relations).
+     * Find a car by its identifier.
      *
      * @param int $id
      * @return Car|null
@@ -23,7 +23,7 @@ interface CarRepositoryInterface
     public function find(int $id): ?Car;
 
     /**
-     * Find a car by id or fail (with relations).
+     * Find a car by its identifier or fail.
      *
      * @param int $id
      * @return Car
@@ -31,24 +31,24 @@ interface CarRepositoryInterface
     public function findOrFail(int $id): Car;
 
     /**
-     * Create a car.
+     * Persist a new car and update caches.
      *
-     * @param array $data
+     * @param array<string,mixed> $data
      * @return Car
      */
     public function create(array $data): Car;
 
     /**
-     * Update a given car.
+     * Update the given car and refresh caches.
      *
-     * @param Car $car
-     * @param array $data
-     * @return true if updated, false otherwise
+     * @param Car                $car
+     * @param array<string,mixed> $data
+     * @return bool
      */
     public function update(Car $car, array $data): bool;
 
     /**
-     * Delete a given car.
+     * Delete the given car and invalidate caches.
      *
      * @param Car $car
      * @return void

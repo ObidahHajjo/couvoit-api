@@ -1,0 +1,1783 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Couvoit API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register",
+                "description": "POST /register",
+                "operationId": "authRegister",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "description": "POST /login",
+                "operationId": "authLogin",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/refresh": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh token",
+                "description": "POST /refresh",
+                "operationId": "authRefresh",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/brands": {
+            "get": {
+                "tags": [
+                    "Brands"
+                ],
+                "summary": "List brands",
+                "description": "List brands.",
+                "operationId": "brandsIndex",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/brands/{id}": {
+            "get": {
+                "tags": [
+                    "Brands"
+                ],
+                "summary": "Get brand by id",
+                "description": "Show a brand.",
+                "operationId": "brandsShow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/cars": {
+            "get": {
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "List cars",
+                "description": "List cars.\nAdmin: list all cars\nUser: only his car",
+                "operationId": "carsIndex",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "Create my car",
+                "description": "Create a car for the authenticated user.",
+                "operationId": "carsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCarRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/cars/{id}": {
+            "get": {
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "Get car by id",
+                "description": "Show a car.",
+                "operationId": "carsShow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "Delete my car",
+                "description": "Delete a car.",
+                "operationId": "carsDestroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "Update my car",
+                "description": "Update a car.",
+                "operationId": "carsUpdate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCarRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/persons": {
+            "get": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "List persons (admin)",
+                "description": "List persons (Admin only).",
+                "operationId": "personsIndex",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Complete my profile",
+                "description": "Store person data (your implementation uses this as \"complete my profile\").",
+                "operationId": "personsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePersonRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/persons/{id}": {
+            "get": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Get person by id",
+                "description": "Show a person.",
+                "operationId": "personsShow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Delete person (soft)",
+                "description": "Soft-delete a person (admin only per policy).",
+                "operationId": "personsDestroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Update person",
+                "description": "Update a person.",
+                "operationId": "personsUpdate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePersonRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/persons/{id}/trips-driver": {
+            "get": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Trips as driver",
+                "description": "List trips where person is driver.",
+                "operationId": "personsTripsDriver",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/persons/{id}/trips-passenger": {
+            "get": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Trips as passenger",
+                "description": "List trips where person is passenger.",
+                "operationId": "personsTripsPassenger",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/person-role": {
+            "patch": {
+                "tags": [
+                    "Persons"
+                ],
+                "summary": "Update person role (admin)",
+                "description": "Update a person's role (admin).",
+                "operationId": "personsUpdateRole",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateRolePersonRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trips": {
+            "get": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Search trips",
+                "description": "Search trips.\n\nQuery: startingcity, arrivalcity, tripdate, per_page",
+                "operationId": "tripsIndex",
+                "parameters": [
+                    {
+                        "name": "startingcity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "arrivalcity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "tripdate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Create trip",
+                "description": "Create a trip.",
+                "operationId": "tripsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTripRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trips/{id}": {
+            "get": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Get trip by id",
+                "description": "Show a trip.",
+                "operationId": "tripsShow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Delete trip permanently",
+                "description": "Permanently delete a trip.",
+                "operationId": "tripsDestroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Update trip",
+                "description": "Update a trip.",
+                "operationId": "tripsUpdate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTripRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trips/{id}/person": {
+            "get": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "List trip passengers",
+                "description": "List passengers of a trip.",
+                "operationId": "tripsPassengers",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Reserve a seat",
+                "description": "Reserve a seat for a trip.",
+                "operationId": "tripsReserve",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReserveTripRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "200": {
+                        "description": "Already exists"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trips/{id}/cancel": {
+            "patch": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Cancel trip",
+                "description": "Cancel a trip.",
+                "operationId": "tripsCancel",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trips/{id}/reservations": {
+            "delete": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Cancel reservation",
+                "description": "Cancel a reservation for this trip.",
+                "operationId": "tripsCancelReservation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CancelReservationRequestPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AuthRequestPayload": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "Trips",
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "minLength": 6,
+                        "example": "secret123"
+                    }
+                },
+                "type": "object"
+            },
+            "RefreshRequestPayload": {
+                "required": [
+                    "refresh_token"
+                ],
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                },
+                "type": "object"
+            },
+            "AuthTokenResponse": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refresh_token": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "example": "bearer"
+                    },
+                    "expires_in": {
+                        "type": "integer",
+                        "example": 3600
+                    }
+                },
+                "type": "object"
+            },
+            "StoreCarRequestPayload": {
+                "required": [
+                    "brand",
+                    "type",
+                    "model",
+                    "color",
+                    "carregistration"
+                ],
+                "properties": {
+                    "brand": {
+                        "required": [
+                            "name"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "peugeot"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "type": {
+                        "required": [
+                            "name"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "berline"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "model": {
+                        "required": [
+                            "name",
+                            "seats"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "308"
+                            },
+                            "seats": {
+                                "type": "integer",
+                                "maximum": 9,
+                                "minimum": 1,
+                                "example": 5
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "color": {
+                        "required": [
+                            "name",
+                            "hex_code"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "bleu"
+                            },
+                            "hex_code": {
+                                "type": "string",
+                                "example": "#00AAFF"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "carregistration": {
+                        "type": "string",
+                        "example": "AA123BB"
+                    },
+                    "seats": {
+                        "type": "integer",
+                        "maximum": 9,
+                        "minimum": 1,
+                        "example": 5,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateCarRequestPayload": {
+                "properties": {
+                    "carregistration": {
+                        "type": "string",
+                        "example": "AA123BB",
+                        "nullable": true
+                    },
+                    "license_plate": {
+                        "type": "string",
+                        "example": "AA123BB",
+                        "nullable": true
+                    },
+                    "color": {
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "bleu",
+                                "nullable": true
+                            },
+                            "hex_code": {
+                                "type": "string",
+                                "example": "#00AAFF",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "model": {
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "308",
+                                "nullable": true
+                            },
+                            "seats": {
+                                "type": "integer",
+                                "maximum": 9,
+                                "minimum": 1,
+                                "example": 5,
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "brand": {
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "peugeot",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "type": {
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "berline",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StorePersonRequestPayload": {
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "firstname": {
+                        "description": "Alias for first_name",
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "lastname": {
+                        "description": "Alias for last_name",
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 15,
+                        "example": "+33600000000",
+                        "nullable": true
+                    },
+                    "pseudo": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "jdoe",
+                        "nullable": true
+                    },
+                    "car_id": {
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdatePersonRequestPayload": {
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "firstname": {
+                        "description": "Alias for first_name",
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "lastname": {
+                        "description": "Alias for last_name",
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 15,
+                        "example": "+33600000000",
+                        "nullable": true
+                    },
+                    "pseudo": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "jdoe",
+                        "nullable": true
+                    },
+                    "car_id": {
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "DELETED"
+                        ],
+                        "example": "ACTIVE",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateRolePersonRequestPayload": {
+                "required": [
+                    "person_id",
+                    "role_id"
+                ],
+                "properties": {
+                    "person_id": {
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "role_id": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "StoreUserRequestPayload": {
+                "required": [
+                    "pseudo",
+                    "first_name",
+                    "last_name",
+                    "phone",
+                    "email"
+                ],
+                "properties": {
+                    "pseudo": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "john_doe"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "+33600000000"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255,
+                        "example": "john@example.com"
+                    },
+                    "city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Paris",
+                        "nullable": true
+                    },
+                    "car_id": {
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateUserRequestPayload": {
+                "properties": {
+                    "id": {
+                        "description": "Route id merged into payload",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "pseudo": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "john_doe",
+                        "nullable": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "+33600000000",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255,
+                        "example": "john@example.com",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CancelReservationRequestPayload": {
+                "required": [
+                    "person_id"
+                ],
+                "properties": {
+                    "person_id": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "ReserveTripRequestPayload": {
+                "required": [
+                    "person_id"
+                ],
+                "properties": {
+                    "person_id": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "StoreTripRequestPayload": {
+                "required": [
+                    "kms",
+                    "trip_datetime",
+                    "available_seats",
+                    "starting_address",
+                    "arrival_address"
+                ],
+                "properties": {
+                    "kms": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0.01,
+                        "example": 12.5
+                    },
+                    "trip_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-18T14:00:00+01:00"
+                    },
+                    "available_seats": {
+                        "type": "integer",
+                        "maximum": 9,
+                        "minimum": 1,
+                        "example": 3
+                    },
+                    "smoking_allowed": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "starting_address": {
+                        "required": [
+                            "street_number",
+                            "street_name",
+                            "postal_code",
+                            "city_name"
+                        ],
+                        "properties": {
+                            "street_number": {
+                                "type": "string",
+                                "maxLength": 50,
+                                "example": "10"
+                            },
+                            "street_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Rue de Rivoli"
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "maxLength": 20,
+                                "example": "75001"
+                            },
+                            "city_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Paris"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "arrival_address": {
+                        "required": [
+                            "street_number",
+                            "street_name",
+                            "postal_code",
+                            "city_name"
+                        ],
+                        "properties": {
+                            "street_number": {
+                                "type": "string",
+                                "maxLength": 50,
+                                "example": "20"
+                            },
+                            "street_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Avenue de France"
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "maxLength": 20,
+                                "example": "75013"
+                            },
+                            "city_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Paris"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "person_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "TripIndexQuery": {
+                "properties": {
+                    "startingcity": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Paris",
+                        "nullable": true
+                    },
+                    "arrivalcity": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Lyon",
+                        "nullable": true
+                    },
+                    "tripdate": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-02-20",
+                        "nullable": true
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 1,
+                        "example": 15,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateTripRequestPayload": {
+                "properties": {
+                    "kms": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0.01,
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "trip_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-18T16:00:00+01:00",
+                        "nullable": true
+                    },
+                    "available_seats": {
+                        "type": "integer",
+                        "maximum": 9,
+                        "minimum": 1,
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "smoking_allowed": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "starting_address": {
+                        "properties": {
+                            "street_number": {
+                                "type": "string",
+                                "maxLength": 50,
+                                "example": "10",
+                                "nullable": true
+                            },
+                            "street_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Rue de Rivoli",
+                                "nullable": true
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "maxLength": 20,
+                                "example": "75001",
+                                "nullable": true
+                            },
+                            "city_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Paris",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "arrival_address": {
+                        "properties": {
+                            "street_number": {
+                                "type": "string",
+                                "maxLength": 50,
+                                "example": "20",
+                                "nullable": true
+                            },
+                            "street_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Avenue de France",
+                                "nullable": true
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "maxLength": 20,
+                                "example": "75013",
+                                "nullable": true
+                            },
+                            "city_name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Paris",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Authentication endpoints (register/login/refresh)."
+        },
+        {
+            "name": "Brands",
+            "description": "Brand endpoints."
+        },
+        {
+            "name": "Cars",
+            "description": "Car endpoints. Admin can list all; user only sees/edits their own car."
+        },
+        {
+            "name": "Persons",
+            "description": "Person endpoints (admin listing, profile, trips)."
+        },
+        {
+            "name": "Trips",
+            "description": "Trip endpoints (search, create, update, cancel, reserve)."
+        }
+    ]
+}

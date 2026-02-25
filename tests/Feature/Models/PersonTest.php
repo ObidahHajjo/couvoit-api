@@ -2,104 +2,215 @@
 
 namespace Tests\Feature\Models;
 
+use App\Models\Address;
 use App\Models\Car;
+use App\Models\CarModel;
+use App\Models\City;
+use App\Models\Brand;
+use App\Models\Color;
 use App\Models\Person;
-use App\Models\Role;
 use App\Models\Trip;
+use App\Models\Type;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
+use Throwable;
 
-class PersonTest extends TestCase
+/**
+ * Class PersonTest
+ *
+ * Feature tests for the Person Eloquent model:
+ * - table name
+ * - relationships (car, trips, reservations pivot)
+ * - SoftDeletes behavior
+ */
+final class PersonTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_person_table_is_persons_and_fillable_allows_expected_fields(): void
+    /**
+     * Create a Car record with required dependencies (Brand/Type/CarModel/Color).
+     *
+     * @param string $licensePlate
+     * @return Car
+     */
+    private function makeCar(string $licensePlate = 'AA-123-AA'): Car
     {
-        $role = Role::factory()->create();
-        $car  = Car::factory()->create();
+        $brand = Brand::query()->create(['name' => 'Brand_' . Str::random(6)]);
+        $type  = Type::query()->create(['type' => 'Type_' . Str::random(6)]);
 
-        $person = Person::query()->create([
-            'supabase_user_id' => '00000000-0000-0000-0000-000000000001',
-            'email'            => 'test@example.com',
-            'first_name'       => 'John',
-            'last_name'        => 'Doe',
-            'pseudo'           => 'john_doe',
-            'phone'            => '0600000000',
-            'is_active'        => true,
-            'role_id'          => $role->id,
-            'car_id'           => $car->id,
+        $model = CarModel::query()->create([
+            'name' => 'Model_' . Str::random(6),
+            'seats' => 5,
+            'brand_id' => $brand->id,
+            'type_id' => $type->id,
         ]);
 
-        $this->assertDatabaseHas('persons', [
-            'id'               => $person->id,
-            'email'            => 'test@example.com',
-            'pseudo'           => 'john_doe',
-            'role_id'          => $role->id,
-            'car_id'           => $car->id,
+        $color = Color::query()->create([
+            'name' => 'Color_' . Str::random(6),
+            'hex_code' => '#00' . strtoupper(Str::random(4)),
+        ]);
+
+        return Car::query()->create([
+            'license_plate' => $licensePlate,
+            'model_id' => $model->id,
+            'color_id' => $color->id,
         ]);
     }
 
-    public function test_relationships_role_car_trips_reservations(): void
+    /**
+     * Create an Address with City dependency.
+     *
+     * @param string $street
+     * @return Address
+     * @throws Throwable
+     */
+    private function makeAddress(string $street = 'Rue A'): Address
     {
-        $role = Role::factory()->create(['name' => 'user']);
-        $car  = Car::factory()->create();
-
-        $person = Person::factory()->create([
-            'role_id' => $role->id,
-            'car_id'  => $car->id,
+        $city = City::query()->create([
+            'name' => 'City_' . Str::random(6),
+            'postal_code' => (string) random_int(10000, 99999),
         ]);
 
-        // trips where person is driver
-        $trip1 = Trip::factory()->create(['person_id' => $person->id]);
-        $trip2 = Trip::factory()->create(['person_id' => $person->id]);
-
-        // reservations pivot: person is passenger
-        $tripAsPassenger = Trip::factory()->create();
-        $person->reservations()->attach($tripAsPassenger->id);
-
-        $person->load(['role', 'car', 'trips', 'reservations']);
-
-        $this->assertEquals($role->id, $person->role->id);
-        $this->assertEquals($car->id, $person->car->id);
-
-        $this->assertCount(2, $person->trips);
-        $this->assertTrue($person->trips->pluck('id')->contains($trip1->id));
-        $this->assertTrue($person->trips->pluck('id')->contains($trip2->id));
-
-        $this->assertCount(1, $person->reservations);
-        $this->assertEquals($tripAsPassenger->id, $person->reservations->first()->id);
+        return Address::query()->create([
+            'street' => $street,
+            'street_number' => '1',
+            'city_id' => $city->id,
+        ]);
     }
 
-    public function test_is_admin_true_when_role_name_admin(): void
+    /**
+     * Create a Person record using only profile fields (no auth fields).
+     *
+     * Adjust keys if your Person fillable differs.
+     *
+     * @param array<string,mixed> $overrides
+     * @return Person
+     * @throws Throwable
+     */
+    private function makePerson(array $overrides = []): Person
     {
-        $adminRole = Role::factory()->create(['name' => 'admin']);
-        $person = Person::factory()->create(['role_id' => $adminRole->id]);
+        $suffix = Str::lower(Str::random(8));
 
-        // role must be loaded for the nullsafe access to hit real role
-        $person->load('role');
+        $payload = array_merge([
+            'first_name' => 'First',
+            'last_name' => 'Last',
+            'pseudo' => "pseudo_$suffix",
+            'phone' => '+336' . random_int(10000000, 99999999),
+            'car_id' => null,
+        ], $overrides);
 
-        $this->assertTrue($person->isAdmin());
+        return Person::query()->create($payload);
     }
 
-    public function test_is_admin_false_when_role_is_not_admin(): void
+    /**
+     * @throws Throwable
+     */
+    public function test_person_uses_persons_table(): void
     {
-        $userRole = Role::factory()->create(['name' => 'user']);
-        $person = Person::factory()->create(['role_id' => $userRole->id]);
-        $person->load('role');
-
-        $this->assertFalse($person->isAdmin());
+        $this->assertSame('persons', (new Person())->getTable());
     }
 
-    public function test_is_admin_false_when_role_is_null(): void
+    /**
+     * @throws Throwable
+     */
+    public function test_person_belongs_to_car_when_car_id_is_set(): void
     {
-        // Create without role relationship (role_id null if DB allows; if not, skip by using an existing but not-loaded role)
-        $role = Role::factory()->create(['name' => 'user']);
-        $person = Person::factory()->create(['role_id' => $role->id]);
+        $car = $this->makeCar('CC-789-CC');
+        $person = $this->makePerson(['car_id' => $car->id]);
 
-        // Force role not loaded and relation null by unsetting relation
-        $person->unsetRelation('role');
+        $person->load('car');
 
-        // In this state role property is null until loaded; nullsafe => false
-        $this->assertFalse($person->isAdmin());
+        $this->assertNotNull($person->car);
+        $this->assertSame($car->id, $person->car->id);
+        $this->assertSame('CC-789-CC', $person->car->license_plate);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function test_person_has_many_trips_as_driver(): void
+    {
+        $driver = $this->makePerson();
+
+        $dep = $this->makeAddress('Dep Street');
+        $arr = $this->makeAddress('Arr Street');
+
+        $t1 = Trip::query()->create([
+            'departure_time' => '2026-02-18 10:00:00',
+            'arrival_time' => '2026-02-18 11:00:00',
+            'distance_km' => 10,
+            'available_seats' => 2,
+            'smoking_allowed' => false,
+            'departure_address_id' => $dep->id,
+            'arrival_address_id' => $arr->id,
+            'person_id' => $driver->id,
+        ]);
+
+        $t2 = Trip::query()->create([
+            'departure_time' => '2026-02-19 10:00:00',
+            'arrival_time' => '2026-02-19 12:00:00',
+            'distance_km' => 120,
+            'available_seats' => 3,
+            'smoking_allowed' => true,
+            'departure_address_id' => $dep->id,
+            'arrival_address_id' => $arr->id,
+            'person_id' => $driver->id,
+        ]);
+
+        $driver->refresh()->load('trips');
+
+        $this->assertCount(2, $driver->trips);
+        $this->assertTrue($driver->trips->contains($t1));
+        $this->assertTrue($driver->trips->contains($t2));
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function test_person_reservations_belongs_to_many_trips_through_pivot(): void
+    {
+        $driver = $this->makePerson();
+        $passenger = $this->makePerson();
+
+        $dep = $this->makeAddress('Dep Street');
+        $arr = $this->makeAddress('Arr Street');
+
+        $trip = Trip::query()->create([
+            'departure_time' => '2026-02-18 10:00:00',
+            'arrival_time' => '2026-02-18 12:00:00',
+            'distance_km' => 50,
+            'available_seats' => 2,
+            'smoking_allowed' => false,
+            'departure_address_id' => $dep->id,
+            'arrival_address_id' => $arr->id,
+            'person_id' => $driver->id,
+        ]);
+
+        $passenger->reservations()->attach($trip->id);
+
+        $passenger->refresh()->load('reservations');
+
+        $this->assertCount(1, $passenger->reservations);
+        $this->assertSame($trip->id, $passenger->reservations->first()->id);
+
+        $this->assertDatabaseHas('reservations', [
+            'person_id' => $passenger->id,
+            'trip_id' => $trip->id,
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function test_person_soft_delete_excludes_from_default_queries(): void
+    {
+        $person = $this->makePerson();
+
+        $person->delete();
+
+        $this->assertSoftDeleted('persons', ['id' => $person->id]);
+        $this->assertNull(Person::query()->find($person->id));
+        $this->assertNotNull(Person::withTrashed()->find($person->id));
     }
 }

@@ -5,6 +5,9 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Auth request payload (register/login).
+ */
 class AuthRequest extends FormRequest
 {
     /**
@@ -23,8 +26,8 @@ class AuthRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "email" => "required|email",
-            "password" => "required|min:6"
+            'email' => 'required|email',
+            'password' => 'required|min:6',
         ];
     }
 }

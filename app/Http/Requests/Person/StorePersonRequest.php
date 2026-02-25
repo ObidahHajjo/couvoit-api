@@ -5,13 +5,27 @@ namespace App\Http\Requests\Person;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Store person request.
+ *
+ * Notes:
+ * - Accepts `firstname`/`lastname` aliases and normalizes into `first_name`/`last_name`.
+ * - If `pseudo` not provided, generates one from first letter of first_name + last_name.
+ * - Lowercases pseudo.
+ */
 class StorePersonRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Normalize incoming request payload prior to validation.
+     */
     protected function prepareForValidation(): void
     {
         $firstName = $this->input('first_name', $this->input('firstname'));
@@ -27,13 +41,17 @@ class StorePersonRequest extends FormRequest
             return;
         }
 
-        if (!empty($firstName) && !empty($lastName)) {
-            $generated = mb_substr((string) $firstName, 0, 1) . (string) $lastName;
+        if (! empty($firstName) && ! empty($lastName)) {
+            $generated = mb_substr((string) $firstName, 0, 1) . $lastName;
             $this->merge(['pseudo' => strtolower(trim($generated))]);
         }
     }
 
-
+    /**
+     * Validation rules.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -50,6 +68,11 @@ class StorePersonRequest extends FormRequest
         ];
     }
 
+    /**
+     * Custom validation messages.
+     *
+     * @return array<string,string>
+     */
     public function messages(): array
     {
         return [

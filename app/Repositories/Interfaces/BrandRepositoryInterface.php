@@ -14,38 +14,37 @@ use Illuminate\Support\Collection;
 interface BrandRepositoryInterface
 {
     /**
-     * Retrieve all brands.
+     * Retrieve all brands ordered by name.
      *
-     * @return Collection<int, Brand> Collection of Brand models.
+     * Results are cached and individual brand caches are warmed.
+     *
+     * @return Collection<int,Brand>
      */
     public function all(): Collection;
 
     /**
      * Find a brand by its identifier.
      *
-     * @param int $id Brand primary key.
-     * @return Brand|null The Brand model if found, otherwise null.
+     * @param int $id
+     * @return Brand|null
      */
     public function findById(int $id): ?Brand;
 
     /**
-     * Retrieve an existing brand by name or create it if it does not exist.
+     * Create a brand if it does not exist, or return the existing one.
      *
-     * Name comparison should be handled consistently
-     * (e.g., lowercase normalization before persistence).
+     * Cache is updated for the specific brand and
+     * the global list cache is invalidated.
      *
-     * @param string $name Brand name.
-     * @return Brand The existing or newly created Brand model.
+     * @param string $name
+     * @return Brand
      */
     public function createOrFirst(string $name): Brand;
 
     /**
-     * Delete a brand.
+     * Delete a brand and invalidate related cache entries.
      *
-     * The Brand instance is expected to be a valid
-     * Eloquent model (usually provided via route model binding).
-     *
-     * @param Brand $brand Brand instance to delete.
+     * @param Brand $brand
      * @return void
      */
     public function delete(Brand $brand): void;

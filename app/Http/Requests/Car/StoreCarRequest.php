@@ -4,13 +4,28 @@ namespace App\Http\Requests\Car;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Store car request.
+ *
+ * Normalizes:
+ * - brand/model strings into objects
+ * - carregistration by removing spaces/dashes and uppercasing
+ * - nested names to lowercase
+ * - hex_code to uppercase
+ */
 class StoreCarRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Normalize incoming request payload prior to validation.
+     */
     protected function prepareForValidation(): void
     {
         if (is_string($this->input('brand'))) {
@@ -42,7 +57,7 @@ class StoreCarRequest extends FormRequest
             'carregistration' => $normalized,
         ]);
 
-        // --- Normalize nested names and hex casing ---
+        // Normalize nested names and hex casing
         $hex = (string) data_get($this->input('color', []), 'hex_code', '');
         $hex = strtoupper($hex);
 
@@ -63,6 +78,11 @@ class StoreCarRequest extends FormRequest
         ]);
     }
 
+    /**
+     * Validation rules.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

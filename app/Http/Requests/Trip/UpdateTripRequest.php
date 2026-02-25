@@ -5,6 +5,9 @@ namespace App\Http\Requests\Trip;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Update trip request.
+ */
 class UpdateTripRequest extends FormRequest
 {
     /**
@@ -16,7 +19,7 @@ class UpdateTripRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Validation rules.
      *
      * @return array<string, ValidationRule|array|string>
      */

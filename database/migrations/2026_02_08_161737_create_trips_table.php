@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
             $table->dateTime('departure_time');
+            $table->dateTime('arrival_time');
             $table->decimal('distance_km', 8, 2);
             $table->smallInteger('available_seats');
             $table->boolean('smoking_allowed')->default(false);
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->foreignId('arrival_address_id')->constrained('addresses');
             $table->foreignId('person_id')->constrained('persons')->cascadeOnDelete();
             $table->softDeletes();
+            $table->unique(['departure_time', 'person_id']);
         });
         DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_available_seats CHECK (available_seats > 0);');
         DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_distance_km CHECK (distance_km > 0);');

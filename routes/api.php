@@ -23,7 +23,7 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('supabase.auth')->group(function () {
+Route::middleware('jwt')->group(function () {
 
     /* ===== USERS / PERSONS ===== */
     Route::get('/persons', [PersonController::class, 'index']);
@@ -32,6 +32,7 @@ Route::middleware('supabase.auth')->group(function () {
     Route::get('/persons/{person}/trips-passenger', [PersonController::class, 'tripsPassenger']);
 
     Route::post('/persons', [PersonController::class, 'store']);
+    Route::patch('/persons/role', [PersonController::class, 'updateRole']);
     Route::patch('/persons/{person}', [PersonController::class, 'update']);
     Route::delete('/persons/{person}', [PersonController::class, 'destroy']);
 

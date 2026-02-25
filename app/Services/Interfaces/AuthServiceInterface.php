@@ -3,44 +3,44 @@
 namespace App\Services\Interfaces;
 
 use App\Exceptions\ExternalServiceException;
-use App\Exceptions\UnauthorizedException;
+use Throwable;
 
 interface AuthServiceInterface
 {
     /**
-     * Register a new user via Supabase.
-     *
-     * - Creates user in Supabase Auth
-     * - Creates corresponding local Person record
+     * Register a new user in Supabase and ensure a corresponding
+     * local Person entity exists.
      *
      * @param string $email
      * @param string $password
-     * @return array Supabase response payload
      *
-     * @throws ExternalServiceException If Supabase request fails.
+     * @return array<string, mixed>
+     *
+     * @throws ExternalServiceException If Supabase response does not contain a valid user ID.
+     * @throws Throwable                Propagates any lower-level exception from client or repository.
      */
     public function register(string $email, string $password): array;
 
     /**
-     * Authenticate user via Supabase.
+     * Authenticate a user with email/password via Supabase.
      *
      * @param string $email
      * @param string $password
-     * @return array Supabase token payload
      *
-     * @throws UnauthorizedException If credentials are invalid.
-     * @throws ExternalServiceException If Supabase is unreachable or fails.
+     * @return array<string, mixed>
+     *
+     * @throws Throwable Propagates any exception thrown by the Supabase client.
      */
     public function login(string $email, string $password): array;
 
     /**
-     * Refresh an access token via Supabase.
+     * Refresh an access token using a Supabase refresh token.
      *
      * @param string $refreshToken
-     * @return array Refreshed token payload
      *
-     * @throws UnauthorizedException If refresh token is invalid.
-     * @throws ExternalServiceException If Supabase request fails.
+     * @return array<string, mixed>
+     *
+     * @throws Throwable Propagates any exception thrown by the Supabase client.
      */
     public function refresh(string $refreshToken): array;
 }

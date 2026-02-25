@@ -5,7 +5,6 @@ namespace App\Services\Implementations;
 use App\DTOS\Car\CarCreateData;
 use App\DTOS\Car\CarUpdateData;
 use App\Exceptions\ConflictException;
-use App\Exceptions\InactiveUserException;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
 use App\Models\Person;
@@ -24,22 +23,21 @@ readonly class CarService implements CarServiceInterface
         private PersonRepositoryInterface     $personRepository
     ) {}
 
+    /** @inheritDoc */
     public function getCars(): Collection
     {
         return $this->carRepository->all();
     }
 
+    /** @inheritDoc */
     public function findCar(Car $car): Car
     {
         return $car;
     }
 
+    /** @inheritDoc */
     public function createCar(CarCreateData $dto, Person $person): Car
     {
-        if (!$person->is_active) {
-            throw new InactiveUserException();
-        }
-
         if ($person->car_id !== null) {
             throw new ConflictException('User already has a car.');
         }
@@ -51,7 +49,7 @@ readonly class CarService implements CarServiceInterface
                 'brand' => ['name' => $dto->brandName],
                 'type'  => ['name' => $dto->typeName],
                 'model' => ['name' => $dto->modelName, 'seats' => $dto->seats],
-                'color' => ['hex_code' => $dto->colorHex],
+                'color' => ['hex_code' => $dto->colorHex, "name" => $dto->colorName],
             ]);
 
             $car = $this->carRepository->create([
@@ -67,6 +65,7 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
+    /** @inheritDoc */
     public function updateCar(Car $car, CarUpdateData $dto): Car
     {
         if ($dto->isEmpty()) {
@@ -112,6 +111,7 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
+    /** @inheritDoc */
     public function deleteCar(Car $car): void
     {
         $this->carRepository->delete($car);

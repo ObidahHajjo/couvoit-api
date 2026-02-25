@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Foundation\Configuration\Exceptions;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class ApiExceptionConfigurator
@@ -17,9 +19,6 @@ final class ApiExceptionConfigurator
     {
         // 0) Your domain/business exceptions
         $exceptions->render(function (DomainException $e, Request $request) {
-            if (! $request->expectsJson()) {
-                return null;
-            }
 
             return response()->json([
                 'error'   => $e->codeName(),
@@ -29,9 +28,6 @@ final class ApiExceptionConfigurator
 
         // 1) Validation exceptions (FormRequest)
         $exceptions->render(function (ValidationException $e, Request $request) {
-            if (! $request->expectsJson()) {
-                return null;
-            }
 
             return response()->json([
                 'error'   => 'VALIDATION_ERROR',
@@ -42,10 +38,6 @@ final class ApiExceptionConfigurator
 
         // 2) Policy/Gate authorization exceptions
         $exceptions->render(function (AuthorizationException $e, Request $request) {
-            if (! $request->expectsJson()) {
-                return null;
-            }
-
             return response()->json([
                 'error'   => 'FORBIDDEN',
                 'details' => $e->getMessage() ?: 'Forbidden.',
@@ -54,9 +46,6 @@ final class ApiExceptionConfigurator
 
         // 3) Model not found
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {
-            if (! $request->expectsJson()) {
-                return null;
-            }
 
             $model = class_basename($e->getModel());
             $ids = $e->getIds();
@@ -74,10 +63,6 @@ final class ApiExceptionConfigurator
 
         // 3bis) NotFoundHttpException (route binding often ends here)
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
-            if (! $request->expectsJson()) {
-                return null;
-            }
-
             $prev = $e->getPrevious();
 
             // If it comes from Eloquent model binding, Laravel often stores it as "previous"
@@ -105,18 +90,34 @@ final class ApiExceptionConfigurator
 
         // 4) Database query exceptions (PostgreSQL-focused, but safe)
         $exceptions->render(function (QueryException $e, Request $request) {
-            if (! $request->expectsJson()) {
-                return null;
-            }
 
             // Postgres SQLSTATE is usually in $e->errorInfo[0]
             $sqlState = $e->errorInfo[0] ?? null;
 
-            // 23505 = unique_violation
             if ($sqlState === '23505') {
+
+                $message = $e->errorInfo[2] ?? '';
+
+                $constraint = null;
+                $fields = null;
+                $values = null;
+
+                // Extract constraint name
+                if (preg_match('/unique constraint "([^"]+)"/', $message, $m)) {
+                    $constraint = $m[1];
+                }
+
+                // Extract duplicated fields + values
+                if (preg_match('/Key \(([^)]+)\)=\(([^)]+)\)/', $message, $m)) {
+                    $fields = explode(', ', $m[1]);
+                    $values = explode(', ', $m[2]);
+                }
+
                 return response()->json([
-                    'error'   => 'CONFLICT',
-                    'details' => 'Unique constraint violation.',
+                    'error' => 'CONFLICT',
+                    'constraint' => $constraint,
+                    'duplicated_fields' => $fields,
+                    'duplicated_values' => $values,
                 ], Response::HTTP_CONFLICT);
             }
 
@@ -140,6 +141,24 @@ final class ApiExceptionConfigurator
                 'error'   => 'DATABASE_ERROR',
                 'details' => 'Database query error.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        });
+
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            return response()->json([
+                'error'   => 'FORBIDDEN',
+                'details' => $e->getMessage() ?: 'Forbidden.',
+            ], Response::HTTP_FORBIDDEN);
+        });
+
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            $status =  $e->getStatusCode();
+            // Keep production safe
+            $message = config('app.debug') ? $e->getMessage() : 'Server Error';
+
+            return response()->json([
+                'error'   => class_basename($e),
+                'details' => $message,
+            ], $status);
         });
     }
 }

@@ -8,14 +8,14 @@ use Illuminate\Support\Collection;
 interface CarModelRepositoryInterface
 {
     /**
-     * Retrieve all car models with their brand.
+     * Retrieve all car models.
      *
      * @return Collection<int,CarModel>
      */
     public function all(): Collection;
 
     /**
-     * Find a car model by its id.
+     * Find a car model by its identifier.
      *
      * @param int $id
      * @return CarModel|null
@@ -23,29 +23,24 @@ interface CarModelRepositoryInterface
     public function findById(int $id): ?CarModel;
 
     /**
-     * Create a model or return the first matching one.
+     * Create a model if it does not exist, or return the existing one.
      *
-     * Unique key assumed:
-     * - name
-     * - brand_id
-     *
-     * @param array{name:string,brand_id:int,seats:int,type_id:int} $data
+     * @param array<string,mixed> $data
      * @return CarModel
      */
     public function createOrFirst(array $data): CarModel;
 
     /**
-     * Update a given CarModel.
+     * Update the given model and refresh caches.
      *
-     * @param CarModel $model
-     * @param array $data
-     *
+     * @param CarModel            $model
+     * @param array<string,mixed> $data
      * @return void
      */
     public function update(CarModel $model, array $data): void;
 
     /**
-     * Delete a given CarModel.
+     * Delete the given model and invalidate caches.
      *
      * @param CarModel $model
      * @return bool
@@ -53,7 +48,7 @@ interface CarModelRepositoryInterface
     public function delete(CarModel $model): bool;
 
     /**
-     * Find a model by name.
+     * Find a model by its (case-insensitive) name.
      *
      * @param string $name
      * @return CarModel|null
@@ -61,7 +56,7 @@ interface CarModelRepositoryInterface
     public function findByName(string $name): ?CarModel;
 
     /**
-     * Find all models for a given brand.
+     * Find all models belonging to a given brand.
      *
      * @param int $brandId
      * @return Collection<int,CarModel>

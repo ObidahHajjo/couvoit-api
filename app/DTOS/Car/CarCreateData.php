@@ -6,15 +6,36 @@ use InvalidArgumentException;
 
 final readonly class CarCreateData
 {
+    /**
+     * @param string $licensePlate
+     * @param string $modelName
+     * @param int    $seats
+     * @param string $brandName
+     * @param string $typeName
+     * @param string $colorHex
+     * @param string $colorName
+     */
     public function __construct(
         public string $licensePlate,
         public string $modelName,
         public int $seats,
         public string $brandName,
         public string $typeName,
-        public string $colorHex
+        public string $colorHex,
+        public string $colorName,
     ) {}
 
+    /**
+     * Build DTO from raw request payload.
+     *
+     * Supports both normalized keys and legacy payload structure.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return self
+     *
+     * @throws InvalidArgumentException
+     */
     public static function fromArray(array $data): self
     {
         // normalize + support your current payload keys
@@ -27,22 +48,49 @@ final readonly class CarCreateData
         $brandName = data_get($data, 'brand.name');
         $typeName  = data_get($data, 'type.name');
 
-        // align with your schema: colors.hex_code
-        $colorHex  = data_get($data, 'color.hex_code')
+        // align with schema: colors.hex_code
+        $colorHex = data_get($data, 'color.hex_code')
             ?? data_get($data, 'color.hex')
             ?? data_get($data, 'color.code');
 
-        if (!is_string($license) || trim($license) === '') {
+        $colorName = data_get($data, 'color.name');
+
+        if (! is_string($license) || trim($license) === '') {
             throw new InvalidArgumentException('license_plate is required.');
+        }
+
+        if (! is_string($modelName) || trim($modelName) === '') {
+            throw new InvalidArgumentException('model.name is required.');
+        }
+
+        if (! is_numeric($seats) || (int) $seats <= 0) {
+            throw new InvalidArgumentException('model.seats must be a positive integer.');
+        }
+
+        if (! is_string($brandName) || trim($brandName) === '') {
+            throw new InvalidArgumentException('brand.name is required.');
+        }
+
+        if (! is_string($typeName) || trim($typeName) === '') {
+            throw new InvalidArgumentException('type.name is required.');
+        }
+
+        if (! is_string($colorHex) || trim($colorHex) === '') {
+            throw new InvalidArgumentException('color.hex_code is required.');
+        }
+
+        if (! is_string($colorName) || trim($colorName) === '') {
+            throw new InvalidArgumentException('color.name is required.');
         }
 
         return new self(
             licensePlate: strtoupper(trim($license)),
-            modelName: strtolower(trim((string) $modelName)),
+            modelName: strtolower(trim($modelName)),
             seats: (int) $seats,
-            brandName: strtolower(trim((string) $brandName)),
-            typeName: strtolower(trim((string) $typeName)),
-            colorHex: strtolower(trim((string) $colorHex)),
+            brandName: strtolower(trim($brandName)),
+            typeName: strtolower(trim($typeName)),
+            colorHex: strtolower(trim($colorHex)),
+            colorName: strtolower(trim($colorName)),
         );
     }
 }

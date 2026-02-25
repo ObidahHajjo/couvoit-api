@@ -8,17 +8,15 @@ use Illuminate\Support\Collection;
 interface CityRepositoryInterface
 {
     /**
-     * Create a city.
+     * Persist a new City and update caches.
      *
-     * @param array $data
+     * @param array<string,mixed> $data
      * @return City
      */
     public function create(array $data): City;
 
     /**
-     * Delete a city.
-     *
-     * City instance is usually provided by route model binding.
+     * Delete a City and invalidate caches.
      *
      * @param City $city
      * @return void
@@ -26,12 +24,19 @@ interface CityRepositoryInterface
     public function delete(City $city): void;
 
     /**
-     * Retrieve distinct postal codes.
+     * Retrieve distinct postcodes.
      *
-     * @return Collection<int,object> Each item contains {postal_code}.
+     * @return Collection<int,mixed>
      */
     public function getPostcodes(): Collection;
 
+    /**
+     * Find a city by (name, postal_code) or create it.
+     *
+     * @param string $cityName
+     * @param string $postalCode
+     * @return City
+     */
     public function firstOrCreate(string $cityName, string $postalCode);
 
 }

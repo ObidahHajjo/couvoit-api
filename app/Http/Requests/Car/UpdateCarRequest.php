@@ -4,17 +4,29 @@ namespace App\Http\Requests\Car;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Update car request.
+ *
+ * Normalizes only fields present:
+ * - carregistration (or license_plate alias) => uppercase, remove spaces/dashes
+ * - nested names lowercased
+ * - hex_code uppercased
+ */
 class UpdateCarRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Normalize incoming request payload prior to validation.
+     */
     protected function prepareForValidation(): void
     {
-        // Only normalize what is actually present in the incoming payload.
-
         // Normalize carregistration / license_plate if present (optional)
         $plate = $this->input('carregistration');
         if ($plate === null) {
@@ -23,6 +35,7 @@ class UpdateCarRequest extends FormRequest
                 $this->merge(['carregistration' => $plate]);
             }
         }
+
         if ($plate !== null) {
             $raw = (string) $plate;
             $normalized = strtoupper(preg_replace('/[\s\-]+/', '', $raw) ?? '');
@@ -65,11 +78,14 @@ class UpdateCarRequest extends FormRequest
         }
     }
 
+    /**
+     * Validation rules.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
-            // At least one updatable field must be present (optional but recommended)
-            // 'carregistration' or 'model' or 'color'
             'carregistration' => ['sometimes', 'string', 'regex:/^[A-Z0-9]{2,12}$/'],
 
             'color' => ['sometimes', 'array'],
@@ -80,7 +96,6 @@ class UpdateCarRequest extends FormRequest
             'model.name' => ['required_with:model', 'string', 'min:1', 'max:255'],
             'model.seats' => ['required_with:model', 'integer', 'min:1', 'max:9'],
 
-            // Only required when updating model, because your service needs brand/type to create/find a model
             'brand' => ['required_with:model', 'array'],
             'brand.name' => ['required_with:model', 'string', 'min:1', 'max:50'],
 

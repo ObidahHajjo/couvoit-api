@@ -3,67 +3,138 @@
 namespace App\Policies;
 
 use App\Models\Person;
+use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
+/**
+ * Authorization rules for User resources.
+ *
+ * Admin users are granted all abilities via {@see before()}.
+ * Non-admin users can only interact with their own profile and related views.
+ */
 class PersonPolicy
 {
-    public function before(Person $user): ?bool
+    /**
+     * Grant all abilities to admins.
+     *
+     * Returning true authorizes, returning null defers to ability methods.
+     *
+     * @param User $user
+     * @return bool|null
+     */
+    public function before(User $user): ?bool
     {
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        return null;
+        return $user->isAdmin() ? true : null;
     }
 
-    public function viewAny(Person $user): Response
+    /**
+     * Determine whether the user can list persons.
+     *
+     * @param User $user
+     * @return Response
+     */
+    public function viewAny(User $user): Response
     {
-        if (!$user->isAdmin()) {
-            return Response::deny("Seuls les administrateurs peuvent consulter la liste des utilisateurs.");
-        }
-
-        return Response::allow();
+        return $user->isAdmin()
+            ? Response::allow()
+            : Response::deny("Seuls les administrateurs peuvent consulter la liste des utilisateurs.");
     }
 
-    public function view(Person $user, Person $person): Response
+    /**
+     * Determine whether the user can view the given person.
+     *
+     * @param User $user
+     * @param Person $person
+     * @return Response
+     */
+    public function view(User $user, Person $person): Response
     {
-        return $user->id === $person->id
+        return $user->person_id === $person->id
             ? Response::allow()
             : Response::deny("Vous ne pouvez consulter que votre propre profil.");
     }
 
-    public function viewTripsDriver(Person $user, Person $person): Response
+    /**
+     * Determine whether the user can view trips where they are the driver.
+     *
+     * @param User $user
+     * @param Person $person
+     * @return Response
+     */
+    public function viewTripsDriver(User $user, Person $person): Response
     {
-        return $user->id === $person->id
+        return $user->person_id === $person->id
             ? Response::allow()
             : Response::deny("Vous ne pouvez consulter que vos propres trajets en tant que conducteur.");
     }
 
-    public function viewTripsPassenger(Person $user, Person $person): Response
+    /**
+     * Determine whether the user can view trips where they are a passenger.
+     *
+     * @param User $user
+     * @param Person $person
+     * @return Response
+     */
+    public function viewTripsPassenger(User $user, Person $person): Response
     {
-        return $user->id === $person->id
+        return $user->person_id === $person->id
             ? Response::allow()
             : Response::deny("Vous ne pouvez consulter que vos propres trajets en tant que passager.");
     }
 
-    public function create(Person $user): Response
+    /**
+     * Determine whether the user can create a person profile.
+     *
+     * This policy assumes the authenticated user has already been resolved.
+     *
+     * @param User $user
+     * @return Response
+     */
+    public function create(User $user): Response
     {
-        if (!$user->exists) {
-            return Response::deny("Profil utilisateur introuvable.");
-        }
-
-        return Response::allow();
+        return $user->exists
+            ? Response::allow()
+            : Response::deny("Profil utilisateur introuvable.");
     }
 
-    public function update(Person $user, Person $person): Response
+    /**
+     * Determine whether the user can update the given person.
+     *
+     * @param User $user
+     * @param Person $person
+     * @return Response
+     */
+    public function update(User $user, Person $person): Response
     {
-        return $user->id === $person->id
+        return $user->person_id === $person->id
             ? Response::allow()
             : Response::deny("Vous ne pouvez modifier que votre propre profil.");
     }
 
-    public function delete(Person $user, Person $person): Response
+    /**
+     * Determine whether the user can delete the given person.
+     *
+     * Non-admin users are denied; admins are granted via {@see before()}.
+     *
+     * @param User $user
+     * @param Person $person
+     * @return Response
+     */
+    public function delete(User $user, Person $person): Response
     {
         return Response::deny("Suppression interdite : réservée à un administrateur.");
+    }
+
+    /**
+     * Determine whether the user can update roles.
+     *
+     * @param User $user
+     * @return Response
+     */
+    public function updateRole(User $user): Response
+    {
+        return $user->isAdmin()
+            ? Response::allow()
+            : Response::deny("Seuls les administrateurs peuvent mettre à jour les roles");
     }
 }

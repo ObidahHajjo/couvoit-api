@@ -4,25 +4,34 @@ namespace App\Services\Interfaces;
 
 use App\Exceptions\ValidationLogicException;
 use App\Models\Person;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
+use Throwable;
 
+/**
+ * Contract for person-related application services.
+ */
 interface PersonServiceInterface
 {
     /**
      * Retrieve all persons.
      *
-     * @return Collection<int,Person>
+     * @return Collection<int, Person>
+     *
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
      */
     public function list(): Collection;
 
     /**
-     * Show a specific person.
+     * Retrieve a specific person.
      *
-     * @param Person $person
+     * @param Person $person Person model instance (route model binding).
+     *
      * @return Person
      *
-     * @throws ModelNotFoundException if the model does not exists
+     * @throws ModelNotFoundException If the model does not exist.
+     * @throws Throwable              Propagates any repository or infrastructure-level exception.
      */
     public function show(Person $person): Person;
 
@@ -30,7 +39,10 @@ interface PersonServiceInterface
      * Get trips where the person is the driver.
      *
      * @param Person $person
-     * @return Collection
+     *
+     * @return Collection<int, mixed>
+     *
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
      */
     public function tripsAsDriver(Person $person): Collection;
 
@@ -38,37 +50,60 @@ interface PersonServiceInterface
      * Get trips where the person is a passenger.
      *
      * @param Person $person
-     * @return Collection
+     *
+     * @return Collection<int, mixed>
+     *
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
      */
     public function tripsAsPassenger(Person $person): Collection;
 
     /**
-     * Update a profile.
+     * Update a person profile.
      *
-     *
-     * @param Person      $person
-     * @param array       $data
+     * @param Person $person
+     * @param array<string, mixed> $data
      *
      * @return Person
      *
-     * @throws ModelNotFoundException
-     * @throws ValidationLogicException
+     * @throws ModelNotFoundException   If the model does not exist.
+     * @throws ValidationLogicException If business validation rules fail.
+     * @throws Throwable                Propagates any repository or infrastructure-level exception.
      */
     public function update(Person $person, array $data): Person;
 
     /**
-     * soft delete a person.
+     * Soft delete a person.
      *
      * @param Person $person
      *
      * @return void
      *
-     * @throws ModelNotFoundException
+     * @throws ModelNotFoundException If the model does not exist.
+     * @throws Throwable              Propagates any repository or infrastructure-level exception.
      */
     public function softDelete(Person $person): void;
 
-    public function deactivate(Person $person): void;
+    /**
+     * Create profile for a user if you want lazy profile creation.
+     *
+     * @param User $user
+     * @param array $data
+     *
+     * @return Person
+     *
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
+     */
+    public function createForUser(User $user, array $data): Person;
 
-    public function reactivate(Person $person): void;
-
+    /**
+     * Admin: update USER role by person_id.
+     *
+     * @param int $personId
+     * @param int $roleId
+     *
+     * @return Person
+     *
+     * @throws Throwable Propagates any repository or infrastructure-level exception.
+     */
+    public function updateUserRoleByPersonId(int $personId, int $roleId): Person;
 }

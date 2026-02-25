@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property int $id Unique identifier of the trip.
  * @property string $departure_time Departure date/time.
+ * @property string $arrival_time Departure date/time.
  * @property float $distance_km Distance in kilometers.
  * @property int $available_seats Available seats for passengers.
  * @property bool $smoking_allowed Whether smoking is allowed.
@@ -33,6 +34,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property-read Person|null $driver Driver of the trip.
  * @property-read Collection<int, Person> $passengers Passengers who reserved.
+ * @property-read Address departureAddress
+ * @property-read Address arrivalAddress
  */
 class Trip extends Model
 {
@@ -58,7 +61,8 @@ class Trip extends Model
         'departure_address_id',  // Departure address
         'arrival_address_id',    // Arrival address
         'smoking_allowed',       // Smoking allowed
-        'person_id'              // Driver id
+        'person_id',
+        'arrival_time'
     ];
 
     protected $casts = [
@@ -72,6 +76,20 @@ class Trip extends Model
      * @var array<int, string>
      */
     protected $guarded = ["id"];
+
+    /**
+     * Attributes that are NOT mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        "created_at",
+        "updated_at",
+        "deleted_at",
+        "created_by",
+        "updated_by",
+        "deleted_by"
+    ];
 
     /**
      * Relationship: Trip belongs to a Person (driver).
