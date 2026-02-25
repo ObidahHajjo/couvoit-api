@@ -72,7 +72,6 @@ final class PersonEloquentRepositoryTest extends TestCase
 
         $person = new Person();
         $person->id = $id;
-        $person->supabase_user_id = null; // avoid warming supabase cache branch
 
         $tagged = Mockery::mock();
         $tagged->shouldReceive('remember')

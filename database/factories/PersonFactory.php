@@ -15,7 +15,6 @@ class PersonFactory extends Factory
     public function definition(): array
     {
         return [
-            'supabase_user_id' => Str::uuid()->toString(),
             'pseudo'           => $this->faker->unique()->userName(),
             'role_id'          => Role::factory(),
             'car_id'           => Car::factory(),
