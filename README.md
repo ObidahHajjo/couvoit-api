@@ -4,12 +4,12 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Laravel-12-red?style=for-the-badge&logo=laravel" />
   <img src="https://img.shields.io/badge/PostgreSQL-DB-blue?style=for-the-badge&logo=postgresql" />
-  <img src="https://img.shields.io/badge/Supabase-JWT-green?style=for-the-badge&logo=supabase" />
+  <img src="https://img.shields.io/badge/Auth-JWT-black?style=for-the-badge&logo=jsonwebtokens" />
   <img src="https://img.shields.io/badge/Tests-PHPUnit-purple?style=for-the-badge&logo=php" />
   <img src="https://img.shields.io/badge/Architecture-SOLID-black?style=for-the-badge" />
 </p>
 
-API REST de covoiturage **orientée production**, développée avec **Laravel 12**, **PostgreSQL** et **Supabase Auth (JWT)**.
+API REST de covoiturage **orientée production**, développée avec **Laravel 12**, **PostgreSQL** et **Local JWT Auth system**.
 
 Le projet applique une **architecture propre (Clean Architecture)** avec séparation stricte des responsabilités, Policies d’autorisation, cache structuré et couverture de tests robuste.
 
@@ -50,7 +50,6 @@ Domaine
 
 Infrastructure
 └── Repositories Eloquent
-└── Client Supabase
 └── Client ORS
 
 
@@ -255,9 +254,6 @@ DB_PASSWORD=secret
 CACHE_STORE=array
 QUEUE_CONNECTION=sync
 
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_JWKS_URL=https://xxxx.supabase.co/auth/v1/keys
-
 ORS_KEY=your_openrouteservice_key
 ```
 ## 4️⃣ Migration base de données
@@ -312,7 +308,6 @@ php artisan test --filter=TripServiceTest
 ```angular2html
 persons:all
 person:{id}
-supabase:{uuid}
 cities:{name}:{postal}
 ```
 - ### TTL par défaut : 3600 secondes
@@ -417,7 +412,7 @@ public function before(Person $user): ?bool
 
 # 📌 Remarques importantes
 
-- Toutes les routes protégées passent par le middleware `supabase.auth`
+- Toutes les routes protégées passent par le middleware `jwt`
 - Les autorisations sont gérées via :
     - `CarPolicy`
     - `TripPolicy`

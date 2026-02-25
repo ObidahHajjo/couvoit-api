@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Clients\Implementations\SupabaseAuthClient;
-use App\Clients\Interfaces\SupabaseAuthClientInterface;
 use App\Resolvers\Implementations\AddressResolver;
 use App\Resolvers\Implementations\CarReferenceResolver;
 use App\Resolvers\Interfaces\AddressResolverInterface;
@@ -45,7 +43,6 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(AddressResolverInterface::class, AddressResolver::class);
 
-        $this->app->bind(SupabaseAuthClientInterface::class, SupabaseAuthClient::class);
         $this->app->bind(OrsRoutingClientInterface::class, OrsRoutingClient::class);
 
     }
