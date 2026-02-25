@@ -259,15 +259,25 @@ class AuthServiceTest extends TestCase
 
         $user = new User();
         $user->id = 7;
+        $user->person_id = 42;
         $user->email = $email;
         $user->password = Hash::make($password);
         $user->is_active = true;
+
+        $person = new Person();
+        $person->id = 42;
 
         $this->userRepository
             ->shouldReceive('findByEmail')
             ->once()
             ->with($email)
             ->andReturn($user);
+
+        $this->personRepository
+            ->shouldReceive('findById')
+            ->once()
+            ->with(42)
+            ->andReturn($person);
 
         $this->jwt
             ->shouldReceive('issueAccessToken')
