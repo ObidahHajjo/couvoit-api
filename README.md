@@ -72,7 +72,6 @@ Infrastructure
 |-------------|--------|
 | Laravel 12 | Framework principal |
 | PostgreSQL | Base de données relationnelle |
-| Supabase | Authentification JWT |
 | PHPUnit | Tests unitaires |
 | Swagger | Documentation OpenAPI |
 | OpenRouteService | Géocodage & calcul distance |
@@ -114,18 +113,114 @@ Infrastructure
 
 ---
 
-# 🔐 Authentification
+# 🔐 Authentification (Local JWT)
+L’API utilise un système d’authentification local basé sur JWT (HS256).
+Elle ne dépend plus de Supabase : la génération, la validation et la rotation des tokens sont entièrement gérées côté serveur.
 
-Flux d’authentification :
+## 🧩 Architecture d’authentification
+| Token | Durée | Usage |
+|----------|---|------------|
+| access_token | Court terme (ex: 15 min) | Accès aux routes protégées |
+| refresh_token | Long terme (ex: 30 jours) | Renouvellement du JWT |
 
-1. L’utilisateur s’authentifie via Supabase
-2. Il reçoit un JWT
-3. Le token est envoyé dans : Authorization: Bearer <token>
-4. Middleware valide le JWT via JWKS
-5. `persons.supabase_user_id` correspond à l’utilisateur authentifié
+## 🔄 Flux d’authentification
+### 1️⃣ L’utilisateur s’inscrit ou se connecte via :
+```POST /api/register
+POST /api/login
+```
+
+### 2️⃣ Le serveur :
+- Vérifie les identifiants
+- Hash le mot de passe (bcrypt)
+- Génère un access_token JWT
+- Génère un refresh_token aléatoire
+- Stocke le refresh token haché en base
+
+### 3️⃣ Le client envoie le JWT dans :
+```
+Authorization: Bearer <access_token>
+```
+
+### 4️⃣ Le middleware jwt :
+- Vérifie la signature (HS256)
+- Vérifie iss, aud, exp
+-Résout sub → User
+-Charge auth()->user()
+---
+
+# 🧾 Structure du JWT
+Exemple de payload :
+```
+{
+  "iss": "couvoit-api",
+  "aud": "couvoit-client",
+  "iat": 1700000000,
+  "exp": 1700000900,
+  "sub": "12",
+  "role_id": 1,
+  "user_id": 1,
+  "jti": "a1b2c3d4e5f6..."
+}
+```
+## 🔎 Claims utilisés
+| Claim | Description |
+|----------|---|
+| iss | Émetteur |
+| aud | Audience |
+| sub | Identifiant interne utilisateur |
+| exp | Expiration |
+| role_id | Rôle utilisateur |
+| jti | Identifiant unique du token |
 
 ---
 
+# 🔁 Refresh Token (Rotation Sécurisée)
+## Le refresh token :
+- Est généré via random_bytes(32)
+- Est stocké haché en base (refresh_tokens)
+- Possède une date d’expiration
+- Est révoqué lors de chaque rotation
+
+## 🔄 Endpoint
+```
+POST /api/refresh
+```
+
+## Processus :
+### 1. Vérification du refresh token
+### 2. Révocation du token utilisé
+### 3. Génération d’un nouveau couple :
+-  access_token
+-  refresh_token
+
+## Cette stratégie protège contre :
+- Vol de token
+- Replay attack
+- Réutilisation après compromission
+---
+
+# 🔒 Sécurité
+- #### Mot de passe hashé via bcrypt
+- #### JWT signé via HS256
+- #### Secret long (≥ 32 bytes)
+- #### Rotation des refresh tokens
+- #### Support révocation
+- #### Utilisateurs inactifs (is_active = false) bloqués
+- #### Middleware centralisé
+
+--- 
+# ⚙ Configuration ``` .env```
+
+```
+JWT_SECRET=base64:...
+JWT_ACCESS_TTL=900
+JWT_REFRESH_TTL=2592000
+JWT_ISSUER=couvoit-api
+JWT_AUDIENCE=couvoit-client
+```
+
+
+--- 
 # 🚀 Installation
 
 ## 1️⃣ Cloner le projet
