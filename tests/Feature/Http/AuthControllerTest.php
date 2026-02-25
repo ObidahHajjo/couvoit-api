@@ -71,12 +71,10 @@ class AuthControllerTest extends TestCase
         ]);
 
         $res->assertCreated();
-
         $res->assertJsonPath('data.access_token', 'a');
         $res->assertJsonPath('data.token_type', 'bearer');
         $res->assertJsonPath('data.refresh_token', 'r');
-        $res->assertJsonPath('data.user.id', 'uuid');
-        $res->assertJsonPath('data.user.email', 'john@example.com');
+        $res->assertJsonPath('data.expires_in', 3600);
     }
 
     /**
@@ -96,8 +94,7 @@ class AuthControllerTest extends TestCase
                     'access_token' => 'a',
                     'token_type' => 'bearer',
                     'expires_in' => 3600,
-                    'refresh_token' => 'r',
-                    'user' => ['id' => 'uuid', 'email' => 'john@example.com'],
+                    'refresh_token' => 'r'
                 ]);
         });
 
@@ -110,7 +107,9 @@ class AuthControllerTest extends TestCase
         $res->assertOk();
 
         $res->assertJsonPath('data.access_token', 'a');
-        $res->assertJsonPath('data.user.email', 'john@example.com');
+        $res->assertJsonPath('data.token_type', 'bearer');
+        $res->assertJsonPath('data.refresh_token', 'r');
+        $res->assertJsonPath('data.expires_in', 3600);
     }
 
     /**
@@ -131,7 +130,6 @@ class AuthControllerTest extends TestCase
                     'token_type' => 'bearer',
                     'expires_in' => 3600,
                     'refresh_token' => 'new_refresh',
-                    'user' => ['id' => 'uuid', 'email' => 'john@example.com'],
                 ]);
         });
 

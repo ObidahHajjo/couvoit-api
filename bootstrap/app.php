@@ -1,7 +1,7 @@
 <?php
 
 use App\Exceptions\ApiExceptionConfigurator;
-use App\Http\Middleware\AuthTokenMiddleware;
+use App\Http\Middleware\LocalJwtAuth;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Middleware\SupabaseAuth;
 use Illuminate\Foundation\Application;
@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
             'supabase.auth' => SupabaseAuth::class,
-            'auth.token' => AuthTokenMiddleware::class,
+            'jwt' => LocalJwtAuth::class,
         ]);
 
     })

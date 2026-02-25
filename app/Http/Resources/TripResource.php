@@ -15,6 +15,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *
  * @property int         $id
  * @property mixed       $departure_time
+ * @property mixed       $arrival_time
  * @property float|int   $distance_km
  * @property int         $available_seats
  * @property bool        $smoking_allowed
@@ -32,6 +33,7 @@ class TripResource extends JsonResource
         return [
             'id'              => $this->id,
             'departure_time'  => $this->departure_time,
+            'arrival_time' => $this->arrival_time,
             'distance_km'     => (float) $this->distance_km,
             'available_seats' => $this->available_seats,
             'smoking_allowed' => $this->smoking_allowed,

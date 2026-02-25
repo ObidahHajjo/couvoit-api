@@ -11,6 +11,7 @@ use App\Models\Address;
 use App\Models\City;
 use App\Models\Person;
 use App\Models\Trip;
+use App\Models\User;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
@@ -105,7 +106,12 @@ final class TripServiceTest extends TestCase
 
         $auth = new Person();
         $auth->id = 1;
-        $auth->role_id = Person::ROLE_USER;
+
+        $user = new User();
+        $user->role_id = 1; // normal user
+        $user->is_active = true;
+
+        $auth->setRelation('user', $user);
 
         $payload = [
             'person_id' => 2,
@@ -128,8 +134,13 @@ final class TripServiceTest extends TestCase
 
         $auth = new Person();
         $auth->id = 1;
-        $auth->role_id = Person::ROLE_USER;
         $auth->car_id = null;
+
+        $user = new User();
+        $user->role_id = 1;
+        $user->is_active = true;
+
+        $auth->setRelation('user', $user);
 
         $payload = [
             'trip_datetime' => '2026-02-20 10:00:00',
@@ -149,8 +160,13 @@ final class TripServiceTest extends TestCase
     {
         $auth = new Person();
         $auth->id = 10;
-        $auth->role_id = Person::ROLE_USER;
         $auth->car_id = 5;
+
+        $user = new User();
+        $user->role_id = 1;
+        $user->is_active = true;
+
+        $auth->setRelation('user', $user);
 
         $payload = [
             'trip_datetime' => '2026-02-20 10:00:00',
@@ -235,7 +251,12 @@ final class TripServiceTest extends TestCase
 
         $auth = new Person();
         $auth->id = 10;
-        $auth->role_id = Person::ROLE_USER;
+
+        $user = new User();
+        $user->role_id = 1;
+        $user->is_active = true;
+
+        $auth->setRelation('user', $user);
 
         $this->service->reserveSeat($trip, 10, $auth);
     }
@@ -245,29 +266,34 @@ final class TripServiceTest extends TestCase
      */
     public function test_reserve_seat_throws_when_already_reserved(): void
     {
-        $this->expectException(\App\Exceptions\ConflictException::class);
+        $this->expectException(ConflictException::class);
 
-        $trip = new \App\Models\Trip();
+        $trip = new Trip();
         $trip->id = 1;
         $trip->person_id = 99;
-        $trip->departure_time = \Carbon\Carbon::parse('2026-02-20 10:00:00');
+        $trip->departure_time = Carbon::parse('2026-02-20 10:00:00');
         $trip->available_seats = 3;
 
-        $auth = new \App\Models\Person();
+        $auth = new Person();
         $auth->id = 10;
-        $auth->role_id = \App\Models\Person::ROLE_USER;
 
-        $relation = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $user = new User();
+        $user->role_id = 1;
+        $user->is_active = true;
+
+        $auth->setRelation('user', $user);
+
+        $relation = \Mockery::mock(BelongsToMany::class);
         $relation->shouldReceive('wherePivot')->once()->with('person_id', 10)->andReturnSelf();
         $relation->shouldReceive('exists')->once()->andReturnTrue();
 
-        $locked = new class extends \App\Models\Trip {
-            /** @var \Illuminate\Database\Eloquent\Relations\BelongsToMany|null */
-            public ?\Illuminate\Database\Eloquent\Relations\BelongsToMany $passengersRelation = null;
+        $locked = new class extends Trip {
+            /** @var BelongsToMany|null */
+            public ?BelongsToMany $passengersRelation = null;
 
-            public function passengers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+            public function passengers(): BelongsToMany
             {
-                /** @var \Illuminate\Database\Eloquent\Relations\BelongsToMany */
+                /** @var BelongsToMany */
                 $rel = $this->passengersRelation;
 
                 return $rel;

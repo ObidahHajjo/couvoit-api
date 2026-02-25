@@ -2,44 +2,55 @@
 
 namespace Tests\Unit\Services;
 
-use App\Clients\Interfaces\SupabaseAuthClientInterface;
-use App\Exceptions\ExternalServiceException;
+use App\Exceptions\ConflictException;
+use App\Exceptions\UnauthorizedException;
+use App\Models\Person;
+use App\Models\User;
+use App\Repositories\Eloquent\RefreshTokenEloquentRepository;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
+use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Security\JwtIssuerInterface;
 use App\Services\Implementations\AuthService;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
-use App\Models\Person;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Throwable;
 
 /**
  * Class AuthServiceTest
  *
  * Unit tests for AuthService:
- * - register(): creates person if not exists, prevents duplicates, throws on bad response
- * - login(): delegates to Supabase client
- * - refresh(): delegates to Supabase client
+ * - register(): creates person if email not exists, throws ConflictException on duplicate
+ * - login(): validates credentials and active flag
+ * - refresh(): consumes & rotates refresh token then issues new access token
  */
 class AuthServiceTest extends TestCase
 {
     use RefreshDatabase;
 
     /**
-     * Mocked Supabase auth client dependency.
-     *
-     * @var SupabaseAuthClientInterface&MockInterface
+     * @var JwtIssuerInterface&MockInterface
      */
-    private SupabaseAuthClientInterface $supabase;
+    private JwtIssuerInterface $jwt;
 
     /**
-     * Mocked Person repository dependency.
-     *
+     * @var RefreshTokenRepositoryInterface&MockInterface
+     */
+    private RefreshTokenRepositoryInterface $refreshTokens;
+
+    /**
+     * @var UserRepositoryInterface&MockInterface
+     */
+    private UserRepositoryInterface $userRepository;
+
+    /**
      * @var PersonRepositoryInterface&MockInterface
      */
-    private PersonRepositoryInterface $persons;
+    private PersonRepositoryInterface $personRepository;
 
     /**
      * Service under test.
@@ -59,194 +70,310 @@ class AuthServiceTest extends TestCase
     {
         parent::setUp();
 
-        /** @var SupabaseAuthClientInterface&MockInterface $supabase */
-        $supabase = Mockery::mock(SupabaseAuthClientInterface::class);
-        $this->supabase = $supabase;
+        /** @var JwtIssuerInterface&MockInterface $jwt */
+        $this->jwt = Mockery::mock(JwtIssuerInterface::class);
 
-        /** @var PersonRepositoryInterface&MockInterface $persons */
-        $persons = Mockery::mock(PersonRepositoryInterface::class);
-        $this->persons = $persons;
+        /** @var RefreshTokenEloquentRepository&MockInterface $refreshTokens */
+        $this->refreshTokens = Mockery::mock(RefreshTokenRepositoryInterface::class);
 
-        $this->service = new AuthService($this->supabase, $this->persons);
+        /** @var UserRepositoryInterface&MockInterface $userRepository */
+        $this->userRepository = Mockery::mock(UserRepositoryInterface::class);
+
+        /** @var PersonRepositoryInterface&MockInterface $personRepository */
+        $this->personRepository = Mockery::mock(PersonRepositoryInterface::class);
+
+        $this->service = new AuthService(
+            $this->jwt,
+            $this->refreshTokens,
+            $this->userRepository,
+            $this->personRepository
+        );
     }
 
     /**
-     * register() should create a person when not existing.
+     * Ensure Mockery expectations are verified/cleaned.
      *
      * @return void
      *
      * @throws Throwable
      */
-    public function test_register_creates_person_when_not_existing(): void
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
+    /**
+     * register() should create person + user and return session payload.
+     *
+     * @return void
+     *
+     * @throws Throwable
+     */
+    public function test_register_creates_user_and_person_when_not_existing(): void
     {
         $email = 'john@example.com';
         $password = 'secret';
-        $supabaseUserId = '00000000-0000-0000-0000-000000000111';
+        $hashed = Hash::make($password);
 
-        $this->supabase
-            ->shouldReceive('signUp')
-            ->once()
-            ->with($email, $password)
-            ->andReturn(['user' => ['id' => $supabaseUserId, 'email' => $email]]);
+        $person = new Person();
+        $person->id = 10;
 
-        $this->persons
-            ->shouldReceive('findBySupabaseUserId')
+        $user = new User();
+        $user->id = 55;
+        $user->email = $email;
+        $user->password = $hashed;
+        $user->is_active = true;
+
+        $this->userRepository
+            ->shouldReceive('existsByEmail')
             ->once()
-            ->with($supabaseUserId)
+            ->with(strtolower($email))
+            ->andReturn(false);
+
+        $this->personRepository
+            ->shouldReceive('create')
+            ->once()
+            ->with([])
+            ->andReturn($person);
+
+        $this->userRepository
+            ->shouldReceive('create')
+            ->once()
+            ->with(Mockery::on(function (array $data) use ($email, $person) {
+                return ($data['email'] ?? null) === strtolower($email)
+                    && isset($data['password'])
+                    && ($data['role_id'] ?? null) === 1
+                    && ($data['is_active'] ?? null) === true
+                    && ($data['person_id'] ?? null) === $person->id;
+            }))
+            ->andReturn($user);
+
+        $this->jwt
+            ->shouldReceive('issueAccessToken')
+            ->once()
+            ->with($user)
+            ->andReturn('access.jwt.token');
+
+        $this->refreshTokens
+            ->shouldReceive('store')
+            ->once()
+            ->with(
+                $user->id,
+                Mockery::type('string'),
+                Mockery::type(CarbonImmutable::class)
+            );
+
+        $res = $this->service->register($email, $password);
+
+        $this->assertIsArray($res);
+        $this->assertSame('access.jwt.token', $res['access_token']);
+        $this->assertSame('Bearer', $res['token_type']);
+        $this->assertArrayHasKey('refresh_token', $res);
+        $this->assertIsString($res['refresh_token']);
+        $this->assertSame((int) config('jwt.access_ttl', 900), $res['expires_in']);
+    }
+
+    /**
+     * register() should throw ConflictException when email already exists.
+     *
+     * @return void
+     *
+     * @throws Throwable
+     */
+    public function test_register_throws_conflict_when_user_exists(): void
+    {
+        $this->userRepository
+            ->shouldReceive('existsByEmail')
+            ->once()
+            ->with('existing@example.com')
+            ->andReturn(true);
+
+        $this->expectException(ConflictException::class);
+
+        $this->service->register('existing@example.com', 'secret');
+    }
+
+    /**
+     * login() should throw UnauthorizedException when credentials invalid.
+     *
+     * @return void
+     *
+     * @throws Throwable
+     */
+    public function test_login_throws_when_invalid_credentials(): void
+    {
+        $email = 'john@example.com';
+
+        $this->userRepository
+            ->shouldReceive('findByEmail')
+            ->once()
+            ->with($email)
             ->andReturn(null);
 
-        $this->persons
-            ->shouldReceive('create')
-            ->once()
-            ->with(Mockery::on(function (array $payload) use ($supabaseUserId, $email) {
-                return ($payload['supabase_user_id'] ?? null) === $supabaseUserId
-                    && ($payload['email'] ?? null) === $email
-                    && ($payload['role_id'] ?? null) === 1
-                    && ($payload['is_active'] ?? null) === true;
-            }));
+        $this->expectException(UnauthorizedException::class);
 
-        $res = $this->service->register($email, $password);
-
-        $this->assertIsArray($res);
-        $this->assertSame($supabaseUserId, $res['user']['id']);
+        $this->service->login($email, 'secret');
     }
 
     /**
-     * register() should NOT create a person if it already exists.
+     * login() should throw UnauthorizedException when account inactive.
      *
      * @return void
      *
      * @throws Throwable
      */
-    public function test_register_does_not_create_person_when_existing(): void
-    {
-        $email = 'existing@example.com';
-        $password = 'secret';
-        $supabaseUserId = '00000000-0000-0000-0000-000000000222';
-
-        $existingPerson = $this->makePerson($supabaseUserId, $email);
-
-        $this->supabase
-            ->shouldReceive('signUp')
-            ->once()
-            ->with($email, $password)
-            ->andReturn(['user' => ['id' => $supabaseUserId, 'email' => $email]]);
-
-        $this->persons
-            ->shouldReceive('findBySupabaseUserId')
-            ->once()
-            ->with($supabaseUserId)
-            ->andReturn($existingPerson);
-
-        $this->persons
-            ->shouldReceive('create')
-            ->never();
-
-        $res = $this->service->register($email, $password);
-
-        $this->assertIsArray($res);
-        $this->assertSame($supabaseUserId, $res['user']['id']);
-    }
-
-    /**
-     * register() should throw ExternalServiceException if Supabase returns missing user.id.
-     *
-     * @return void
-     *
-     * @throws Throwable
-     */
-    public function test_register_throws_when_user_id_missing(): void
-    {
-        $this->supabase
-            ->shouldReceive('signUp')
-            ->once()
-            ->andReturn(['user' => ['email' => 'x@example.com']]);
-
-        $this->expectException(ExternalServiceException::class);
-
-        $this->service->register('x@example.com', 'secret');
-    }
-
-    /**
-     * login() should delegate to Supabase client.
-     *
-     * @return void
-     *
-     * @throws Throwable
-     */
-    public function test_login_delegates_to_supabase_client(): void
+    public function test_login_throws_when_inactive(): void
     {
         $email = 'john@example.com';
         $password = 'secret';
 
-        $this->supabase
-            ->shouldReceive('signInWithPassword')
+        $user = new User();
+        $user->id = 1;
+        $user->email = $email;
+        $user->password = Hash::make($password);
+        $user->is_active = false;
+
+        $this->userRepository
+            ->shouldReceive('findByEmail')
             ->once()
-            ->with($email, $password)
-            ->andReturn(['access_token' => 'token']);
+            ->with($email)
+            ->andReturn($user);
+
+        $this->expectException(UnauthorizedException::class);
+
+        $this->service->login($email, $password);
+    }
+
+    /**
+     * login() should return session payload when valid.
+     *
+     * @return void
+     *
+     * @throws Throwable
+     */
+    public function test_login_returns_session_when_valid(): void
+    {
+        $email = 'john@example.com';
+        $password = 'secret';
+
+        $user = new User();
+        $user->id = 7;
+        $user->person_id = 42;
+        $user->email = $email;
+        $user->password = Hash::make($password);
+        $user->is_active = true;
+
+        $person = new Person();
+        $person->id = 42;
+
+        $this->userRepository
+            ->shouldReceive('findByEmail')
+            ->once()
+            ->with($email)
+            ->andReturn($user);
+
+        $this->personRepository
+            ->shouldReceive('findById')
+            ->once()
+            ->with(42)
+            ->andReturn($person);
+
+        $this->jwt
+            ->shouldReceive('issueAccessToken')
+            ->once()
+            ->with($user)
+            ->andReturn('access.jwt.token');
+
+        $this->refreshTokens
+            ->shouldReceive('store')
+            ->once()
+            ->with(
+                $user->id,
+                Mockery::type('string'),
+                Mockery::type(CarbonImmutable::class)
+            );
 
         $res = $this->service->login($email, $password);
 
-        $this->assertSame('token', $res['access_token']);
+        $this->assertSame('access.jwt.token', $res['access_token']);
+        $this->assertSame('Bearer', $res['token_type']);
+        $this->assertArrayHasKey('refresh_token', $res);
+        $this->assertSame((int) config('jwt.access_ttl', 900), $res['expires_in']);
     }
 
     /**
-     * refresh() should delegate to Supabase client.
+     * refresh() should rotate refresh token, validate user, and return new tokens.
      *
      * @return void
      *
      * @throws Throwable
      */
-    public function test_refresh_delegates_to_supabase_client(): void
+    public function test_refresh_rotates_and_issues_new_access_token(): void
     {
-        $refresh = 'refresh_token';
+        $oldRefresh = 'old_refresh_token';
+        $userId = 99;
 
-        $this->supabase
-            ->shouldReceive('refreshToken')
+        $user = new User();
+        $user->id = $userId;
+        $user->is_active = true;
+
+        $this->refreshTokens
+            ->shouldReceive('consumeAndRotate')
             ->once()
-            ->with($refresh)
-            ->andReturn(['access_token' => 'new_token']);
+            ->with(
+                $oldRefresh,
+                Mockery::type('string'),
+                Mockery::type(CarbonImmutable::class)
+            )
+            ->andReturn($userId);
 
-        $res = $this->service->refresh($refresh);
+        $this->userRepository
+            ->shouldReceive('findById')
+            ->once()
+            ->with($userId)
+            ->andReturn($user);
 
-        $this->assertSame('new_token', $res['access_token']);
+        $this->jwt
+            ->shouldReceive('issueAccessToken')
+            ->once()
+            ->with($user)
+            ->andReturn('new.access.token');
+
+        $res = $this->service->refresh($oldRefresh);
+
+        $this->assertSame('new.access.token', $res['access_token']);
+        $this->assertSame('Bearer', $res['token_type']);
+        $this->assertArrayHasKey('refresh_token', $res);
+        $this->assertIsString($res['refresh_token']);
+        $this->assertSame((int) config('jwt.access_ttl', 900), $res['expires_in']);
     }
 
     /**
-     * Seed roles with stable IDs used by Person::ROLE_USER / ROLE_ADMIN.
+     * refresh() should throw UnauthorizedException when user not found.
      *
      * @return void
      *
      * @throws Throwable
      */
-    private function seedRoles(): void
+    public function test_refresh_throws_when_user_not_found(): void
     {
-        DB::table('roles')->insertOrIgnore([
-            ['id' => 1, 'name' => 'user'],
-            ['id' => 2, 'name' => 'admin'],
-        ]);
+        $oldRefresh = 'old_refresh_token';
+        $userId = 123;
+
+        $this->refreshTokens
+            ->shouldReceive('consumeAndRotate')
+            ->once()
+            ->andReturn($userId);
+
+        $this->userRepository
+            ->shouldReceive('findById')
+            ->once()
+            ->with($userId)
+            ->andReturn(null);
+
+        $this->expectException(UnauthorizedException::class);
+
+        $this->service->refresh($oldRefresh);
     }
-
-    /**
-     * Create a Person model for repository return type compliance.
-     *
-     * @param string $supabaseUserId
-     * @param string $email
-     * @return Person
-     *
-     * @throws Throwable
-     */
-    private function makePerson(string $supabaseUserId, string $email): Person
-    {
-        $this->seedRoles();
-
-        return Person::query()->create([
-            'supabase_user_id' => $supabaseUserId,
-            'email' => $email,
-            'pseudo' => 'p_' . Str::random(10),
-            'role_id' => 1,
-            'is_active' => true,
-        ]);
-    }
-
 }

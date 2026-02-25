@@ -8,30 +8,20 @@ use App\Http\Requests\Person\UpdateRolePersonRequest;
 use App\Http\Resources\PersonResource;
 use App\Http\Resources\TripResource;
 use App\Models\Person;
+use App\Models\User;
 use App\Services\Interfaces\PersonServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
 use Throwable;
 
-/**
- * HTTP controller for Person endpoints.
- */
 #[OA\Tag(name: 'Persons', description: 'Person endpoints (admin listing, profile, trips).')]
 class PersonController extends Controller
 {
-    /**
-     * @param PersonServiceInterface $persons
-     */
     public function __construct(
         private readonly PersonServiceInterface $persons
     ) {}
 
-    /**
-     * List persons (Admin only).
-     *
-     * @return JsonResponse
-     */
     #[OA\Get(
         path: '/api/persons',
         operationId: 'personsIndex',
@@ -55,21 +45,13 @@ class PersonController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Show a person.
-     *
-     * @param Person $person
-     * @return JsonResponse
-     */
     #[OA\Get(
         path: '/api/persons/{id}',
         operationId: 'personsShow',
         summary: 'Get person by id',
         security: [['bearerAuth' => []]],
         tags: ['Persons'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: 200, description: 'OK'),
             new OA\Response(response: 401, description: 'Unauthorized'),
@@ -79,28 +61,20 @@ class PersonController extends Controller
     )]
     public function show(Person $person): JsonResponse
     {
-        $this->authorize('view', $person);
+        $this->authorize('view', [Person::class,$person]);
 
         return PersonResource::make($person)
             ->response()
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * List trips where person is driver.
-     *
-     * @param Person $person
-     * @return JsonResponse
-     */
     #[OA\Get(
         path: '/api/persons/{id}/trips-driver',
         operationId: 'personsTripsDriver',
         summary: 'Trips as driver',
         security: [['bearerAuth' => []]],
         tags: ['Persons'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: 200, description: 'OK'),
             new OA\Response(response: 401, description: 'Unauthorized'),
@@ -110,7 +84,7 @@ class PersonController extends Controller
     )]
     public function tripsDriver(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsDriver', $person);
+        $this->authorize('viewTripsDriver', [Person::class,$person]);
 
         $trips = $this->persons->tripsAsDriver($person);
 
@@ -119,21 +93,13 @@ class PersonController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * List trips where person is passenger.
-     *
-     * @param Person $person
-     * @return JsonResponse
-     */
     #[OA\Get(
         path: '/api/persons/{id}/trips-passenger',
         operationId: 'personsTripsPassenger',
         summary: 'Trips as passenger',
         security: [['bearerAuth' => []]],
         tags: ['Persons'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: 200, description: 'OK'),
             new OA\Response(response: 401, description: 'Unauthorized'),
@@ -143,7 +109,7 @@ class PersonController extends Controller
     )]
     public function tripsPassenger(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsPassenger', $person);
+        $this->authorize('viewTripsPassenger', [Person::class,$person]);
 
         $trips = $this->persons->tripsAsPassenger($person);
 
@@ -153,10 +119,10 @@ class PersonController extends Controller
     }
 
     /**
-     * Store person data (your implementation uses this as "complete my profile").
+     * Complete my profile.
      *
-     * @param StorePersonRequest $request
-     * @return JsonResponse
+     * Now: authenticated user is User, profile is User->person.
+     *
      * @throws Throwable
      */
     #[OA\Post(
@@ -164,10 +130,7 @@ class PersonController extends Controller
         operationId: 'personsStore',
         summary: 'Complete my profile',
         security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(ref: '#/components/schemas/StorePersonRequestPayload')
-        ),
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/StorePersonRequestPayload')),
         tags: ['Persons'],
         responses: [
             new OA\Response(response: 201, description: 'Created'),
@@ -180,11 +143,17 @@ class PersonController extends Controller
     {
         $this->authorize('create', Person::class);
 
-        /** @var Person $me */
-        $me = auth()->user();
+        /** @var User $user */
+        $user = auth()->user();
 
-        $updated = $this->persons->update($me, $request->validated());
-        $updated->loadMissing(['role', 'car']);
+        $person = $user->person;
+        if (!$person) {
+            // If you want profile created lazily:
+            $person = $this->persons->createForUser($user, []);
+        }
+
+        $updated = $this->persons->update($person, $request->validated());
+        $updated->loadMissing(['car', 'user.role']);
 
         return PersonResource::make($updated)
             ->response()
@@ -192,11 +161,6 @@ class PersonController extends Controller
     }
 
     /**
-     * Update a person.
-     *
-     * @param UpdatePersonRequest $request
-     * @param Person $person
-     * @return JsonResponse
      * @throws Throwable
      */
     #[OA\Patch(
@@ -204,14 +168,9 @@ class PersonController extends Controller
         operationId: 'personsUpdate',
         summary: 'Update person',
         security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(ref: '#/components/schemas/UpdatePersonRequestPayload')
-        ),
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/UpdatePersonRequestPayload')),
         tags: ['Persons'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: 200, description: 'OK'),
             new OA\Response(response: 401, description: 'Unauthorized'),
@@ -222,31 +181,23 @@ class PersonController extends Controller
     )]
     public function update(UpdatePersonRequest $request, Person $person): JsonResponse
     {
-        $this->authorize('update', $person);
+        $this->authorize('update', [Person::class,$person]);
 
         $updated = $this->persons->update($person, $request->validated());
-        $updated->loadMissing(['role', 'car']);
+        $updated->loadMissing(['car', 'user.role']);
 
         return PersonResource::make($updated)
             ->response()
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Soft-delete a person (admin only per policy).
-     *
-     * @param Person $person
-     * @return Response
-     */
     #[OA\Delete(
         path: '/api/persons/{id}',
         operationId: 'personsDestroy',
         summary: 'Delete person (soft)',
         security: [['bearerAuth' => []]],
         tags: ['Persons'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: 204, description: 'No Content'),
             new OA\Response(response: 401, description: 'Unauthorized'),
@@ -256,28 +207,19 @@ class PersonController extends Controller
     )]
     public function destroy(Person $person): Response
     {
-        $this->authorize('delete', $person);
+        $this->authorize('delete', [Person::class,$person]);
 
         $this->persons->softDelete($person);
 
         return response()->noContent();
     }
 
-    /**
-     * Update a person's role (admin).
-     *
-     * @param UpdateRolePersonRequest $request
-     * @return JsonResponse
-     */
     #[OA\Patch(
         path: '/api/admin/person-role',
         operationId: 'personsUpdateRole',
-        summary: 'Update person role (admin)',
+        summary: 'Update user role (admin)',
         security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(ref: '#/components/schemas/UpdateRolePersonRequestPayload')
-        ),
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/UpdateRolePersonRequestPayload')),
         tags: ['Persons'],
         responses: [
             new OA\Response(response: 200, description: 'OK'),
@@ -288,10 +230,13 @@ class PersonController extends Controller
     )]
     public function updateRole(UpdateRolePersonRequest $request): JsonResponse
     {
+        // Policy still targets Person::class; inside policy check auth()->user()->isAdmin()
         $this->authorize('updateRole', Person::class);
 
         $data = $request->validated();
-        $updated = $this->persons->updateRole($data['person_id'], $data['role_id']);
+
+        // NOTE: This now updates the USER role (auth), not the person role.
+        $updated = $this->persons->updateUserRoleByPersonId((int) $data['person_id'], (int) $data['role_id']);
 
         return PersonResource::make($updated)
             ->response()

@@ -5,7 +5,6 @@ namespace App\Services\Implementations;
 use App\DTOS\Car\CarCreateData;
 use App\DTOS\Car\CarUpdateData;
 use App\Exceptions\ConflictException;
-use App\Exceptions\InactiveUserException;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
 use App\Models\Person;
@@ -39,10 +38,6 @@ readonly class CarService implements CarServiceInterface
     /** @inheritDoc */
     public function createCar(CarCreateData $dto, Person $person): Car
     {
-        if (!$person->is_active) {
-            throw new InactiveUserException();
-        }
-
         if ($person->car_id !== null) {
             throw new ConflictException('User already has a car.');
         }
