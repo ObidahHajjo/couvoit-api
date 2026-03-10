@@ -36,7 +36,7 @@ class CarController extends Controller
      * @return JsonResponse
      */
     #[OA\Get(
-        path: '/api/cars',
+        path: '/cars',
         operationId: 'carsIndex',
         summary: 'List cars',
         security: [['bearerAuth' => []]],
@@ -78,7 +78,7 @@ class CarController extends Controller
      * @return JsonResponse
      */
     #[OA\Get(
-        path: '/api/cars/{id}',
+        path: '/cars/{id}',
         operationId: 'carsShow',
         summary: 'Get car by id',
         security: [['bearerAuth' => []]],
@@ -112,7 +112,7 @@ class CarController extends Controller
      * @throws Throwable
      */
     #[OA\Post(
-        path: '/api/cars',
+        path: '/cars',
         operationId: 'carsStore',
         summary: 'Create my car',
         security: [['bearerAuth' => []]],
@@ -154,7 +154,7 @@ class CarController extends Controller
      * @throws Throwable
      */
     #[OA\Patch(
-        path: '/api/cars/{id}',
+        path: '/cars/{id}',
         operationId: 'carsUpdate',
         summary: 'Update my car',
         security: [['bearerAuth' => []]],
@@ -195,7 +195,7 @@ class CarController extends Controller
      * @return Response
      */
     #[OA\Delete(
-        path: '/api/cars/{id}',
+        path: '/cars/{id}',
         operationId: 'carsDestroy',
         summary: 'Delete my car',
         security: [['bearerAuth' => []]],

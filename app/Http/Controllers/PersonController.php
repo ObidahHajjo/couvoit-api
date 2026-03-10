@@ -23,7 +23,7 @@ class PersonController extends Controller
     ) {}
 
     #[OA\Get(
-        path: '/api/persons',
+        path: '/persons',
         operationId: 'personsIndex',
         summary: 'List persons (admin)',
         security: [['bearerAuth' => []]],
@@ -46,7 +46,7 @@ class PersonController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/persons/{id}',
+        path: '/persons/{id}',
         operationId: 'personsShow',
         summary: 'Get person by id',
         security: [['bearerAuth' => []]],
@@ -69,7 +69,7 @@ class PersonController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/persons/{id}/trips-driver',
+        path: '/persons/{id}/trips-driver',
         operationId: 'personsTripsDriver',
         summary: 'Trips as driver',
         security: [['bearerAuth' => []]],
@@ -94,7 +94,7 @@ class PersonController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/persons/{id}/trips-passenger',
+        path: '/persons/{id}/trips-passenger',
         operationId: 'personsTripsPassenger',
         summary: 'Trips as passenger',
         security: [['bearerAuth' => []]],
@@ -126,7 +126,7 @@ class PersonController extends Controller
      * @throws Throwable
      */
     #[OA\Post(
-        path: '/api/persons',
+        path: '/persons',
         operationId: 'personsStore',
         summary: 'Complete my profile',
         security: [['bearerAuth' => []]],
@@ -164,7 +164,7 @@ class PersonController extends Controller
      * @throws Throwable
      */
     #[OA\Patch(
-        path: '/api/persons/{id}',
+        path: '/persons/{id}',
         operationId: 'personsUpdate',
         summary: 'Update person',
         security: [['bearerAuth' => []]],
@@ -192,7 +192,7 @@ class PersonController extends Controller
     }
 
     #[OA\Delete(
-        path: '/api/persons/{id}',
+        path: '/persons/{id}',
         operationId: 'personsDestroy',
         summary: 'Delete person (soft)',
         security: [['bearerAuth' => []]],
@@ -215,7 +215,7 @@ class PersonController extends Controller
     }
 
     #[OA\Patch(
-        path: '/api/admin/person-role',
+        path: '/admin/person-role',
         operationId: 'personsUpdateRole',
         summary: 'Update user role (admin)',
         security: [['bearerAuth' => []]],

@@ -28,7 +28,7 @@ class BrandController extends Controller
      * @return JsonResponse
      */
     #[OA\Get(
-        path: '/api/brands',
+        path: '/brands',
         operationId: 'brandsIndex',
         summary: 'List brands',
         security: [['bearerAuth' => []]],
@@ -54,7 +54,7 @@ class BrandController extends Controller
      * @return JsonResponse
      */
     #[OA\Get(
-        path: '/api/brands/{id}',
+        path: '/brands/{id}',
         operationId: 'brandsShow',
         summary: 'Get brand by id',
         security: [['bearerAuth' => []]],

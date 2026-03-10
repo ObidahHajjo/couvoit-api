@@ -12,10 +12,15 @@ use App\Http\Controllers\CarController;
 | PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
+Route::get('/', function () {
+    return json_encode(["message" => "ok"]);
+});
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/refresh', [AuthController::class, 'refresh']);
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+});
 
 /*
 |--------------------------------------------------------------------------

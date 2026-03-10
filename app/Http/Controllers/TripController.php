@@ -43,7 +43,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Get(
-        path: '/api/trips',
+        path: '/trips',
         operationId: 'tripsIndex',
         summary: 'Search trips',
         security: [['bearerAuth' => []]],
@@ -84,7 +84,7 @@ class TripController extends Controller
      * @return JsonResponse
      */
     #[OA\Get(
-        path: '/api/trips/{id}',
+        path: '/trips/{id}',
         operationId: 'tripsShow',
         summary: 'Get trip by id',
         security: [['bearerAuth' => []]],
@@ -119,7 +119,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Get(
-        path: '/api/trips/{id}/person',
+        path: '/trips/{id}/person',
         operationId: 'tripsPassengers',
         summary: 'List trip passengers',
         security: [['bearerAuth' => []]],
@@ -153,7 +153,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Post(
-        path: '/api/trips',
+        path: '/trips',
         operationId: 'tripsStore',
         summary: 'Create trip',
         security: [['bearerAuth' => []]],
@@ -202,7 +202,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Patch(
-        path: '/api/trips/{id}',
+        path: '/trips/{id}',
         operationId: 'tripsUpdate',
         summary: 'Update trip',
         security: [['bearerAuth' => []]],
@@ -247,7 +247,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Delete(
-        path: '/api/trips/{id}',
+        path: '/trips/{id}',
         operationId: 'tripsDestroy',
         summary: 'Delete trip permanently',
         security: [['bearerAuth' => []]],
@@ -283,7 +283,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Patch(
-        path: '/api/trips/{id}/cancel',
+        path: '/trips/{id}/cancel',
         operationId: 'tripsCancel',
         summary: 'Cancel trip',
         security: [['bearerAuth' => []]],
@@ -320,7 +320,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Delete(
-        path: '/api/trips/{id}/reservations',
+        path: '/trips/{id}/reservations',
         operationId: 'tripsCancelReservation',
         summary: 'Cancel reservation',
         security: [['bearerAuth' => []]],
@@ -370,7 +370,7 @@ class TripController extends Controller
      * @throws Throwable
      */
     #[OA\Post(
-        path: '/api/trips/{id}/person',
+        path: '/trips/{id}/person',
         operationId: 'tripsReserve',
         summary: 'Reserve a seat',
         security: [['bearerAuth' => []]],

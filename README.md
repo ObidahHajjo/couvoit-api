@@ -124,8 +124,8 @@ Elle ne dépend plus de Supabase : la génération, la validation et la rotation
 
 ## 🔄 Flux d’authentification
 ### 1️⃣ L’utilisateur s’inscrit ou se connecte via :
-```POST /api/register
-POST /api/login
+```POST /register
+POST /login
 ```
 
 ### 2️⃣ Le serveur :
@@ -182,7 +182,7 @@ Exemple de payload :
 
 ## 🔄 Endpoint
 ```
-POST /api/refresh
+POST /refresh
 ```
 
 ## Processus :
@@ -280,7 +280,7 @@ php artisan l5-swagger:generate
 
 ### Accessible via :
 ```
-/api/documentation
+/documentation
 ```
 
 ---
@@ -363,52 +363,52 @@ public function before(Person $user): ?bool
 ## 🔐 Authentification - Routes Publiques
 | Méthode | Endpoint | Description |
 |----------|----------|------------|
-| POST | `/api/register` | Inscription d’un utilisateur |
-| POST | `/api/login` | Connexion utilisateur |
-| POST | `/api/refresh` | Rafraîchissement du token JWT |
+| POST | `/register` | Inscription d’un utilisateur |
+| POST | `/login` | Connexion utilisateur |
+| POST | `/refresh` | Rafraîchissement du token JWT |
 
 # 👤 Persons
 
 | Méthode | Endpoint | Description |
 |----------|----------|------------|
-| GET | `/api/persons` | Liste des utilisateurs |
-| GET | `/api/persons/{person}` | Détail d’un utilisateur |
-| GET | `/api/persons/{person}/trips-driver` | Trajets en tant que conducteur |
-| GET | `/api/persons/{person}/trips-passenger` | Trajets en tant que passager |
-| POST | `/api/persons` | Création d’un utilisateur |
-| PATCH | `/api/persons/role` | Mise à jour du rôle |
-| PATCH | `/api/persons/{person}` | Mise à jour d’un utilisateur |
-| DELETE | `/api/persons/{person}` | Suppression d’un utilisateur |
+| GET | `/persons` | Liste des utilisateurs |
+| GET | `/persons/{person}` | Détail d’un utilisateur |
+| GET | `/persons/{person}/trips-driver` | Trajets en tant que conducteur |
+| GET | `/persons/{person}/trips-passenger` | Trajets en tant que passager |
+| POST | `/persons` | Création d’un utilisateur |
+| PATCH | `/persons/role` | Mise à jour du rôle |
+| PATCH | `/persons/{person}` | Mise à jour d’un utilisateur |
+| DELETE | `/persons/{person}` | Suppression d’un utilisateur |
 
 # 🚗 Trajets
 
 | Méthode | Endpoint | Description |
 |----------|----------|------------|
-| GET | `/api/trips` | Liste des trajets |
-| GET | `/api/trips/{trip}` | Détail d’un trajet |
-| GET | `/api/trips/{trip}/person` | Liste des passagers |
-| POST | `/api/trips` | Création d’un trajet |
-| PATCH | `/api/trips/{trip}` | Mise à jour d’un trajet |
-| PATCH | `/api/trips/{trip}/cancel` | Annulation d’un trajet |
-| DELETE | `/api/trips/{trip}` | Suppression d’un trajet |
-| POST | `/api/trips/{trip}/person` | Réservation d’un siège |
-| DELETE | `/api/trips/{trip}/reservations` | Annulation d’une réservation |
+| GET | `/trips` | Liste des trajets |
+| GET | `/trips/{trip}` | Détail d’un trajet |
+| GET | `/trips/{trip}/person` | Liste des passagers |
+| POST | `/trips` | Création d’un trajet |
+| PATCH | `/trips/{trip}` | Mise à jour d’un trajet |
+| PATCH | `/trips/{trip}/cancel` | Annulation d’un trajet |
+| DELETE | `/trips/{trip}` | Suppression d’un trajet |
+| POST | `/trips/{trip}/person` | Réservation d’un siège |
+| DELETE | `/trips/{trip}/reservations` | Annulation d’une réservation |
 
 # 🏷 Marques
 
 | Méthode | Endpoint | Description |
 |----------|----------|------------|
-| GET | `/api/brands` | Liste des marques |
-| GET | `/api/brand/{brand}` | Détail d’une marque |
+| GET | `/brands` | Liste des marques |
+| GET | `/brand/{brand}` | Détail d’une marque |
 
 ## 🚗 Voitures
 | Méthode | Endpoint | Description |
 |----------|----------|------------|
-| GET | `/api/cars` | Liste des voitures |
-| GET | `/api/cars/{car}` | Détail d’une voiture |
-| POST | `/api/cars` | Création d’une voiture |
-| PUT | `/api/cars/{car}` | Mise à jour complète |
-| DELETE | `/api/cars/{car}` | Suppression d’une voiture |
+| GET | `/cars` | Liste des voitures |
+| GET | `/cars/{car}` | Détail d’une voiture |
+| POST | `/cars` | Création d’une voiture |
+| PUT | `/cars/{car}` | Mise à jour complète |
+| DELETE | `/cars/{car}` | Suppression d’une voiture |
 
 # 📌 Remarques importantes
 

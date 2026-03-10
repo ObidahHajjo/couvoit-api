@@ -21,7 +21,7 @@ class AuthController extends Controller
     ) {}
 
     #[OA\Post(
-        path: '/api/register',
+        path: '/register',
         operationId: 'authRegister',
         summary: 'Register',
         requestBody: new OA\RequestBody(
@@ -45,7 +45,7 @@ class AuthController extends Controller
     }
 
     #[OA\Post(
-        path: '/api/login',
+        path: '/login',
         operationId: 'authLogin',
         summary: 'Login',
         requestBody: new OA\RequestBody(
@@ -70,7 +70,7 @@ class AuthController extends Controller
     }
 
     #[OA\Post(
-        path: '/api/refresh',
+        path: '/refresh',
         operationId: 'authRefresh',
         summary: 'Refresh token',
         requestBody: new OA\RequestBody(

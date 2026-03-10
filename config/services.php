@@ -37,7 +37,7 @@ return [
 
     'ors' => [
         'key' => env('OPENROUTESERVICE_API_KEY'),
-        'geocode_url' => 'https://api.openrouteservice.org/geocode/search',
-        'directions_url' => 'https://api.openrouteservice.org/v2/directions/driving-car',
+        'geocode_url' => 'https:/.openrouteservice.org/geocode/search',
+        'directions_url' => 'https:/.openrouteservice.org/v2/directions/driving-car',
     ],
 ];

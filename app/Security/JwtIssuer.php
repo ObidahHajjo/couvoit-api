@@ -46,8 +46,8 @@ final class JwtIssuer implements JwtIssuerInterface
             'sub' => (string) $user->id,
 
             // Helpful claims
-            'email' => (string) $user->email,
-            'role_id' => (int) $user->role_id,
+            'email' => $user->email,
+            'role_id' => $user->role_id,
             'jti' => bin2hex(random_bytes(16)),
         ];
 
