@@ -4,8 +4,8 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Color;
 use App\Repositories\Interfaces\ColorRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Eloquent implementation of ColorRepositoryInterface.
@@ -18,86 +18,18 @@ use Illuminate\Support\Facades\Cache;
  * - By hex:      colors:hex:{normalizedHex} (tags: colors, hex:{normalizedHex})
  * - By name:     colors:name:{normalizedName} (tags: colors, name:{normalizedName})
  */
-class ColorEloquentRepository implements ColorRepositoryInterface
+readonly class ColorEloquentRepository implements ColorRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    // ---------- Tags ----------
-
-    /**
-     * @return array<int,string>
-     */
-    private function tagColors(): array
-    {
-        return ['colors'];
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {
     }
 
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagColor(int $id): array
-    {
-        return ['colors', 'color:' . $id];
-    }
-
-    /**
-     * @param string $hex
-     * @return array<int,string>
-     */
-    private function tagHex(string $hex): array
-    {
-        return ['colors', 'hex:' . $this->normalizeHex($hex)];
-    }
-
-    /**
-     * @param string $name
-     * @return array<int,string>
-     */
-    private function tagName(string $name): array
-    {
-        return ['colors', 'name:' . $this->normalizeName($name)];
-    }
-
-    // ---------- Keys ----------
-
-    private function keyAll(): string
-    {
-        return 'colors:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return 'colors:' . $id;
-    }
-
-    private function keyByHex(string $hex): string
-    {
-        return 'colors:hex:' . $this->normalizeHex($hex);
-    }
-
-    private function keyByName(string $name): string
-    {
-        return 'colors:name:' . $this->normalizeName($name);
-    }
-
-    /**
-     * Normalize hex code for consistent caching and lookup.
-     *
-     * @param string $hex
-     * @return string
-     */
     private function normalizeHex(string $hex): string
     {
         return mb_strtolower(trim($hex));
     }
 
-    /**
-     * Normalize name for consistent caching and lookup.
-     *
-     * @param string $name
-     * @return string
-     */
     private function normalizeName(string $name): string
     {
         return mb_strtolower(trim($name));
@@ -107,23 +39,14 @@ class ColorEloquentRepository implements ColorRepositoryInterface
     public function all(): Collection
     {
         /** @var Collection<int,Color> $colors */
-        $colors = Cache::tags($this->tagColors())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return Color::query()
-                    ->orderBy('name')
-                    ->get();
-            });
+        $colors = $this->cache->rememberColorsAll(function () {
+            return Color::query()
+                ->orderBy('name')
+                ->get();
+        });
 
-        // Optional warming: id + hex + name
-        foreach ($colors as $c) {
-            Cache::tags($this->tagColor($c->id))
-                ->put($this->keyById($c->id), $c, self::TTL_SECONDS);
-
-            Cache::tags($this->tagHex($c->hex_code))
-                ->put($this->keyByHex($c->hex_code), $c, self::TTL_SECONDS);
-
-            Cache::tags($this->tagName($c->name))
-                ->put($this->keyByName($c->name), $c, self::TTL_SECONDS);
+        foreach ($colors as $color) {
+            $this->cache->putColor($color, $color->name, $color->hex_code);
         }
 
         return $colors;
@@ -133,10 +56,7 @@ class ColorEloquentRepository implements ColorRepositoryInterface
     public function findById(int $id): ?Color
     {
         /** @var Color|null $color */
-        $color = Cache::tags($this->tagColor($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Color::query()->find($id);
-            });
+        $color = $this->cache->rememberColorById($id, fn () => Color::query()->find($id));
 
         return $color;
     }
@@ -159,16 +79,9 @@ class ColorEloquentRepository implements ColorRepositoryInterface
 
         $color->refresh();
 
-        Cache::tags($this->tagColor((int) $color->id))
-            ->put($this->keyById((int) $color->id), $color, self::TTL_SECONDS);
-
-        Cache::tags($this->tagHex((string) $color->hex_code))
-            ->put($this->keyByHex((string) $color->hex_code), $color, self::TTL_SECONDS);
-
-        Cache::tags($this->tagName((string) $color->name))
-            ->put($this->keyByName((string) $color->name), $color, self::TTL_SECONDS);
-
-        Cache::tags($this->tagColors())->forget($this->keyAll());
+        $this->cache->putColor($color, (string) $color->name, (string) $color->hex_code);
+        $this->cache->forgetColorsAll();
+        $this->cache->invalidateCarsAndPersonsByColorId((int) $color->id);
 
         return $color;
     }
@@ -195,24 +108,18 @@ class ColorEloquentRepository implements ColorRepositoryInterface
         $ok = $color->update($data);
         $color->refresh();
 
-        Cache::tags($this->tagColor($id))
-            ->put($this->keyById($id), $color, self::TTL_SECONDS);
+        $this->cache->putColor($color, (string) $color->name, (string) $color->hex_code);
 
         if ($oldHex !== (string) $color->hex_code) {
-            Cache::tags($this->tagHex($oldHex))->flush();
+            $this->cache->forgetColorByHex($oldHex);
         }
 
         if ($oldName !== (string) $color->name) {
-            Cache::tags($this->tagName($oldName))->flush();
+            $this->cache->forgetColorByName($oldName);
         }
 
-        Cache::tags($this->tagHex((string) $color->hex_code))
-            ->put($this->keyByHex((string) $color->hex_code), $color, self::TTL_SECONDS);
-
-        Cache::tags($this->tagName((string) $color->name))
-            ->put($this->keyByName((string) $color->name), $color, self::TTL_SECONDS);
-
-        Cache::tags($this->tagColors())->forget($this->keyAll());
+        $this->cache->forgetColorsAll();
+        $this->cache->invalidateCarsAndPersonsByColorId($id);
 
         return $ok;
     }
@@ -230,10 +137,11 @@ class ColorEloquentRepository implements ColorRepositoryInterface
 
         $ok = (bool) $color->delete();
 
-        Cache::tags($this->tagColor($id))->flush();
-        Cache::tags($this->tagHex($hex))->flush();
-        Cache::tags($this->tagName($name))->flush();
-        Cache::tags($this->tagColors())->forget($this->keyAll());
+        $this->cache->forgetColor($id);
+        $this->cache->forgetColorByHex($hex);
+        $this->cache->forgetColorByName($name);
+        $this->cache->forgetColorsAll();
+        $this->cache->invalidateCarsAndPersonsByColorId($id);
 
         return $ok;
     }
@@ -242,21 +150,16 @@ class ColorEloquentRepository implements ColorRepositoryInterface
     public function findByName(string $name): ?Color
     {
         /** @var Color|null $color */
-        $color = Cache::tags($this->tagName($name))
-            ->remember($this->keyByName($name), self::TTL_SECONDS, function () use ($name) {
-                $normalized = $this->normalizeName($name);
+        $color = $this->cache->rememberColorByName($name, function () use ($name) {
+            $normalized = $this->normalizeName($name);
 
-                return Color::query()
-                    ->whereRaw('lower(name) = ?', [$normalized])
-                    ->first();
-            });
+            return Color::query()
+                ->whereRaw('lower(name) = ?', [$normalized])
+                ->first();
+        });
 
         if ($color) {
-            Cache::tags($this->tagColor($color->id))
-                ->put($this->keyById($color->id), $color, self::TTL_SECONDS);
-
-            Cache::tags($this->tagHex($color->hex_code))
-                ->put($this->keyByHex($color->hex_code), $color, self::TTL_SECONDS);
+            $this->cache->putColor($color, $color->name, $color->hex_code);
         }
 
         return $color;
@@ -266,21 +169,16 @@ class ColorEloquentRepository implements ColorRepositoryInterface
     public function findByHexCode(string $hexCode): ?Color
     {
         /** @var Color|null $color */
-        $color = Cache::tags($this->tagHex($hexCode))
-            ->remember($this->keyByHex($hexCode), self::TTL_SECONDS, function () use ($hexCode) {
-                $normalized = $this->normalizeHex($hexCode);
+        $color = $this->cache->rememberColorByHex($hexCode, function () use ($hexCode) {
+            $normalized = $this->normalizeHex($hexCode);
 
-                return Color::query()
-                    ->whereRaw('lower(hex_code) = ?', [$normalized])
-                    ->first();
-            });
+            return Color::query()
+                ->whereRaw('lower(hex_code) = ?', [$normalized])
+                ->first();
+        });
 
         if ($color) {
-            Cache::tags($this->tagColor($color->id))
-                ->put($this->keyById($color->id), $color, self::TTL_SECONDS);
-
-            Cache::tags($this->tagName($color->name))
-                ->put($this->keyByName($color->name), $color, self::TTL_SECONDS);
+            $this->cache->putColor($color, $color->name, $color->hex_code);
         }
 
         return $color;

@@ -4,8 +4,8 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\CarModel;
 use App\Repositories\Interfaces\CarModelRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Eloquent implementation of CarModelRepositoryInterface.
@@ -18,67 +18,11 @@ use Illuminate\Support\Facades\Cache;
  * - By brand:    models:brand:{brandId} (tags: models, brand:{brandId})
  * - By name:     models:name:{normalizedName} (tags: models, name:{normalizedName})
  */
-class CarModelEloquentRepository implements CarModelRepositoryInterface
+readonly class CarModelEloquentRepository implements CarModelRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    // ---------- Tags ----------
-
-    /**
-     * @return array<int,string>
-     */
-    private function tagModels(): array
-    {
-        return ['models'];
-    }
-
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagModel(int $id): array
-    {
-        return ['models', 'model:' . $id];
-    }
-
-    /**
-     * @param int $brandId
-     * @return array<int,string>
-     */
-    private function tagBrand(int $brandId): array
-    {
-        return ['models', 'brand:' . $brandId];
-    }
-
-    /**
-     * @param string $name
-     * @return array<int,string>
-     */
-    private function tagName(string $name): array
-    {
-        return ['models', 'name:' . $this->normalizeName($name)];
-    }
-
-    // ---------- Keys ----------
-
-    private function keyAll(): string
-    {
-        return 'models:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return 'models:' . $id;
-    }
-
-    private function keyByBrand(int $brandId): string
-    {
-        return 'models:brand:' . $brandId;
-    }
-
-    private function keyByName(string $name): string
-    {
-        return 'models:name:' . $this->normalizeName($name);
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {
     }
 
     /**
@@ -96,20 +40,14 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
     public function all(): Collection
     {
         /** @var Collection<int,CarModel> $models */
-        $models = Cache::tags($this->tagModels())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return CarModel::query()
-                    ->with('brand')
-                    ->get();
-            });
+        $models = $this->cache->rememberModelsAll(function () {
+            return CarModel::query()
+                ->with(['brand', 'type'])
+                ->get();
+        });
 
-        // Optional: warm per-model + per-name caches (avoid re-caching by-brand for each model)
-        foreach ($models as $m) {
-            Cache::tags($this->tagModel($m->id))
-                ->put($this->keyById($m->id), $m, self::TTL_SECONDS);
-
-            Cache::tags($this->tagName($m->name))
-                ->put($this->keyByName($m->name), $m, self::TTL_SECONDS);
+        foreach ($models as $model) {
+            $this->cache->putModel($model);
         }
 
         return $models;
@@ -119,12 +57,11 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
     public function findById(int $id): ?CarModel
     {
         /** @var CarModel|null $model */
-        $model = Cache::tags($this->tagModel($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return CarModel::query()
-                    ->with('brand')
-                    ->find($id);
-            });
+        $model = $this->cache->rememberModelById($id, function () use ($id) {
+            return CarModel::query()
+                ->with(['brand', 'type'])
+                ->find($id);
+        });
 
         return $model;
     }
@@ -136,22 +73,17 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
 
         $model = CarModel::query()->createOrFirst(
             [
-                'name'     => $data['name'],
+                'name' => $data['name'],
                 'brand_id' => $data['brand_id'],
+                'search_key' => $data['search_key'],
             ],
             $data
-        )->loadMissing('brand');
+        )->load(['brand', 'type']);
 
-        // write-through
-        Cache::tags($this->tagModel((int) $model->id))
-            ->put($this->keyById((int) $model->id), $model, self::TTL_SECONDS);
-
-        Cache::tags($this->tagName((string) $model->name))
-            ->put($this->keyByName((string) $model->name), $model, self::TTL_SECONDS);
-
-        // invalidate affected lists
-        Cache::tags($this->tagModels())->forget($this->keyAll());
-        Cache::tags($this->tagBrand((int) $model->brand_id))->flush();
+        $this->cache->putModel($model);
+        $this->cache->forgetModelsAll();
+        $this->cache->forgetModelsByBrand((int) $model->brand_id);
+        $this->cache->invalidateCarsAndPersonsByModelId((int) $model->id);
 
         return $model;
     }
@@ -167,23 +99,18 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
         }
 
         $model->update($data);
-        $model->refresh()->loadMissing('brand');
+        $model->refresh()->load(['brand', 'type']);
 
-        Cache::tags($this->tagModel($model->id))
-            ->put($this->keyById($model->id), $model, self::TTL_SECONDS);
+        $this->cache->putModel($model);
+        $this->cache->forgetModelsAll();
+        $this->cache->forgetModelsByBrand($oldBrandId);
+        $this->cache->forgetModelsByBrand($model->brand_id);
 
-        Cache::tags($this->tagName($model->name))
-            ->put($this->keyByName($model->name), $model, self::TTL_SECONDS);
-
-        // invalidate lists
-        Cache::tags($this->tagModels())->forget($this->keyAll());
-        Cache::tags($this->tagBrand($oldBrandId))->flush();
-        Cache::tags($this->tagBrand($model->brand_id))->flush();
-
-        // if name changed, clear old name scope
         if ($oldName !== $model->name) {
-            Cache::tags($this->tagName($oldName))->flush();
+            $this->cache->forgetModelByName($oldName);
         }
+
+        $this->cache->invalidateCarsAndPersonsByModelId($model->id);
     }
 
     /** @inheritDoc */
@@ -195,11 +122,11 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
 
         $ok = (bool) $model->delete();
 
-        Cache::tags($this->tagModel($id))->flush();
-        Cache::tags($this->tagBrand($brandId))->flush();
-        Cache::tags($this->tagName($name))->flush();
-
-        Cache::tags($this->tagModels())->forget($this->keyAll());
+        $this->cache->forgetModel($id);
+        $this->cache->forgetModelsByBrand($brandId);
+        $this->cache->forgetModelByName($name);
+        $this->cache->forgetModelsAll();
+        $this->cache->invalidateCarsAndPersonsByModelId($id);
 
         return $ok;
     }
@@ -208,20 +135,17 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
     public function findByName(string $name): ?CarModel
     {
         /** @var CarModel|null $model */
-        $model = Cache::tags($this->tagName($name))
-            ->remember($this->keyByName($name), self::TTL_SECONDS, function () use ($name) {
-                $normalized = $this->normalizeName($name);
+        $model = $this->cache->rememberModelByName($name, function () use ($name) {
+            $normalized = $this->normalizeName($name);
 
-                return CarModel::query()
-                    ->with('brand')
-                    ->whereRaw('lower(name) = ?', [$normalized])
-                    ->first();
-            });
+            return CarModel::query()
+                ->with(['brand', 'type'])
+                ->whereRaw('lower(name) = ?', [$normalized])
+                ->first();
+        });
 
-        // warm id cache
         if ($model) {
-            Cache::tags($this->tagModel($model->id))
-                ->put($this->keyById($model->id), $model, self::TTL_SECONDS);
+            $this->cache->putModel($model);
         }
 
         return $model;
@@ -231,24 +155,31 @@ class CarModelEloquentRepository implements CarModelRepositoryInterface
     public function findByBrand(int $brandId): Collection
     {
         /** @var Collection<int,CarModel> $models */
-        $models = Cache::tags($this->tagBrand($brandId))
-            ->remember($this->keyByBrand($brandId), self::TTL_SECONDS, function () use ($brandId) {
-                return CarModel::query()
-                    ->with('brand')
-                    ->where('brand_id', $brandId)
-                    ->orderBy('name')
-                    ->get();
-            });
+        $models = $this->cache->rememberModelsByBrand($brandId, function () use ($brandId) {
+            return CarModel::query()
+                ->with(['brand', 'type'])
+                ->where('brand_id', $brandId)
+                ->orderBy('name')
+                ->get();
+        });
 
-        // Optional: warm per-id + per-name caches
-        foreach ($models as $m) {
-            Cache::tags($this->tagModel($m->id))
-                ->put($this->keyById($m->id), $m, self::TTL_SECONDS);
-
-            Cache::tags($this->tagName($m->name))
-                ->put($this->keyByName($m->name), $m, self::TTL_SECONDS);
+        foreach ($models as $model) {
+            $this->cache->putModel($model);
         }
 
         return $models;
+    }
+
+    /** @inheritDoc */
+    public function findBySearchKey(string $brandSearchKey, string $modelSearchKey): Collection{
+        return CarModel::query()
+            ->with('brand')
+            ->whereHas('brand', function ($query) use ($brandSearchKey) {
+                $query->where('search_key', $brandSearchKey);
+            })
+            ->where('search_key', 'like', '%' . $modelSearchKey . '%')
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
     }
 }

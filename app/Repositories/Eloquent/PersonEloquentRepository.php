@@ -4,8 +4,8 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Person;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Person repository (profile).
@@ -14,116 +14,120 @@ use Illuminate\Support\Facades\Cache;
  * - persons:all (tag: persons)
  * - persons:{id} (tags: persons, person:{id})
  */
-class PersonEloquentRepository implements PersonRepositoryInterface
+readonly class PersonEloquentRepository implements PersonRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    /**
-     * @return array<int,string>
-     */
-    private function tagPersons(): array
-    {
-        return ['persons'];
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {
     }
 
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagPerson(int $id): array
-    {
-        return ['persons', "person:$id"];
-    }
-
-    private function keyAll(): string
-    {
-        return 'persons:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return "persons:$id";
-    }
-
+    /** @inheritDoc */
     public function all(): Collection
     {
-        /** @var Collection<int,Person> $people */
-        $people = Cache::tags($this->tagPersons())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return Person::query()
-                    ->with(['car', 'user.role'])
-                    ->get();
-            });
+        $people = $this->cache->rememberPersonsAll(function () {
+            return Person::query()
+                ->with(['car.model.brand', 'car.model.type', 'car.color', 'user.role'])
+                ->get();
+        });
 
-        foreach ($people as $p) {
-            Cache::tags($this->tagPerson($p->id))
-                ->put($this->keyById($p->id), $p, self::TTL_SECONDS);
+        foreach ($people as $person) {
+            $this->cache->putPerson($person);
         }
 
         return $people;
     }
 
+    /** @inheritDoc */
     public function findById(int $id): Person
     {
-        /** @var Person $person */
-        $person = Cache::tags($this->tagPerson($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Person::query()
-                    ->with(['car', 'user.role'])
-                    ->findOrFail($id);
-            });
-
-        return $person;
+        return $this->cache->rememberPersonById($id, function () use ($id) {
+            return Person::query()
+                ->with(['car.model.brand', 'car.model.type', 'car.color', 'user.role'])
+                ->findOrFail($id);
+        });
     }
 
+    /** @inheritDoc */
     public function create(array $data): Person
     {
         $person = Person::query()
             ->create($data)
-            ->loadMissing(['car', 'user.role']);
+            ->load(['car.model.brand', 'car.model.type', 'car.color', 'user.role']);
 
-        Cache::tags($this->tagPerson((int) $person->id))
-            ->put($this->keyById((int) $person->id), $person, self::TTL_SECONDS);
-
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        $this->cache->putPerson($person);
+        $this->cache->forgetPersonsAll();
 
         return $person;
     }
 
+    /** @inheritDoc */
     public function update(int $id, array $data): void
     {
-        $person = $this->findById($id);
+        $person = Person::query()->findOrFail($id);
+        $oldCarId = $person->car_id ? (int) $person->car_id : null;
 
         $person->update($data);
-        $person->refresh()->loadMissing(['car', 'user.role']);
+        $person->refresh()->load(['car.model.brand', 'car.model.type', 'car.color', 'user.role']);
 
-        Cache::tags($this->tagPerson($id))
-            ->put($this->keyById($id), $person, self::TTL_SECONDS);
+        $this->cache->putPerson($person);
+        $this->cache->forgetPersonsAll();
 
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        if ($oldCarId !== null) {
+            $this->cache->invalidatePersonsByCarId($oldCarId);
+        }
+
+        if ($person->car_id !== null) {
+            $this->cache->invalidatePersonsByCarId((int) $person->car_id);
+        }
     }
 
+    /** @inheritDoc */
     public function delete(int $id): void
     {
         $person = Person::query()->findOrFail($id);
+        $carId = $person->car_id ? (int) $person->car_id : null;
+
         $person->delete();
 
-        Cache::tags($this->tagPerson($id))->flush();
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        $this->cache->forgetPerson($id);
+        $this->cache->forgetPersonsAll();
+
+        if ($carId !== null) {
+            $this->cache->invalidatePersonsByCarId($carId);
+        }
     }
 
+    /** @inheritDoc */
     public function attachCar(Person $person, int $carId): bool
     {
+        $oldCarId = $person->car_id ? (int) $person->car_id : null;
+
         $person->car_id = $carId;
         $ok = $person->save();
 
-        $person->refresh()->loadMissing(['car', 'user.role']);
+        $person->refresh()->load(['car.model.brand', 'car.model.type', 'car.color', 'user.role']);
 
-        Cache::tags($this->tagPerson($person->id))
-            ->put($this->keyById($person->id), $person, self::TTL_SECONDS);
+        $this->cache->putPerson($person);
+        $this->cache->forgetPersonsAll();
 
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        if ($oldCarId !== null) {
+            $this->cache->invalidatePersonsByCarId($oldCarId);
+        }
+
+        $this->cache->invalidatePersonsByCarId($carId);
 
         return $ok;
+    }
+
+    /** @inheritDoc */
+    public function restore(int $personId): void
+    {
+        /** @var Person $person */
+        $person = Person::withTrashed()
+            ->find($personId);
+
+        if ($person !== null && $person->trashed() && $person->purged_at === null) {
+            $person->restore();
+        }
     }
 }

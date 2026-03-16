@@ -6,13 +6,12 @@ use App\Exceptions\UnauthorizedException;
 use App\Models\RefreshToken;
 use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInterface
 {
-    /**
-     * Store hashed refresh token for a user (write-only).
-     */
+    /** @inheritDoc */
     public function store(int $userId, string $refreshTokenPlain, CarbonImmutable $expiresAt): void
     {
         $hash = $this->hash($refreshTokenPlain);
@@ -25,15 +24,10 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
         ]);
     }
 
-    /**
-     * Validate provided refresh token and rotate it:
-     * - marks current token revoked
-     * - returns the owning user id
-     */
+    /** @inheritDoc */
     public function consume(string $refreshTokenPlain): int
     {
         $hash = $this->hash($refreshTokenPlain);
-
         /** @var RefreshToken|null $row */
         $row = RefreshToken::query()
             ->where('token_hash', $hash)
@@ -50,10 +44,7 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
         return (int) $row->user_id;
     }
 
-    /**
-     * Convenience: consume old token and store a new one.
-     * Returns user id (so service can issue new access token).
-     */
+    /** @inheritDoc */
     public function consumeAndRotate(string $refreshTokenPlain, string $newRefreshTokenPlain, CarbonImmutable $newExpiresAt): int
     {
         $userId = $this->consume($refreshTokenPlain);
@@ -62,6 +53,18 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
         return $userId;
     }
 
+    /** @inheritDoc */
+    public function deleteAllByUserId(int $userId): void
+    {
+        RefreshToken::query()->where('user_id', $userId)->delete();
+    }
+
+    /**
+     * hash a refresh token
+     *
+     * @param string $plain the raw refresh token
+     * @return string ashed refresh token
+     */
     private function hash(string $plain): string
     {
         $secret = (string) config('jwt.secret');

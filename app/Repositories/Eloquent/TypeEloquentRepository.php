@@ -4,8 +4,8 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Type;
 use App\Repositories\Interfaces\TypeRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Eloquent implementation of TypeRepositoryInterface.
@@ -17,53 +17,11 @@ use Illuminate\Support\Facades\Cache;
  * - By id:       types:{id} (tags: types, type_id:{id})
  * - By value:    types:type:{normalizedType} (tags: types, type:{normalizedType})
  */
-class TypeEloquentRepository implements TypeRepositoryInterface
+readonly class TypeEloquentRepository implements TypeRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    // ---------- Tags ----------
-
-    /**
-     * @return array<int,string>
-     */
-    private function tagTypes(): array
-    {
-        return ['types'];
-    }
-
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagTypeId(int $id): array
-    {
-        return ['types', 'type_id:' . $id];
-    }
-
-    /**
-     * @param string $type
-     * @return array<int,string>
-     */
-    private function tagTypeValue(string $type): array
-    {
-        return ['types', 'type:' . $this->normalizeType($type)];
-    }
-
-    // ---------- Keys ----------
-
-    private function keyAll(): string
-    {
-        return 'types:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return 'types:' . $id;
-    }
-
-    private function keyByType(string $type): string
-    {
-        return 'types:type:' . $this->normalizeType($type);
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {
     }
 
     /**
@@ -81,20 +39,14 @@ class TypeEloquentRepository implements TypeRepositoryInterface
     public function all(): Collection
     {
         /** @var Collection<int,Type> $types */
-        $types = Cache::tags($this->tagTypes())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return Type::query()
-                    ->orderBy('type')
-                    ->get();
-            });
+        $types = $this->cache->rememberTypesAll(function () {
+            return Type::query()
+                ->orderBy('type')
+                ->get();
+        });
 
-        // Optional warming
-        foreach ($types as $t) {
-            Cache::tags($this->tagTypeId($t->id))
-                ->put($this->keyById($t->id), $t, self::TTL_SECONDS);
-
-            Cache::tags($this->tagTypeValue($t->type))
-                ->put($this->keyByType($t->type), $t, self::TTL_SECONDS);
+        foreach ($types as $type) {
+            $this->cache->putType($type, $type->type);
         }
 
         return $types;
@@ -104,10 +56,7 @@ class TypeEloquentRepository implements TypeRepositoryInterface
     public function findById(int $id): ?Type
     {
         /** @var Type|null $type */
-        $type = Cache::tags($this->tagTypeId($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Type::query()->find($id);
-            });
+        $type = $this->cache->rememberTypeById($id, fn () => Type::query()->find($id));
 
         return $type;
     }
@@ -122,13 +71,9 @@ class TypeEloquentRepository implements TypeRepositoryInterface
             ['type' => $name]
         );
 
-        Cache::tags($this->tagTypeId((int) $type->id))
-            ->put($this->keyById((int) $type->id), $type, self::TTL_SECONDS);
-
-        Cache::tags($this->tagTypeValue((string) $type->type))
-            ->put($this->keyByType((string) $type->type), $type, self::TTL_SECONDS);
-
-        Cache::tags($this->tagTypes())->forget($this->keyAll());
+        $this->cache->putType($type, (string) $type->type);
+        $this->cache->forgetTypesAll();
+        $this->cache->invalidateCarsAndPersonsByTypeId((int) $type->id);
 
         return $type;
     }
@@ -150,17 +95,14 @@ class TypeEloquentRepository implements TypeRepositoryInterface
         $ok = $type->update($data);
         $type->refresh();
 
-        Cache::tags($this->tagTypeId($id))
-            ->put($this->keyById($id), $type, self::TTL_SECONDS);
+        $this->cache->putType($type, (string) $type->type);
 
         if ($oldType !== (string) $type->type) {
-            Cache::tags($this->tagTypeValue($oldType))->flush();
+            $this->cache->forgetTypeByValue($oldType);
         }
 
-        Cache::tags($this->tagTypeValue((string) $type->type))
-            ->put($this->keyByType((string) $type->type), $type, self::TTL_SECONDS);
-
-        Cache::tags($this->tagTypes())->forget($this->keyAll());
+        $this->cache->forgetTypesAll();
+        $this->cache->invalidateCarsAndPersonsByTypeId($id);
 
         return $ok;
     }
@@ -177,9 +119,10 @@ class TypeEloquentRepository implements TypeRepositoryInterface
 
         $ok = (bool) $type->delete();
 
-        Cache::tags($this->tagTypeId($id))->flush();
-        Cache::tags($this->tagTypeValue($typeValue))->flush();
-        Cache::tags($this->tagTypes())->forget($this->keyAll());
+        $this->cache->forgetType($id);
+        $this->cache->forgetTypeByValue($typeValue);
+        $this->cache->forgetTypesAll();
+        $this->cache->invalidateCarsAndPersonsByTypeId($id);
 
         return $ok;
     }
@@ -187,21 +130,19 @@ class TypeEloquentRepository implements TypeRepositoryInterface
     /** @inheritDoc */
     public function findByType(string $type): ?Type
     {
-        /** @var Type|null $t */
-        $t = Cache::tags($this->tagTypeValue($type))
-            ->remember($this->keyByType($type), self::TTL_SECONDS, function () use ($type) {
-                $normalized = $this->normalizeType($type);
+        /** @var Type|null $found */
+        $found = $this->cache->rememberTypeByValue($type, function () use ($type) {
+            $normalized = $this->normalizeType($type);
 
-                return Type::query()
-                    ->whereRaw('lower(type) = ?', [$normalized])
-                    ->first();
-            });
+            return Type::query()
+                ->whereRaw('lower(type) = ?', [$normalized])
+                ->first();
+        });
 
-        if ($t) {
-            Cache::tags($this->tagTypeId($t->id))
-                ->put($this->keyById($t->id), $t, self::TTL_SECONDS);
+        if ($found) {
+            $this->cache->putType($found, $found->type);
         }
 
-        return $t;
+        return $found;
     }
 }

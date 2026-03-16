@@ -4,60 +4,37 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Address;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
-use Illuminate\Support\Facades\Cache;
+use App\Support\Cache\RepositoryCacheManager;
+use LogicException;
 
 /**
  * Eloquent implementation of AddressRepositoryInterface.
  *
  * Handles persistence, retrieval and caching of Address aggregates.
  */
-class AddressEloquentRepository implements AddressRepositoryInterface
+readonly class AddressEloquentRepository implements AddressRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Tags
-    |--------------------------------------------------------------------------
-    */
-
-    private function tagAddresses(): array
-    {
-        return ['addresses'];
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {
     }
-
-    private function tagAddress(int $id): array
-    {
-        return ['addresses', "address:$id"];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Keys
-    |--------------------------------------------------------------------------
-    */
-
-    private function keyById(int $id): string
-    {
-        return "addresses:$id";
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Repository Methods
-    |--------------------------------------------------------------------------
-    */
 
     /**
      * @inheritDoc
      */
     public function create(array $data): Address
     {
-        $address = Address::query()->create($data);
+        $address = Address::query()->firstOrCreate(
+            [
+                'street_number' => $data['street_number'],
+                'street' => $data['street'],
+                'city_id' => $data['city_id'],
+            ],
+            $data
+        );
 
-        // Cache freshly created address
-        Cache::tags($this->tagAddress($address->id))
-            ->put($this->keyById($address->id), $address->loadMissing('city'), self::TTL_SECONDS);
+        $address->load('city');
+        $this->cache->putAddress($address);
 
         return $address;
     }
@@ -67,18 +44,14 @@ class AddressEloquentRepository implements AddressRepositoryInterface
      */
     public function findOrFail(int $id): Address
     {
-        $address = Cache::tags($this->tagAddress($id))
-            ->remember(
-                $this->keyById($id),
-                self::TTL_SECONDS,
-                fn () => Address::query()
-                    ->with(['city'])
-                    ->findOrFail($id)
-            );
+        $address = $this->cache->rememberAddressById($id, fn () => Address::query()
+            ->with('city')
+            ->findOrFail($id));
 
-        if (!$address instanceof Address) throw new \LogicException('Cached value is not an Address instance.');
+        if (! $address instanceof Address) {
+            throw new LogicException('Cached value is not an Address instance.');
+        }
 
         return $address;
     }
-
 }

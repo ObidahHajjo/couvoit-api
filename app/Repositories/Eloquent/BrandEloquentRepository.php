@@ -4,73 +4,43 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Brand;
 use App\Repositories\Interfaces\BrandRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Eloquent implementation of BrandRepositoryInterface.
  *
  * Provides read-through and write-through caching using tagged cache.
  */
-class BrandEloquentRepository implements BrandRepositoryInterface
+readonly class BrandEloquentRepository implements BrandRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    /**
-     * @return array<int,string>
-     */
-    private function tagBrands(): array
-    {
-        return ['brands'];
-    }
-
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagBrand(int $id): array
-    {
-        return ['brands', "brand:$id"];
-    }
-
-    private function keyAll(): string
-    {
-        return 'brands:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return "brands:$id";
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {
     }
 
     /** @inheritDoc */
     public function all(): Collection
     {
         /** @var Collection<int,Brand> $brands */
-        $brands = Cache::tags($this->tagBrands())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return Brand::query()
-                    ->orderBy('name')
-                    ->get();
-            });
+        $brands = $this->cache->rememberBrandsAll(function () {
+            return Brand::query()
+                ->orderBy('name')
+                ->get();
+        });
 
-        // Warm per-brand cache entries
         foreach ($brands as $brand) {
-            Cache::tags($this->tagBrand($brand->id))
-                ->put($this->keyById($brand->id), $brand, self::TTL_SECONDS);
+            $this->cache->putBrand($brand);
         }
 
         return $brands;
     }
 
-   /** @inheritDoc */
+    /** @inheritDoc */
     public function findById(int $id): ?Brand
     {
         /** @var Brand|null $brand */
-        $brand = Cache::tags($this->tagBrand($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Brand::query()->find($id);
-            });
+        $brand = $this->cache->rememberBrandById($id, fn () => Brand::query()->find($id));
 
         return $brand;
     }
@@ -85,11 +55,8 @@ class BrandEloquentRepository implements BrandRepositoryInterface
             ['name' => $name]
         );
 
-        Cache::tags($this->tagBrand((int) $brand->id))
-            ->put($this->keyById((int) $brand->id), $brand, self::TTL_SECONDS);
-
-        Cache::tags($this->tagBrands())
-            ->forget($this->keyAll());
+        $this->cache->putBrand($brand);
+        $this->cache->forgetBrandsAll();
 
         return $brand;
     }
@@ -101,7 +68,9 @@ class BrandEloquentRepository implements BrandRepositoryInterface
 
         $brand->delete();
 
-        Cache::tags($this->tagBrand($id))->flush();
-        Cache::tags($this->tagBrands())->forget($this->keyAll());
+        $this->cache->forgetBrand($id);
+        $this->cache->forgetBrandsAll();
+        $this->cache->forgetModelsByBrand($id);
+        $this->cache->invalidateCarsAndPersonsByBrandId($id);
     }
 }
