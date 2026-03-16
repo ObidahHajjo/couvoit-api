@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 //            AddressSeeder::class,
 //            ColorSeeder::class,
 //            TypeSeeder::class,
-//            BrandSeeder::class,
+            BrandSeeder::class,
 //            CarModelSeeder::class,
         ]);
     }
