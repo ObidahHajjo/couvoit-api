@@ -29,7 +29,7 @@ final readonly class LocalJwtAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken();
+        $token = $request->cookie('access_token') ?: $request->bearerToken();
         if (!$token) {
             return response()->json(['error' => 'Missing Bearer token'], 401);
         }
