@@ -16,10 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: "",
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            EnsureFrontendRequestsAreStateful::class,
-        ]);
-
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
             'jwt' => LocalJwtAuth::class,
