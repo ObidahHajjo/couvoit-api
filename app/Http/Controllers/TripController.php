@@ -30,7 +30,9 @@ class TripController extends Controller
      */
     public function __construct(
         private readonly TripServiceInterface $trips,
-    ) {}
+    ) {
+        $this->authorizeResource(Trip::class, 'trip');
+    }
 
     /**
      * Search trips.
@@ -63,8 +65,6 @@ class TripController extends Controller
     )]
     public function index(TripIndexRequest $request): JsonResponse
     {
-        $this->authorize('viewAny', Trip::class);
-
         $starting = $request->validated('startingcity');
         $arrival  = $request->validated('arrivalcity');
         $date     = $request->validated('tripdate');
@@ -101,8 +101,6 @@ class TripController extends Controller
     )]
     public function show(Trip $trip): JsonResponse
     {
-        $this->authorize('view', [Trip::class,$trip]);
-
         $trip->loadMissing(['driver', 'departureAddress.city', 'arrivalAddress.city']);
 
         return (new TripResource($trip))
@@ -136,7 +134,7 @@ class TripController extends Controller
     )]
     public function passengers(Trip $trip): JsonResponse
     {
-        $this->authorize('viewPassengers', [Trip::class,$trip]);
+        $this->authorize('viewPassengers', $trip);
 
         $passengers = $this->trips->getTripPassengers($trip);
 
@@ -175,14 +173,7 @@ class TripController extends Controller
         $authUser = auth()->user();
         $authPerson = $authUser->person;
 
-        $driverId = $request->safe()->input('person_id');
-
-        if ($driverId && (int) $driverId !== $authPerson->id) {
-            $driver = $this->trips->getPersonById((int) $driverId);
-            $this->authorize('createFor', [Trip::class, $driver]);
-        } else {
-            $this->authorize('create', Trip::class);
-        }
+        $this->authorize('create', Trip::class);
 
         $trip = $this->trips->createTrip($request->validated(), $authPerson);
 
@@ -228,8 +219,6 @@ class TripController extends Controller
         $authUser = auth()->user();
         $authPerson = $authUser->person;
 
-        $this->authorize('update', [Trip::class,$trip]);
-
         $trip = $this->trips->updateTrip($trip, $request->validated(), $authPerson);
 
         $trip->loadMissing(['driver', 'departureAddress.city', 'arrivalAddress.city']);
@@ -268,8 +257,6 @@ class TripController extends Controller
         $authUser = auth()->user();
         $authPerson = $authUser->person;
 
-        $this->authorize('delete', [Trip::class,$trip]);
-
         $this->trips->deleteTripPermanently($trip, $authPerson);
 
         return response()->noContent();
@@ -304,7 +291,7 @@ class TripController extends Controller
         $authUser = auth()->user();
         $authPerson = $authUser->person;
 
-        $this->authorize('cancel', [Trip::class,$trip]);
+        $this->authorize('cancel', $trip);
 
         $this->trips->cancelTrip($trip, $authPerson);
 
@@ -346,7 +333,7 @@ class TripController extends Controller
         $authUser = auth()->user();
         $authPerson = $authUser->person;
 
-        $this->authorize('cancelReservation', [Trip::class,$trip]);
+        $this->authorize('cancelReservation', $trip);
 
         if ($authUser->isAdmin() && $request->validated('person_id') === null) {
             throw new ValidationLogicException('person_id is required for admin.');
@@ -403,10 +390,7 @@ class TripController extends Controller
             ? (int)$requestPersonId
             : (is_null($requestPersonId) ? $authPerson->id : (int)$requestPersonId);
 
-        Log::info("person id");
-        $passenger = $this->trips->getPersonById($personId);
-
-        $this->authorize('reserve', [Trip::class,$trip, $passenger]);
+        $this->authorize('reserve', $trip);
 
         $created = $this->trips->reserveSeat($trip, $personId, $authPerson);
 
