@@ -7,6 +7,7 @@ use App\Models\Car;
 use App\Models\Person;
 use App\Models\Trip;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -34,7 +35,7 @@ class RouteBindingServiceProvider extends ServiceProvider
             return Cache::tags(['persons'])->remember(
                 "persons:id:{$id}",
                 now()->addMinutes(10),
-                fn () => Person::query()->findOrFail($id)
+                fn () => Person::with('car.model','car.model.brand', 'car.color')->findOrFail($id)
             );
         });
 
