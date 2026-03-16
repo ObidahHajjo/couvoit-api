@@ -20,6 +20,7 @@ return [
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
+        'reset-password-template' => env('RESEND_RESET_PASSWORD_TEMPLATE_ID'),
     ],
 
     'ses' => [
@@ -37,7 +38,11 @@ return [
 
     'ors' => [
         'key' => env('OPENROUTESERVICE_API_KEY'),
-        'geocode_url' => 'https:/.openrouteservice.org/geocode/search',
-        'directions_url' => 'https:/.openrouteservice.org/v2/directions/driving-car',
+        'geocode_url' => 'https://api.openrouteservice.org/geocode/search',
+        'directions_url' => 'https://api.openrouteservice.org/v2/directions/driving-car',
+    ],
+
+    'cars_api' => [
+        'key' => env('CARS_API_KEY'),
     ],
 ];
