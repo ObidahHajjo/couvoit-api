@@ -13,6 +13,8 @@ use App\Services\Interfaces\AuthServiceInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
 
 final readonly class AuthService implements AuthServiceInterface
 {
@@ -57,7 +59,14 @@ final readonly class AuthService implements AuthServiceInterface
         /** @var User|null $user */
         $user  = $this->userRepository->findByEmail($email);
         if (!$user || !Hash::check($password, $user->password)) throw new UnauthorizedException('Invalid credentials.');
-        if (!$user->is_active) throw new UnauthorizedException('Account inactive.');
+        if ($user->purged_at !== null) throw new UnauthorizedException('This account has been permanently deleted.');
+        if ($user->trashed()) {
+            if ($user->deleted_at === null) throw new UnauthorizedException('Invalid account state.');
+            if ($user->deleted_at->lt(now()->subDays(90))) throw new UnauthorizedException('Restore period expired. This account has been permanently deleted.');
+
+            $this->restoreDeletedAccount($user);
+            $user->refresh();
+        }
         $person = $this->personRepository->findById($user->person_id);
         return $this->issueSession($user, $person->id);
     }
@@ -83,6 +92,39 @@ final readonly class AuthService implements AuthServiceInterface
         ];
     }
 
+    /** @inheritDoc */
+    public function logout() :void
+    {
+        $this->refreshTokens->deleteAllByUserId(auth()->id());
+    }
+
+    /** @inheritDoc */
+    public function forgetPassword(string $email) : string{
+        return Password::sendResetLink([
+            'email' => $email,
+        ]);
+    }
+
+    /** @inheritDoc */
+    public function resetPassword(array $data): string
+    {
+        return Password::broker('users')->reset(
+            [
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'password_confirmation' => $data['password_confirmation'],
+                'token' => $data['token'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+    }
+
     private function issueSession(User $user, int $person_id): array
     {
         $access = $this->jwt->issueAccessToken($user);
@@ -100,5 +142,13 @@ final readonly class AuthService implements AuthServiceInterface
             'role_id' => $user->role_id,
             'person_id' => $person_id,
         ];
+    }
+
+    private function restoreDeletedAccount(User $user): void
+    {
+        DB::transaction(function () use ($user): void {
+            $this->personRepository->restore($user->person_id);
+            $this->userRepository->restore($user);
+        });
     }
 }
