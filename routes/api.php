@@ -20,6 +20,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/forgot-password', [AuthController::class, 'forgetPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
 /*
@@ -29,7 +31,10 @@ Route::prefix('auth')->group(function () {
 */
 
 Route::middleware('jwt')->group(function () {
-
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me', [AuthController::class, 'me']);
+    });
     /* ===== USERS / PERSONS ===== */
     Route::get('/persons', [PersonController::class, 'index']);
     Route::get('/persons/{person}', [PersonController::class, 'show']);
@@ -59,6 +64,7 @@ Route::middleware('jwt')->group(function () {
     Route::get('/brand/{brand}', [BrandController::class, 'show']);
 
     /* ===== CARS ===== */
+    Route::get('/cars/search', [CarController::class, 'search']);
     Route::get('/cars', [CarController::class, 'index']);
     Route::get('/cars/{car}', [CarController::class, 'show']);
     Route::post('/cars', [CarController::class, 'store']);
