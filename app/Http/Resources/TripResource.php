@@ -32,8 +32,8 @@ class TripResource extends JsonResource
     {
         return [
             'id'              => $this->id,
-            'departure_time'  => $this->departure_time,
-            'arrival_time' => $this->arrival_time,
+            'departure_time'  => $this->departure_time->format('Y-m-d H:i:s'),
+            'arrival_time' => $this->arrival_time->format('Y-m-d H:i:s'),
             'distance_km'     => (float) $this->distance_km,
             'available_seats' => $this->available_seats,
             'smoking_allowed' => $this->smoking_allowed,
