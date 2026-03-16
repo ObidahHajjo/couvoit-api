@@ -13,6 +13,7 @@ use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
 use App\Services\Interfaces\OrsRoutingClientInterface;
 use App\Services\Interfaces\TripServiceInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -40,6 +41,7 @@ readonly class TripService implements TripServiceInterface
         private AddressResolverInterface   $addressResolver,
         private AddressRepositoryInterface $addresses,
         private OrsRoutingClientInterface  $orsRoutingClient,
+        private RepositoryCacheManager     $cache
     )
     {
     }
@@ -107,20 +109,19 @@ readonly class TripService implements TripServiceInterface
             $from = cache()->remember('geo:' . sha1($depStr), 86400, fn() => $this->orsRoutingClient->geocode($depStr));
             $to = cache()->remember('geo:' . sha1($arrStr), 86400, fn() => $this->orsRoutingClient->geocode($arrStr));
 
-            $durationSeconds = cache()->remember(
+            $routeSummary = cache()->remember(
                 'route:' . sha1(json_encode([$from, $to])),
                 86400,
-                fn() => $this->orsRoutingClient->durationSeconds($from, $to)
+                fn() => $this->orsRoutingClient->routeSummary($from, $to)
             );
 
-            $departureTime = Carbon::parse((int)$payload['trip_datetime']);
-            $durationSecondsInt = (int)$durationSeconds;
-            logger()->error('durationSeconds type', ['v' => $durationSecondsInt, 't' => gettype($durationSecondsInt)]);
-            $arrivalTime = $departureTime->copy()->addSeconds($durationSecondsInt);
+            $departureTime = Carbon::parse($payload['trip_datetime']);
+            $durationSeconds = (int)$routeSummary['duration_seconds'];
+            $arrivalTime = $departureTime->copy()->addSeconds($durationSeconds);
 
             $trip = $this->trips->create([
                 'departure_time' => $payload['trip_datetime'],
-                'distance_km' => $payload['kms'],
+                'distance_km' => $routeSummary['distance_km'],
                 'available_seats' => $payload['available_seats'],
                 'smoking_allowed' => (bool)($payload['smoking_allowed'] ?? false),
                 'departure_address_id' => $departureAddressId,
@@ -206,7 +207,11 @@ readonly class TripService implements TripServiceInterface
 
             $lockedTrip->passengers()->attach($personId);
 
-            DB::afterCommit(fn() => $this->invalidateTripReservationCaches($trip->id));
+            DB::afterCommit(fn() => $this->cache->invalidateReservationWrite(
+                $trip->id,
+                $personId,
+                $trip->person_id
+            ));
 
             return true;
         });
@@ -228,7 +233,11 @@ readonly class TripService implements TripServiceInterface
             $deleted = $lockedTrip->passengers()->detach($personId);
             if ($deleted === 0) throw new NotFoundException('Reservation not found.');
 
-            DB::afterCommit(fn() => $this->invalidateTripReservationCaches($trip->id));
+            DB::afterCommit(fn() => $this->cache->invalidateReservationWrite(
+                $trip->id,
+                $personId,
+                $trip->person_id
+            ));
 
             return true;
         });
@@ -248,15 +257,5 @@ readonly class TripService implements TripServiceInterface
         if ($trip->departure_time <= now()) {
             throw new ForbiddenException('Trip already started; action not allowed.');
         }
-    }
-
-    private function invalidateTripReservationCaches(int $tripId): void
-    {
-        Cache::forget("trips:$tripId");
-        Cache::forget("trips:$tripId:passengers");
-
-        // versioned search cache invalidation
-        Cache::add('trips:search:version', 1);
-        Cache::increment('trips:search:version');
     }
 }
