@@ -43,4 +43,8 @@ interface OrsRoutingClientInterface
      * @throws Throwable If the external API call fails or response is invalid.
      */
     public function durationSeconds(array $from, array $to): int;
+
+
+    public function routeSummary(array $from, array $to): array;
+
 }
