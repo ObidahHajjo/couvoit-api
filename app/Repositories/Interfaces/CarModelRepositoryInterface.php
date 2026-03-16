@@ -62,4 +62,12 @@ interface CarModelRepositoryInterface
      * @return Collection<int,CarModel>
      */
     public function findByBrand(int $brandId): Collection;
+
+    /**
+     * Find a model by its search_key and brand name
+     * @param string $brandSearchKey
+     * @param string $modelSearchKey
+     * @return Collection
+     */
+    public function findBySearchKey(string $brandSearchKey, string $modelSearchKey): Collection;
 }
