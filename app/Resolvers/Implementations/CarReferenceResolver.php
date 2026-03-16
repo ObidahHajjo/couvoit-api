@@ -38,6 +38,7 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
     public function resolveForCreate(array $data): ResolvedCarRefs
     {
         $brandName = data_get($data, 'brand.name');
+        $modelSearchKey = data_get($data, 'model.search_key');
         $typeName  = data_get($data, 'type.name');
         $modelName = data_get($data, 'model.name');
         $seats     = data_get($data, 'model.seats');
@@ -46,6 +47,9 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
 
         if (!is_string($brandName) || trim($brandName) === '') {
             throw new ValidationLogicException('brand.name is required.');
+        }
+        if (!is_string($modelSearchKey) || trim($modelSearchKey) === '') {
+            throw new ValidationLogicException('model.search_key is required.');
         }
         if (!is_string($typeName) || trim($typeName) === '') {
             throw new ValidationLogicException('type.name is required.');
@@ -71,6 +75,7 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
             'seats'    => (int) $seats,
             'brand_id' => $brand->id,
             'type_id'  => $type->id,
+            'search_key' => $modelSearchKey,
         ]);
 
         $color = $this->colors->createOrFirst([
@@ -90,8 +95,9 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
     public function resolveModelForUpdate(Car $car, array $data): ?int
     {
         $modelName = data_get($data, 'model.name');
+        $modelSearchKey = data_get($data, 'model.search_key');
 
-        if ($modelName === null) {
+        if ($modelName === null || $modelSearchKey === null) {
             return null;
         }
 
@@ -125,6 +131,7 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
             'brand_id' => $brandId,
             'type_id'  => $typeId,
             'seats'    => $finalSeats,
+            'search_key' => $modelSearchKey,
         ]);
 
         return $model->id;
