@@ -57,4 +57,12 @@ interface PersonRepositoryInterface
      * @return bool
      */
     public function attachCar(Person $person, int $carId): bool;
+
+    /**
+     * Restore deleted account
+     *
+     * @param int $personId
+     * @return void
+     */
+    public function restore(int $personId): void;
 }
