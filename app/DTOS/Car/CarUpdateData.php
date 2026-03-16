@@ -13,6 +13,7 @@ final readonly class CarUpdateData
      * @param string|null $brandName
      * @param string|null $typeName
      * @param string|null $colorHex
+     * @param string|null $colorName
      */
     public function __construct(
         public ?string $licensePlate = null,
@@ -20,8 +21,11 @@ final readonly class CarUpdateData
         public ?int $seats = null,
         public ?string $brandName = null,
         public ?string $typeName = null,
-        public ?string $colorHex = null
-    ) {}
+        public ?string $colorHex = null,
+        public ?string $colorName = null,
+    )
+    {
+    }
 
     /**
      * Build DTO from raw request payload.
@@ -44,17 +48,19 @@ final readonly class CarUpdateData
             ?? data_get($data, 'color.hex')
             ?? data_get($data, 'color.code');
 
+        $colorName = data_get($data, 'color.name');
+
         $modelName = data_get($data, 'model.name');
-        $seats     = data_get($data, 'model.seats');
+        $seats = data_get($data, 'model.seats');
         $brandName = data_get($data, 'brand.name');
-        $typeName  = data_get($data, 'type.name');
+        $typeName = data_get($data, 'type.name');
 
         $normalizedSeats = null;
         if ($seats !== null) {
-            if (! is_numeric($seats) || (int) $seats <= 0) {
+            if (!is_numeric($seats) || (int)$seats <= 0) {
                 throw new InvalidArgumentException('model.seats must be a positive integer.');
             }
-            $normalizedSeats = (int) $seats;
+            $normalizedSeats = (int)$seats;
         }
 
         return new self(
@@ -63,21 +69,25 @@ final readonly class CarUpdateData
                 : null,
 
             modelName: $modelName !== null
-                ? strtolower(trim((string) $modelName))
+                ? strtolower(trim((string)$modelName))
                 : null,
 
             seats: $normalizedSeats,
 
             brandName: $brandName !== null
-                ? strtolower(trim((string) $brandName))
+                ? strtolower(trim((string)$brandName))
                 : null,
 
             typeName: $typeName !== null
-                ? strtolower(trim((string) $typeName))
+                ? strtolower(trim((string)$typeName))
                 : null,
 
-            colorHex: $colorHex !== null && trim((string) $colorHex) !== ''
-                ? strtolower(trim((string) $colorHex))
+            colorHex: $colorHex !== null && trim((string)$colorHex) !== ''
+                ? strtolower(trim((string)$colorHex))
+                : null,
+
+            colorName: $colorName !== null && trim((string)$colorName) !== ''
+                ? strtolower(trim((string)$colorName))
                 : null,
         );
     }
@@ -92,6 +102,7 @@ final readonly class CarUpdateData
             && $this->seats === null
             && $this->brandName === null
             && $this->typeName === null
-            && $this->colorHex === null;
+            && $this->colorHex === null
+            && $this->colorName === null;
     }
 }
