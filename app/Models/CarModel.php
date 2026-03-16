@@ -58,7 +58,8 @@ class CarModel extends Model
         'name',     // Model name
         'seats',    // Number of seats
         'brand_id', // Brand reference
-        'type_id'   // Type reference
+        'type_id',  // Type reference
+        'search_key',
     ];
 
     /**
