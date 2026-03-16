@@ -10,6 +10,7 @@ use App\Http\Resources\CarResource;
 use App\Models\Car;
 use App\Models\User;
 use App\Services\Interfaces\CarServiceInterface;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -25,8 +26,10 @@ class CarController extends Controller
      * @param CarServiceInterface $cars
      */
     public function __construct(
-        private readonly CarServiceInterface $cars
-    ) {}
+        private readonly CarServiceInterface $cars,
+    ) {
+        $this->authorizeResource(Car::class, 'car');
+    }
 
     /**
      * List cars.
@@ -49,8 +52,6 @@ class CarController extends Controller
     )]
     public function index(): JsonResponse
     {
-        $this->authorize('viewAny', Car::class);
-
         /** @var User $authUser */
         $authUser = auth()->user();
 
@@ -95,8 +96,6 @@ class CarController extends Controller
     )]
     public function show(Car $car): JsonResponse
     {
-        $person = auth()->user()->person;
-        $this->authorize('view', [Car::class,$person,$car]);
         $car->loadMissing(['model.brand', 'model.type', 'color']);
 
         return (new CarResource($car))
@@ -133,7 +132,6 @@ class CarController extends Controller
         /** @var User $user */
         $user = auth()->user();
         $person = $user->person;
-        $this->authorize('create', [Car::class, $person]);
 
         $dto = CarCreateData::fromArray($request->validated());
         $car = $this->cars->createCar($dto, $person);
@@ -176,8 +174,6 @@ class CarController extends Controller
     )]
     public function update(UpdateCarRequest $request, Car $car): JsonResponse
     {
-        $this->authorize('update', [Car::class,$car]);
-
         $dto = CarUpdateData::fromArray($request->validated());
         $updatedCar = $this->cars->updateCar($car, $dto);
 
@@ -212,10 +208,51 @@ class CarController extends Controller
     )]
     public function destroy(Car $car): Response
     {
-        $this->authorize('delete', [Car::class,$car]);
-
         $this->cars->deleteCar($car);
 
         return response()->noContent();
+    }
+
+
+    /**
+     * search a car.
+     *
+     * @param Request $request
+     * @return Response
+     */
+    #[OA\Delete(
+        path: '/cars/search',
+        operationId: 'carsSearch',
+        summary: 'Search a car',
+        security: [['bearerAuth' => []]],
+        tags: ['Cars'],
+        parameters: [
+            new OA\Parameter(name: 'q', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'brand', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'No Content'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 404, description: 'Not Found'),
+        ]
+    )]
+    public function search(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->query('q', ''));
+        $brand = trim((string) $request->query('brand', ''));
+        if (mb_strlen($query) < 2 ||  mb_strlen($brand) < 3) {
+            return response()->json([
+                'data' => [],
+            ]);
+        }
+        $results = $this->cars->search(
+            $query,
+            $brand
+        );
+
+        return response()->json([
+            'data' => $results,
+        ]);
     }
 }
