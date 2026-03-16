@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $phone
  * @property int|null $car_id
  * @property string|null $deleted_at
+ * @property string|null $purged_at
  *
  * ===========================
  * Relationships
@@ -57,6 +58,11 @@ class Person extends Model
     ];
 
     protected $guarded = ['id'];
+
+    protected $casts = [
+        'deleted_at' => 'datetime',
+        'purged_at' => 'datetime',
+    ];
 
     /**
      * Person <-> User (auth identity).
