@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * Optional relations (when eager-loaded):
  * - role
  * - car
+ * - car.model
+ * - car.model.brand
+ * - car.color
  *
  * @property int         $id
  * @property string|null $email
@@ -32,7 +35,7 @@ class PersonResource extends JsonResource
     {
         return [
             'id'         => $this->id,
-            'email'      => $this->email !== null ? (string) $this->email : null,
+            'email'      => $this->email !== null ? (string) $this->email : auth()->user()->email,
             'first_name' => $this->first_name !== null ? (string) $this->first_name : null,
             'last_name'  => $this->last_name !== null ? (string) $this->last_name : null,
             'pseudo'     => $this->pseudo,
@@ -49,12 +52,37 @@ class PersonResource extends JsonResource
             }),
 
             'car' => $this->whenLoaded('car', function () {
-                return $this->car
-                    ? [
-                        'id'            => (int) $this->car->id,
-                        'license_plate' => (string) $this->car->license_plate,
-                    ]
-                    : null;
+                if ($this->car === null) {
+                    return null;
+                }
+
+                return [
+                    'id'            => (int) $this->car->id,
+                    'license_plate' => (string) $this->car->license_plate,
+
+                    'model' => $this->car->relationLoaded('model') && $this->car->model !== null
+                        ? [
+                            'id'    => (int) $this->car->model->id,
+                            'name'  => (string) $this->car->model->name,
+                            'seats' => $this->car->model->seats !== null ? (int) $this->car->model->seats : null,
+
+                            'brand' => $this->car->model->relationLoaded('brand') && $this->car->model->brand !== null
+                                ? [
+                                    'id'   => (int) $this->car->model->brand->id,
+                                    'name' => (string) $this->car->model->brand->name,
+                                ]
+                                : null,
+                        ]
+                        : null,
+
+                    'color' => $this->car->relationLoaded('color') && $this->car->color !== null
+                        ? [
+                            'id'       => (int) $this->car->color->id,
+                            'name'     => (string) $this->car->color->name,
+                            'hex_code' => (string) $this->car->color->hex_code,
+                        ]
+                        : null,
+                ];
             }),
         ];
     }
