@@ -20,7 +20,9 @@ class PersonController extends Controller
 {
     public function __construct(
         private readonly PersonServiceInterface $persons
-    ) {}
+    ) {
+        $this->authorizeResource(Person::class, 'person');
+    }
 
     #[OA\Get(
         path: '/persons',
@@ -36,8 +38,6 @@ class PersonController extends Controller
     )]
     public function index(): JsonResponse
     {
-        $this->authorize('viewAny', Person::class);
-
         $people = $this->persons->list();
 
         return PersonResource::collection($people)
@@ -61,8 +61,6 @@ class PersonController extends Controller
     )]
     public function show(Person $person): JsonResponse
     {
-        $this->authorize('view', [Person::class,$person]);
-
         return PersonResource::make($person)
             ->response()
             ->setStatusCode(Response::HTTP_OK);
@@ -141,14 +139,11 @@ class PersonController extends Controller
     )]
     public function store(StorePersonRequest $request): JsonResponse
     {
-        $this->authorize('create', Person::class);
-
         /** @var User $user */
         $user = auth()->user();
 
         $person = $user->person;
         if (!$person) {
-            // If you want profile created lazily:
             $person = $this->persons->createForUser($user, []);
         }
 
@@ -181,8 +176,6 @@ class PersonController extends Controller
     )]
     public function update(UpdatePersonRequest $request, Person $person): JsonResponse
     {
-        $this->authorize('update', [Person::class,$person]);
-
         $updated = $this->persons->update($person, $request->validated());
         $updated->loadMissing(['car', 'user.role']);
 
@@ -207,8 +200,6 @@ class PersonController extends Controller
     )]
     public function destroy(Person $person): Response
     {
-        $this->authorize('delete', [Person::class,$person]);
-
         $this->persons->softDelete($person);
 
         return response()->noContent();
@@ -230,12 +221,10 @@ class PersonController extends Controller
     )]
     public function updateRole(UpdateRolePersonRequest $request): JsonResponse
     {
-        // Policy still targets Person::class; inside policy check auth()->user()->isAdmin()
         $this->authorize('updateRole', Person::class);
 
         $data = $request->validated();
 
-        // NOTE: This now updates the USER role (auth), not the person role.
         $updated = $this->persons->updateUserRoleByPersonId((int) $data['person_id'], (int) $data['role_id']);
 
         return PersonResource::make($updated)
