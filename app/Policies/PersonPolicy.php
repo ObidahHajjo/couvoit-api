@@ -49,9 +49,9 @@ class PersonPolicy
      */
     public function view(User $user, Person $person): Response
     {
-        return $user->person_id === $person->id
+        return $user->isAdmin() || $user->person_id === $person->id
             ? Response::allow()
-            : Response::deny("Vous ne pouvez consulter que votre propre profil.");
+            : Response::deny('Vous ne pouvez consulter que votre propre profil.');
     }
 
     /**
@@ -63,9 +63,9 @@ class PersonPolicy
      */
     public function viewTripsDriver(User $user, Person $person): Response
     {
-        return $user->person_id === $person->id
+        return $user->isAdmin() || $user->person_id === $person->id
             ? Response::allow()
-            : Response::deny("Vous ne pouvez consulter que vos propres trajets en tant que conducteur.");
+            : Response::deny('Vous ne pouvez consulter que vos propres trajets en tant que conducteur.');
     }
 
     /**
@@ -77,9 +77,9 @@ class PersonPolicy
      */
     public function viewTripsPassenger(User $user, Person $person): Response
     {
-        return $user->person_id === $person->id
+        return $user->isAdmin() || $user->person_id === $person->id
             ? Response::allow()
-            : Response::deny("Vous ne pouvez consulter que vos propres trajets en tant que passager.");
+            : Response::deny('Vous ne pouvez consulter que vos propres trajets en tant que passager.');
     }
 
     /**
@@ -92,9 +92,9 @@ class PersonPolicy
      */
     public function create(User $user): Response
     {
-        return $user->exists
+        return $user->isAdmin()
             ? Response::allow()
-            : Response::deny("Profil utilisateur introuvable.");
+            : Response::deny('Seuls les administrateurs peuvent créer un profil utilisateur.');
     }
 
     /**
@@ -106,9 +106,9 @@ class PersonPolicy
      */
     public function update(User $user, Person $person): Response
     {
-        return $user->person_id === $person->id
+        return $user->isAdmin() || $user->person_id === $person->id
             ? Response::allow()
-            : Response::deny("Vous ne pouvez modifier que votre propre profil.");
+            : Response::deny('Vous ne pouvez modifier que votre propre profil.');
     }
 
     /**
@@ -122,7 +122,9 @@ class PersonPolicy
      */
     public function delete(User $user, Person $person): Response
     {
-        return Response::deny("Suppression interdite : réservée à un administrateur.");
+        return $user->isAdmin()
+            ? Response::allow()
+            : Response::deny('Suppression interdite : réservée à un administrateur.');
     }
 
     /**
@@ -135,6 +137,6 @@ class PersonPolicy
     {
         return $user->isAdmin()
             ? Response::allow()
-            : Response::deny("Seuls les administrateurs peuvent mettre à jour les roles");
+            : Response::deny('Seuls les administrateurs peuvent mettre à jour les rôles.');
     }
 }
