@@ -85,4 +85,12 @@ interface CarServiceInterface
      * @throws Throwable              Propagates any repository or infrastructure-level exception.
      */
     public function deleteCar(Car $car): void;
+
+
+    /**
+     * Local DB first, external API second.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function search(string $q, string $brand): array;
 }

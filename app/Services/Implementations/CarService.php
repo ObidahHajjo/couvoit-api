@@ -7,21 +7,29 @@ use App\DTOS\Car\CarUpdateData;
 use App\Exceptions\ConflictException;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
+use App\Models\CarModel;
 use App\Models\Person;
+use App\Repositories\Interfaces\CarModelRepositoryInterface;
 use App\Repositories\Interfaces\CarRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 use App\Services\Interfaces\CarServiceInterface;
+use App\Support\Car\CarCatalogNormalizer;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 readonly class CarService implements CarServiceInterface
 {
     public function __construct(
-        private CarRepositoryInterface        $carRepository,
+        private CarRepositoryInterface $carRepository,
         private CarReferenceResolverInterface $carReferenceResolver,
-        private PersonRepositoryInterface     $personRepository
-    ) {}
+        private PersonRepositoryInterface $personRepository,
+        private CarModelRepositoryInterface $modelRepository,
+        private CarCatalogNormalizer $normalizer,
+    ) {
+    }
 
     /** @inheritDoc */
     public function getCars(): Collection
@@ -42,14 +50,14 @@ readonly class CarService implements CarServiceInterface
             throw new ConflictException('User already has a car.');
         }
 
-        return DB::transaction(function () use ($dto, $person) {
+        $modelSearchKey = $this->normalizer->normalizeSearchKey($dto->modelName);
 
-            // Resolver receives normalized structure (NOT request keys)
+        return DB::transaction(function () use ($dto, $person, $modelSearchKey) {
             $refs = $this->carReferenceResolver->resolveForCreate([
                 'brand' => ['name' => $dto->brandName],
                 'type'  => ['name' => $dto->typeName],
-                'model' => ['name' => $dto->modelName, 'seats' => $dto->seats],
-                'color' => ['hex_code' => $dto->colorHex, "name" => $dto->colorName],
+                'model' => ['name' => $dto->modelName, 'seats' => $dto->seats, 'search_key' => $modelSearchKey],
+                'color' => ['hex_code' => $dto->colorHex, 'name' => $dto->colorName],
             ]);
 
             $car = $this->carRepository->create([
@@ -60,7 +68,6 @@ readonly class CarService implements CarServiceInterface
 
             $this->personRepository->attachCar($person, $car->id);
 
-            // return loaded (repo should eager load relationships)
             return $this->carRepository->findOrFail($car->id);
         });
     }
@@ -72,36 +79,43 @@ readonly class CarService implements CarServiceInterface
             throw new ValidationLogicException('Nothing to update.');
         }
 
-        return DB::transaction(function () use ($car, $dto) {
+        $modelSearchKey = $this->normalizer->normalizeSearchKey($dto->modelName);
 
+        return DB::transaction(function () use ($car, $dto, $modelSearchKey) {
             $editable = [];
 
-            // model update: only if modelName provided (and optionally brand/type/seats)
             if ($dto->modelName !== null) {
                 $modelId = $this->carReferenceResolver->resolveModelForUpdate($car, [
                     'brand' => ['name' => $dto->brandName],
                     'type'  => ['name' => $dto->typeName],
-                    'model' => ['name' => $dto->modelName, 'seats' => $dto->seats],
+                    'model' => ['name' => $dto->modelName, 'seats' => $dto->seats, 'search_key' => $modelSearchKey],
                 ]);
 
                 $editable['model_id'] = $modelId;
             }
 
-            // color update
-            if ($dto->colorHex !== null) {
+            if ($dto->colorHex !== null || $dto->colorName !== null) {
                 $colorId = $this->carReferenceResolver->resolveColorForUpdate([
-                    'color' => ['hex_code' => $dto->colorHex],
+                    'color' => [
+                        'name' => $dto->colorName,
+                        'hex_code' => $dto->colorHex,
+                    ],
                 ]);
+
+                if ($colorId === null) {
+                    throw new ValidationLogicException(
+                        'color.name and color.hex_code are required when updating color.'
+                    );
+                }
 
                 $editable['color_id'] = $colorId;
             }
 
-            // plate update
             if ($dto->licensePlate !== null) {
                 $editable['license_plate'] = $dto->licensePlate;
             }
 
-            if (empty($editable)) {
+            if ($editable === []) {
                 throw new ValidationLogicException('Nothing to update.');
             }
 
@@ -115,5 +129,121 @@ readonly class CarService implements CarServiceInterface
     public function deleteCar(Car $car): void
     {
         $this->carRepository->delete($car);
+    }
+
+    /** @inheritDoc */
+    public function search(string $q, string $brand): array
+    {
+        $q = trim($q);
+        $brand = trim($brand);
+
+        if ($q === '' || $brand === '') {
+            return [];
+        }
+
+        $local = $this->searchLocalModels($q, $brand);
+
+        if ($local !== []) {
+            return $local;
+        }
+
+        return $this->searchExternalModels($q, $brand);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function searchLocalModels(string $q, string $brand): array
+    {
+        $brandKey = $this->normalizer->normalizeSearchKey($brand);
+        $queryKey = $this->normalizer->normalizeSearchKey($q);
+
+        if ($brandKey === '' || $queryKey === '') {
+            return [];
+        }
+
+        /** @var EloquentCollection<int, CarModel> $models */
+        $models = $this->modelRepository->findBySearchKey($brandKey, $queryKey);
+
+        return $models
+            ->map(function (CarModel $model): array {
+                return [
+                    'id' => $model->id,
+                    'model' => [
+                        'id' => $model->id,
+                        'name' => $model->name,
+                        'seats' => $model->seats,
+                        'brand' => [
+                            'id' => $model->brand?->id ?? 0,
+                            'name' => $model->brand?->name ?? '',
+                        ],
+                    ],
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function searchExternalModels(string $q, string $brand): array
+    {
+        $response = Http::timeout(10)
+            ->acceptJson()
+            ->get(
+                'https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/' . rawurlencode($brand),
+                ['format' => 'json']
+            );
+
+        $response->throw();
+
+        /** @var array<string, mixed> $json */
+        $json = $response->json();
+
+        /** @var array<int, array<string, mixed>> $results */
+        $results = is_array($json['Results'] ?? null) ? $json['Results'] : [];
+
+        $seen = [];
+        $output = [];
+        $id = 1;
+
+        foreach ($results as $item) {
+            $modelName = trim((string) ($item['Model_Name'] ?? ''));
+            $makeName = trim((string) ($item['Make_Name'] ?? $brand));
+
+            if ($modelName === '') {
+                continue;
+            }
+
+            if (!$this->normalizer->containsNormalized($q, $modelName)) {
+                continue;
+            }
+
+            $dedupeKey = $this->normalizer->normalizeSearchKey($makeName)
+                . '|'
+                . $this->normalizer->normalizeSearchKey($modelName);
+
+            if (isset($seen[$dedupeKey])) {
+                continue;
+            }
+
+            $seen[$dedupeKey] = true;
+
+            $output[] = [
+                'id' => $id++,
+                'model' => [
+                    'id' => 0,
+                    'name' => $modelName,
+                    'seats' => null,
+                    'brand' => [
+                        'id' => 0,
+                        'name' => $makeName,
+                    ],
+                ],
+            ];
+        }
+
+        return $output;
     }
 }
