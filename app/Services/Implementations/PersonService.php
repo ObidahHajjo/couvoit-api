@@ -7,14 +7,18 @@ use App\Models\Person;
 use App\Models\User;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Services\Interfaces\PersonServiceInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 readonly class PersonService implements PersonServiceInterface
 {
     public function __construct(
         private PersonRepositoryInterface $persons,
         private TripRepositoryInterface $trips,
+        private UserRepositoryInterface $users,
     ) {}
 
     /** @inheritDoc */
@@ -60,9 +64,16 @@ readonly class PersonService implements PersonServiceInterface
         return $this->persons->findById($person->id);
     }
 
+    /** @inheritDoc */
     public function softDelete(Person $person): void
     {
-        $this->persons->delete($person->id);
+        DB::transaction(function () use ($person) :void{
+            $user = $person->user;
+            $this->users->softDelete($user->id);
+            Log::info('user', ['user' => $user]);
+            $this->persons->delete($person->id);
+
+        });
     }
 
     /** @inheritDoc */
