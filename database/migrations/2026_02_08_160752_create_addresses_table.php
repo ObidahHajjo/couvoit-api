@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('street', 150);
             $table->string('street_number', 10);
             $table->foreignId('city_id')->constrained()->cascadeOnDelete();
+            $table->unique(['street_number','street', 'city_id']);
         });
     }
 
