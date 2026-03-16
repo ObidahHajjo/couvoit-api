@@ -31,7 +31,7 @@ class ReserveTripRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'person_id' => ['required', 'integer', 'exists:persons,id'],
+            'person_id' => ['sometimes', 'integer', 'exists:persons,id'],
         ];
     }
 }
