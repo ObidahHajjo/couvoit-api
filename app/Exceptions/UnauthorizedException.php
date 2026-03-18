@@ -8,6 +8,6 @@ class UnauthorizedException extends DomainException
 {
     public function __construct(string $message = 'External service error')
     {
-        parent::__construct($message, 502, 'EXTERNAL_SERVICE_ERROR');
+        parent::__construct($message, 401, 'EXTERNAL_SERVICE_ERROR');
     }
 }
