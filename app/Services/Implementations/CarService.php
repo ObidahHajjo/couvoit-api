@@ -9,16 +9,20 @@ use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\Person;
+use App\Models\Trip;
 use App\Repositories\Interfaces\CarModelRepositoryInterface;
 use App\Repositories\Interfaces\CarRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 use App\Services\Interfaces\CarServiceInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use App\Support\Car\CarCatalogNormalizer;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 readonly class CarService implements CarServiceInterface
 {
@@ -28,6 +32,7 @@ readonly class CarService implements CarServiceInterface
         private PersonRepositoryInterface $personRepository,
         private CarModelRepositoryInterface $modelRepository,
         private CarCatalogNormalizer $normalizer,
+        private RepositoryCacheManager $cache,
     ) {
     }
 
@@ -128,7 +133,17 @@ readonly class CarService implements CarServiceInterface
     /** @inheritDoc */
     public function deleteCar(Car $car): void
     {
+        $person = auth()->user()->person;
+        $trips = $person->trips;
+        if(!$trips->isEmpty()){
+            if($trips->contains(fn(Trip $trip) => Carbon::parse($trip->departure_time)->isAfter(Carbon::now()))){
+                throw new ConflictException('You cannot delete a car that is in use.');
+            }
+        }
         $this->carRepository->delete($car);
+
+        $this->cache->invalidatePersonsByCarId($car->id);
+        $this->cache->invalidatePersonListAndItem($person->id);
     }
 
     /** @inheritDoc */
@@ -189,7 +204,7 @@ readonly class CarService implements CarServiceInterface
      */
     private function searchExternalModels(string $q, string $brand): array
     {
-        $response = Http::timeout(10)
+        $response = Http::timeout(30)
             ->acceptJson()
             ->get(
                 'https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/' . rawurlencode($brand),
