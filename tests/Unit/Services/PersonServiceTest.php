@@ -8,50 +8,29 @@ use App\Exceptions\ValidationLogicException;
 use App\Models\Person;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Services\Implementations\PersonService;
 use Illuminate\Support\Collection;
 use Mockery;
-use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use Throwable;
 
-/**
- * Class PersonServiceTest
- *
- * Unit tests for PersonService use-cases and delegation logic.
- */
 final class PersonServiceTest extends TestCase
 {
-    /**
-     * @var PersonRepositoryInterface&MockInterface
-     */
     private PersonRepositoryInterface $persons;
-
-    /**
-     * @var TripRepositoryInterface&MockInterface
-     */
     private TripRepositoryInterface $trips;
-
-    /**
-     * @var PersonService
-     */
+    private UserRepositoryInterface $users;
     private PersonService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        /** @var PersonRepositoryInterface&MockInterface $persons */
-        $persons = Mockery::mock(PersonRepositoryInterface::class);
+        $this->persons = Mockery::mock(PersonRepositoryInterface::class);
+        $this->trips = Mockery::mock(TripRepositoryInterface::class);
+        $this->users = Mockery::mock(UserRepositoryInterface::class);
 
-        /** @var TripRepositoryInterface&MockInterface $trips */
-        $trips = Mockery::mock(TripRepositoryInterface::class);
-
-        $this->persons = $persons;
-        $this->trips = $trips;
-
-        $this->service = new PersonService($this->persons, $this->trips);
+        $this->service = new PersonService($this->persons, $this->trips, $this->users);
     }
 
     protected function tearDown(): void
@@ -60,9 +39,6 @@ final class PersonServiceTest extends TestCase
         parent::tearDown();
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function list_delegates_to_person_repository(): void
     {
@@ -77,9 +53,6 @@ final class PersonServiceTest extends TestCase
         self::assertSame($expected, $res);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function trips_as_driver_delegates_to_trip_repository(): void
     {
@@ -98,9 +71,6 @@ final class PersonServiceTest extends TestCase
         self::assertSame($expected, $res);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function trips_as_passenger_delegates_to_trip_repository(): void
     {
@@ -119,9 +89,6 @@ final class PersonServiceTest extends TestCase
         self::assertSame($expected, $res);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function update_throws_when_data_empty(): void
     {
@@ -133,9 +100,6 @@ final class PersonServiceTest extends TestCase
         $this->service->update($p, []);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function update_handles_status_deleted_and_updates_is_active_false(): void
     {
@@ -156,9 +120,6 @@ final class PersonServiceTest extends TestCase
         self::assertSame($p, $res);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function update_handles_status_active_and_updates_is_active_true(): void
     {
@@ -179,9 +140,6 @@ final class PersonServiceTest extends TestCase
         self::assertSame($p, $res);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function update_updates_fields_and_returns_fresh_person(): void
     {
@@ -205,14 +163,19 @@ final class PersonServiceTest extends TestCase
         self::assertSame($fresh, $res);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[Test]
     public function soft_delete_delegates_to_repository_delete(): void
     {
         $p = new Person();
         $p->id = 9;
+
+        $user = new \App\Models\User();
+        $user->id = 1;
+        $p->setRelation('user', $user);
+
+        $this->users->shouldReceive('softDelete')
+            ->once()
+            ->with(1);
 
         $this->persons->shouldReceive('delete')
             ->once()

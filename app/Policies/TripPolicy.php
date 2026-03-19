@@ -21,6 +21,17 @@ use Illuminate\Auth\Access\Response;
 class TripPolicy
 {
     /**
+     * Grant all abilities to admins.
+     *
+     * @param User $user
+     * @return bool|null
+     */
+    public function before(User $user): ?bool
+    {
+        return $user->isAdmin() ? true : null;
+    }
+
+    /**
      * Determine whether the user can list trips.
      *
      * @param User $user
@@ -222,7 +233,7 @@ class TripPolicy
      * @param Person $passenger
      * @return Response
      */
-    public function reserve(User $user, Trip $trip): Response
+    public function reserve(User $user, Trip $trip, ?Person $passenger = null): Response
     {
         if ($trip->departure_time <= now()) {
             return Response::deny('Trip already started; reservations are closed.');
@@ -242,6 +253,10 @@ class TripPolicy
 
         if ($trip->person_id === $user->person_id) {
             return Response::deny('The driver cannot reserve a seat on their own trip.');
+        }
+
+        if ($passenger !== null && $passenger->id !== $user->person_id) {
+            return Response::deny('Vous ne pouvez réserver que pour vous-même.');
         }
 
         return Response::allow();

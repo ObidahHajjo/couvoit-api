@@ -92,9 +92,9 @@ class PersonPolicy
      */
     public function create(User $user): Response
     {
-        return $user->isAdmin()
+        return $user->is_active
             ? Response::allow()
-            : Response::deny('Seuls les administrateurs peuvent créer un profil utilisateur.');
+            : Response::deny('Seuls les utilisateurs actifs peuvent créer un profil.');
     }
 
     /**

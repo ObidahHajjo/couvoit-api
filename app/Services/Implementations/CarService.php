@@ -84,15 +84,14 @@ readonly class CarService implements CarServiceInterface
             throw new ValidationLogicException('Nothing to update.');
         }
 
-        $modelSearchKey = $this->normalizer->normalizeSearchKey($dto->modelName);
-
-        return DB::transaction(function () use ($car, $dto, $modelSearchKey) {
+        return DB::transaction(function () use ($car, $dto) {
             $editable = [];
 
             if ($dto->modelName !== null) {
+                $modelSearchKey = $this->normalizer->normalizeSearchKey($dto->modelName);
                 $modelId = $this->carReferenceResolver->resolveModelForUpdate($car, [
                     'brand' => ['name' => $dto->brandName],
-                    'type'  => ['name' => $dto->typeName],
+                    'type' => ['name' => $dto->typeName],
                     'model' => ['name' => $dto->modelName, 'seats' => $dto->seats, 'search_key' => $modelSearchKey],
                 ]);
 
