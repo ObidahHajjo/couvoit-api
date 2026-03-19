@@ -71,7 +71,7 @@ readonly class CarModelEloquentRepository implements CarModelRepositoryInterface
     {
         $data['name'] = $this->normalizeName((string) ($data['name'] ?? ''));
 
-        $model = CarModel::query()->createOrFirst(
+        $model = CarModel::query()->updateOrCreate(
             [
                 'name' => $data['name'],
                 'brand_id' => $data['brand_id'],
@@ -175,7 +175,7 @@ readonly class CarModelEloquentRepository implements CarModelRepositoryInterface
         return CarModel::query()
             ->with('brand')
             ->whereHas('brand', function ($query) use ($brandSearchKey) {
-                $query->where('search_key', $brandSearchKey);
+                $query->where('name', $brandSearchKey);
             })
             ->where('search_key', 'like', '%' . $modelSearchKey . '%')
             ->orderBy('name')
