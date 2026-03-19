@@ -68,9 +68,13 @@ class TripPolicy
             return Response::allow();
         }
 
-        return $trip->person_id === $user->person_id
+        $isDriver = $trip->person_id === $user->person_id;
+        $isPassenger = $trip->passengers
+            ->contains(fn ($passenger) => (int) $passenger->id === $user->person_id);
+
+        return ($isDriver || $isPassenger)
             ? Response::allow()
-            : Response::deny('Vous ne pouvez consulter les passagers que de vos propres trajets.');
+            : Response::deny('Vous ne pouvez consulter que vos trajets ou vos réservations.');
     }
 
     /**
