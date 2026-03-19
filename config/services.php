@@ -21,6 +21,11 @@ return [
     'resend' => [
         'key' => env('RESEND_API_KEY'),
         'reset-password-template' => env('RESEND_RESET_PASSWORD_TEMPLATE_ID'),
+        'trip-reservation-passenger-template' => env('RESEND_TRIP_RESERVATION_PASSENGER_TEMPLATE_ID'),
+        'trip-reservation-driver-template' => env('RESEND_TRIP_RESERVATION_DRIVER_TEMPLATE_ID'),
+        'trip-reservation-cancel-passenger-template' => env('RESEND_TRIP_RESERVATION_CANCEL_PASSENGER_TEMPLATE_ID'),
+        'trip-reservation-cancel-driver-template' => env('RESEND_TRIP_RESERVATION_CANCEL_DRIVER_TEMPLATE_ID'),
+        'trip-cancelled-passenger-template' => env('RESEND_TRIP_CANCELLED_PASSENGER_TEMPLATE_ID'),
     ],
 
     'ses' => [
@@ -40,9 +45,5 @@ return [
         'key' => env('OPENROUTESERVICE_API_KEY'),
         'geocode_url' => 'https://api.openrouteservice.org/geocode/search',
         'directions_url' => 'https://api.openrouteservice.org/v2/directions/driving-car',
-    ],
-
-    'cars_api' => [
-        'key' => env('CARS_API_KEY'),
     ],
 ];

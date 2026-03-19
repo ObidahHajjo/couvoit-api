@@ -11,6 +11,7 @@ use App\Models\Trip;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
+use App\Services\Interfaces\TripEmailServiceInterface;
 use App\Services\Interfaces\OrsRoutingClientInterface;
 use App\Services\Interfaces\TripServiceInterface;
 use App\Support\Cache\RepositoryCacheManager;
@@ -19,7 +20,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Resolvers\Interfaces\AddressResolverInterface;
+use Throwable;
 
 /**
  * Class TripService
@@ -41,7 +44,8 @@ readonly class TripService implements TripServiceInterface
         private AddressResolverInterface   $addressResolver,
         private AddressRepositoryInterface $addresses,
         private OrsRoutingClientInterface  $orsRoutingClient,
-        private RepositoryCacheManager     $cache
+        private RepositoryCacheManager     $cache,
+        private TripEmailServiceInterface  $tripEmails
     )
     {
     }
@@ -172,8 +176,21 @@ readonly class TripService implements TripServiceInterface
     {
         $this->assertTripNotStarted($trip);
 
-        DB::transaction(function () use ($trip) {
+        $tripForEmail = $trip->loadMissing([
+            'driver.user',
+            'departureAddress.city',
+            'arrivalAddress.city',
+            'passengers.user',
+        ]);
+
+        DB::transaction(function () use ($trip, $tripForEmail) {
             $this->trips->delete($trip->id);
+
+            DB::afterCommit(fn() => $this->sendEmailSafely(
+                fn() => $this->tripEmails->sendTripCancelledByDriver($tripForEmail),
+                'driver trip cancellation',
+                ['trip_id' => $trip->id]
+            ));
         });
     }
 
@@ -214,11 +231,26 @@ readonly class TripService implements TripServiceInterface
 
             $lockedTrip->passengers()->attach($personId);
 
-            DB::afterCommit(fn() => $this->cache->invalidateReservationWrite(
-                $trip->id,
-                $personId,
-                $trip->person_id
-            ));
+            $passenger = $this->getPersonById($personId)->loadMissing('user');
+            $tripForEmail = $lockedTrip->loadMissing([
+                'driver.user',
+                'departureAddress.city',
+                'arrivalAddress.city',
+            ]);
+
+            DB::afterCommit(function () use ($trip, $personId, $passenger, $tripForEmail) {
+                $this->cache->invalidateReservationWrite(
+                    $trip->id,
+                    $personId,
+                    $trip->person_id
+                );
+
+                $this->sendEmailSafely(
+                    fn() => $this->tripEmails->sendReservationCreated($tripForEmail, $passenger),
+                    'reservation confirmation',
+                    ['trip_id' => $trip->id, 'person_id' => $personId]
+                );
+            });
 
             return true;
         });
@@ -237,14 +269,29 @@ readonly class TripService implements TripServiceInterface
         return DB::transaction(function () use ($trip, $personId) {
             $lockedTrip = $this->trips->findByIdForUpdate($trip->id);
 
+            $passenger = $this->getPersonById($personId)->loadMissing('user');
+            $tripForEmail = $lockedTrip->loadMissing([
+                'driver.user',
+                'departureAddress.city',
+                'arrivalAddress.city',
+            ]);
+
             $deleted = $lockedTrip->passengers()->detach($personId);
             if ($deleted === 0) throw new NotFoundException('Reservation not found.');
 
-            DB::afterCommit(fn() => $this->cache->invalidateReservationWrite(
-                $trip->id,
-                $personId,
-                $trip->person_id
-            ));
+            DB::afterCommit(function () use ($trip, $personId, $passenger, $tripForEmail) {
+                $this->cache->invalidateReservationWrite(
+                    $trip->id,
+                    $personId,
+                    $trip->person_id
+                );
+
+                $this->sendEmailSafely(
+                    fn() => $this->tripEmails->sendReservationCancelled($tripForEmail, $passenger),
+                    'reservation cancellation',
+                    ['trip_id' => $trip->id, 'person_id' => $personId]
+                );
+            });
 
             return true;
         });
@@ -263,6 +310,17 @@ readonly class TripService implements TripServiceInterface
     {
         if ($trip->departure_time <= now()) {
             throw new ForbiddenException('Trip already started; action not allowed.');
+        }
+    }
+
+    private function sendEmailSafely(callable $callback, string $context, array $extra = []): void
+    {
+        try {
+            $callback();
+        } catch (Throwable $exception) {
+            Log::warning('Failed to send trip email after ' . $context . '.', array_merge($extra, [
+                'exception' => $exception->getMessage(),
+            ]));
         }
     }
 }

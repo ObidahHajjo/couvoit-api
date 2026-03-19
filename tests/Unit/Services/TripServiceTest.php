@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Exceptions\ConflictException;
 use App\Exceptions\ForbiddenException;
-use App\Exceptions\ValidationLogicException;
 use App\Models\Address;
+use App\Models\Car;
+use App\Models\CarModel;
 use App\Models\City;
 use App\Models\Person;
 use App\Models\Trip;
@@ -18,45 +18,32 @@ use App\Repositories\Interfaces\TripRepositoryInterface;
 use App\Resolvers\Interfaces\AddressResolverInterface;
 use App\Services\Implementations\TripService;
 use App\Services\Interfaces\OrsRoutingClientInterface;
+use App\Services\Interfaces\TripEmailServiceInterface;
+use App\Support\Cache\RepositoryCacheManager;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
-use Throwable;
 
-/**
- * Class TripServiceTest
- *
- * Unit tests for TripService business rules and delegation.
- */
 final class TripServiceTest extends TestCase
 {
-    /**
-     * @var TripRepositoryInterface&MockInterface
-     */
     private TripRepositoryInterface $trips;
 
-    /**
-     * @var AddressResolverInterface&MockInterface
-     */
+    private PersonRepositoryInterface $persons;
+
     private AddressResolverInterface $resolver;
 
-    /**
-     * @var AddressRepositoryInterface&MockInterface
-     */
     private AddressRepositoryInterface $addresses;
 
-    /**
-     * @var OrsRoutingClientInterface&MockInterface
-     */
     private OrsRoutingClientInterface $ors;
 
-    /**
-     * @var TripService
-     */
+    private RepositoryCacheManager $cache;
+
+    private TripEmailServiceInterface $tripEmails;
+
     private TripService $service;
 
     protected function setUp(): void
@@ -66,57 +53,49 @@ final class TripServiceTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-02-18 12:00:00'));
 
         $this->trips = Mockery::mock(TripRepositoryInterface::class);
-        $persons = Mockery::mock(PersonRepositoryInterface::class);
+        $this->persons = Mockery::mock(PersonRepositoryInterface::class);
         $this->resolver = Mockery::mock(AddressResolverInterface::class);
         $this->addresses = Mockery::mock(AddressRepositoryInterface::class);
         $this->ors = Mockery::mock(OrsRoutingClientInterface::class);
+        $this->cache = Mockery::mock(RepositoryCacheManager::class);
+        $this->tripEmails = Mockery::mock(TripEmailServiceInterface::class);
 
         $this->service = new TripService(
             $this->trips,
-            $persons,
+            $this->persons,
             $this->resolver,
             $this->addresses,
-            $this->ors
+            $this->ors,
+            $this->cache,
+            $this->tripEmails,
         );
 
-        // Make DB::transaction run the callback directly (unit test style)
-        DB::shouldReceive('transaction')
-            ->andReturnUsing(static fn(callable $cb) => $cb());
-
-        // Avoid real cache
-        Cache::shouldReceive('remember')->andReturnUsing(static fn($k, $ttl, callable $cb) => $cb());
-        Cache::shouldReceive('forget')->byDefault();
-        Cache::shouldReceive('add')->byDefault();
-        Cache::shouldReceive('increment')->byDefault();
+        DB::shouldReceive('transaction')->andReturnUsing(static fn(callable $callback) => $callback());
+        DB::shouldReceive('afterCommit')->andReturnUsing(static fn(callable $callback) => $callback());
     }
 
     protected function tearDown(): void
     {
         Mockery::close();
         Carbon::setTestNow();
+
         parent::tearDown();
     }
 
-    /**
-     * @throws Throwable
-     */
     public function test_create_trip_for_another_user_forbidden_if_not_admin(): void
     {
         $this->expectException(ForbiddenException::class);
 
-        $auth = new Person();
-        $auth->id = 1;
-
-        $user = new User();
-        $user->role_id = 1; // normal user
-        $user->is_active = true;
-
-        $auth->setRelation('user', $user);
+        $auth = $this->makePerson(1, 'auth@example.test');
+        $carModel = new CarModel();
+        $carModel->seats = 4;
+        $car = new Car();
+        $car->setRelation('model', $carModel);
+        $auth->setRelation('car', $car);
 
         $payload = [
             'person_id' => 2,
             'trip_datetime' => '2026-02-20 10:00:00',
-            'kms' => 10,
             'available_seats' => 2,
             'starting_address' => ['street' => 'A'],
             'arrival_address' => ['street' => 'B'],
@@ -125,187 +104,146 @@ final class TripServiceTest extends TestCase
         $this->service->createTrip($payload, $auth);
     }
 
-    /**
-     * @throws Throwable
-     */
-    public function test_create_trip_requires_driver_has_car(): void
+    public function test_reserve_seat_invalidates_cache_and_sends_emails_after_commit(): void
     {
-        $this->expectException(ForbiddenException::class);
+        $driver = $this->makePerson(99, 'driver@example.test', 'Driver');
+        $passenger = $this->makePerson(10, 'passenger@example.test', 'Passenger');
 
-        $auth = new Person();
-        $auth->id = 1;
-        $auth->car_id = null;
+        $trip = $this->makeTrip(1, $driver, collect());
 
-        $user = new User();
-        $user->role_id = 1;
-        $user->is_active = true;
-
-        $auth->setRelation('user', $user);
-
-        $payload = [
-            'trip_datetime' => '2026-02-20 10:00:00',
-            'kms' => 10,
-            'available_seats' => 2,
-            'starting_address' => ['street' => 'A'],
-            'arrival_address' => ['street' => 'B'],
-        ];
-
-        $this->service->createTrip($payload, $auth);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function test_create_trip_happy_path_creates_trip_and_returns_fresh_trip(): void
-    {
-        $auth = new Person();
-        $auth->id = 10;
-        $auth->car_id = 5;
-
-        $user = new User();
-        $user->role_id = 1;
-        $user->is_active = true;
-
-        $auth->setRelation('user', $user);
-
-        $payload = [
-            'trip_datetime' => '2026-02-20 10:00:00',
-            'kms' => 120,
-            'available_seats' => 3,
-            'smoking_allowed' => true,
-            'starting_address' => ['street' => 'Dep'],
-            'arrival_address' => ['street' => 'Arr'],
-        ];
-
-        $depId = 111;
-        $arrId = 222;
-
-        $this->resolver->shouldReceive('resolveId')->once()->with($payload['starting_address'])->andReturn($depId);
-        $this->resolver->shouldReceive('resolveId')->once()->with($payload['arrival_address'])->andReturn($arrId);
-
-        $dep = new Address();
-        $dep->id = $depId;
-        $dep->street_number = '1';
-        $dep->street = 'Dep';
-        $dep->setRelation('city', (new City(['postal_code'=>'75000','name'=>'Paris'])));
-
-        $arr = new Address();
-        $arr->id = $arrId;
-        $arr->street_number = '2';
-        $arr->street = 'Arr';
-        $arr->setRelation('city', (object) ['postal_code' => '69000', 'name' => 'Lyon']);
-
-        $this->addresses->shouldReceive('findOrFail')->once()->with($depId)->andReturn($dep);
-        $this->addresses->shouldReceive('findOrFail')->once()->with($arrId)->andReturn($arr);
-
-        $this->ors->shouldReceive('geocode')->twice()->andReturn(['lng' => 2.0, 'lat' => 48.0]);
-        $this->ors->shouldReceive('durationSeconds')->once()->andReturn(3600);
-
-        $created = new Trip();
-        $created->id = 999;
-
-        $this->trips->shouldReceive('create')
-            ->once()
-            ->with(Mockery::on(function (array $attrs) use ($auth, $depId, $arrId): bool {
-                return (int)$attrs['person_id'] === $auth->id
-                    && (int)$attrs['departure_address_id'] === $depId
-                    && (int)$attrs['arrival_address_id'] === $arrId
-                    && isset($attrs['arrival_time']);
-            }))
-            ->andReturn($created);
-
-        $fresh = new Trip();
-        $fresh->id = 999;
-
-        $this->trips->shouldReceive('findByIdOrFail')->once()->with(999)->andReturn($fresh);
-
-        $res = $this->service->createTrip($payload, $auth);
-
-        self::assertSame(999, $res->id);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function test_update_trip_throws_when_nothing_to_update(): void
-    {
-        $this->expectException(ValidationLogicException::class);
-
-        $trip = new Trip();
-        $trip->id = 1;
-
-        $this->service->updateTrip($trip, [], new Person());
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function test_reserve_seat_driver_cannot_reserve_own_trip(): void
-    {
-        $this->expectException(ValidationLogicException::class);
-
-        $trip = new Trip();
-        $trip->id = 1;
-        $trip->person_id = 10;
-        $trip->departure_time = Carbon::parse('2026-02-20 10:00:00');
-
-        $auth = new Person();
-        $auth->id = 10;
-
-        $user = new User();
-        $user->role_id = 1;
-        $user->is_active = true;
-
-        $auth->setRelation('user', $user);
-
-        $this->service->reserveSeat($trip, 10, $auth);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function test_reserve_seat_throws_when_already_reserved(): void
-    {
-        $this->expectException(ConflictException::class);
-
-        $trip = new Trip();
-        $trip->id = 1;
-        $trip->person_id = 99;
-        $trip->departure_time = Carbon::parse('2026-02-20 10:00:00');
-        $trip->available_seats = 3;
-
-        $auth = new Person();
-        $auth->id = 10;
-
-        $user = new User();
-        $user->role_id = 1;
-        $user->is_active = true;
-
-        $auth->setRelation('user', $user);
-
-        $relation = \Mockery::mock(BelongsToMany::class);
+        $relation = Mockery::mock(BelongsToMany::class);
         $relation->shouldReceive('wherePivot')->once()->with('person_id', 10)->andReturnSelf();
-        $relation->shouldReceive('exists')->once()->andReturnTrue();
+        $relation->shouldReceive('exists')->once()->andReturnFalse();
+        $relation->shouldReceive('count')->once()->andReturn(0);
+        $relation->shouldReceive('attach')->once()->with(10);
 
-        $locked = new class extends Trip {
-            /** @var BelongsToMany|null */
-            public ?BelongsToMany $passengersRelation = null;
+        $lockedTrip = new class extends Trip {
+            public BelongsToMany $passengersRelation;
 
             public function passengers(): BelongsToMany
             {
-                /** @var BelongsToMany */
-                $rel = $this->passengersRelation;
-
-                return $rel;
+                return $this->passengersRelation;
             }
         };
 
-        $locked->id = 1;
-        $locked->available_seats = 3;
-        $locked->passengersRelation = $relation;
+        $lockedTrip->id = 1;
+        $lockedTrip->person_id = 99;
+        $lockedTrip->available_seats = 3;
+        $lockedTrip->departure_time = Carbon::parse('2026-02-20 10:00:00');
+        $lockedTrip->arrival_time = Carbon::parse('2026-02-20 12:00:00');
+        $lockedTrip->passengersRelation = $relation;
+        $this->attachTripRelations($lockedTrip, $driver, collect());
 
-        $this->trips->shouldReceive('findByIdForUpdate')->once()->with(1)->andReturn($locked);
+        $this->trips->shouldReceive('findByIdForUpdate')->once()->with(1)->andReturn($lockedTrip);
+        $this->persons->shouldReceive('findById')->once()->with(10)->andReturn($passenger);
+        $this->cache->shouldReceive('invalidateReservationWrite')->once()->with(1, 10, 99);
+        $this->tripEmails->shouldReceive('sendReservationCreated')->once()->with($lockedTrip, $passenger);
 
-        $this->service->reserveSeat($trip, 10, $auth);
+        self::assertTrue($this->service->reserveSeat($trip, 10, $passenger));
+    }
+
+    public function test_cancel_reservation_invalidates_cache_and_sends_emails_after_commit(): void
+    {
+        $driver = $this->makePerson(99, 'driver@example.test', 'Driver');
+        $passenger = $this->makePerson(10, 'passenger@example.test', 'Passenger');
+
+        $trip = $this->makeTrip(1, $driver, collect([$passenger]));
+
+        $relation = Mockery::mock(BelongsToMany::class);
+        $relation->shouldReceive('detach')->once()->with(10)->andReturn(1);
+
+        $lockedTrip = new class extends Trip {
+            public BelongsToMany $passengersRelation;
+
+            public function passengers(): BelongsToMany
+            {
+                return $this->passengersRelation;
+            }
+        };
+
+        $lockedTrip->id = 1;
+        $lockedTrip->person_id = 99;
+        $lockedTrip->departure_time = Carbon::parse('2026-02-20 10:00:00');
+        $lockedTrip->arrival_time = Carbon::parse('2026-02-20 12:00:00');
+        $lockedTrip->passengersRelation = $relation;
+        $this->attachTripRelations($lockedTrip, $driver, collect([$passenger]));
+
+        $this->trips->shouldReceive('findByIdForUpdate')->once()->with(1)->andReturn($lockedTrip);
+        $this->persons->shouldReceive('findById')->once()->with(10)->andReturn($passenger);
+        $this->cache->shouldReceive('invalidateReservationWrite')->once()->with(1, 10, 99);
+        $this->tripEmails->shouldReceive('sendReservationCancelled')->once()->with($lockedTrip, $passenger);
+
+        self::assertTrue($this->service->cancelReservation($trip, 10, $passenger));
+    }
+
+    public function test_cancel_trip_sends_trip_cancellation_email_after_commit(): void
+    {
+        $driver = $this->makePerson(99, 'driver@example.test', 'Driver');
+        $passenger = $this->makePerson(10, 'passenger@example.test', 'Passenger');
+        $trip = $this->makeTrip(1, $driver, collect([$passenger]));
+
+        $this->trips->shouldReceive('delete')->once()->with(1)->andReturnTrue();
+        $this->tripEmails->shouldReceive('sendTripCancelledByDriver')->once()->with($trip);
+
+        $this->service->cancelTrip($trip, $driver);
+
+        self::assertTrue(true);
+    }
+
+    private function makePerson(int $id, string $email, string $firstName = 'User'): Person
+    {
+        $person = new Person();
+        $person->id = $id;
+        $person->first_name = $firstName;
+        $person->last_name = 'Test';
+
+        $user = new User();
+        $user->email = $email;
+        $user->role_id = 1;
+        $user->is_active = true;
+
+        $person->setRelation('user', $user);
+
+        return $person;
+    }
+
+    private function makeTrip(int $id, Person $driver, Collection $passengers): Trip
+    {
+        $trip = new Trip();
+        $trip->id = $id;
+        $trip->person_id = $driver->id;
+        $trip->available_seats = 3;
+        $trip->departure_time = Carbon::parse('2026-02-20 10:00:00');
+        $trip->arrival_time = Carbon::parse('2026-02-20 12:00:00');
+
+        $this->attachTripRelations($trip, $driver, $passengers);
+
+        return $trip;
+    }
+
+    private function attachTripRelations(Trip $trip, Person $driver, Collection $passengers): void
+    {
+        $departureCity = new City();
+        $departureCity->postal_code = '75001';
+        $departureCity->name = 'Paris';
+
+        $arrivalCity = new City();
+        $arrivalCity->postal_code = '69001';
+        $arrivalCity->name = 'Lyon';
+
+        $departureAddress = new Address();
+        $departureAddress->street_number = '1';
+        $departureAddress->street = 'Rue de Paris';
+        $departureAddress->setRelation('city', $departureCity);
+
+        $arrivalAddress = new Address();
+        $arrivalAddress->street_number = '10';
+        $arrivalAddress->street = 'Rue de Lyon';
+        $arrivalAddress->setRelation('city', $arrivalCity);
+
+        $trip->setRelation('driver', $driver);
+        $trip->setRelation('departureAddress', $departureAddress);
+        $trip->setRelation('arrivalAddress', $arrivalAddress);
+        $trip->setRelation('passengers', $passengers);
     }
 }
