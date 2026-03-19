@@ -71,6 +71,13 @@ readonly class TripService implements TripServiceInterface
         $driverId = (int)($payload['person_id'] ?? $authPerson->id);
         $user = $authPerson->user;
 
+        $availableSeats = (int)($payload['available_seats'] ?? 0);
+        $personCarAvailableSeats = $authPerson->car->model->seats;
+
+        if($availableSeats > $personCarAvailableSeats) {
+            throw new ValidationLogicException('Available seats cannot be greater than the car\'s seats.');
+        }
+
         if ($driverId !== $authPerson->id && !$user->isAdmin()) {
             throw new ForbiddenException('You cannot create a trip for another user.');
         }
