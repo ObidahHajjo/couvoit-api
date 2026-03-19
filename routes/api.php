@@ -50,7 +50,7 @@ Route::middleware('jwt')->group(function () {
     /* ===== TRIPS ===== */
     Route::get('/trips', [TripController::class, 'index']);
     Route::get('/trips/{trip}', [TripController::class, 'show']);
-    Route::get("trips/{trip}/person", [TripController::class, 'passengers']);
+    Route::get("/trips/{trip}/person", [TripController::class, 'passengers']);
     Route::post('/trips', [TripController::class, 'store']);
     Route::patch("/trips/{trip}", [TripController::class, 'update']);
     Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
