@@ -30,16 +30,13 @@ final class TripPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * @var TripPolicy
-     */
     private TripPolicy $policy;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->policy = new TripPolicy();
+        $this->policy = new TripPolicy;
 
         // Freeze "now()" for time-based rules.
         Carbon::setTestNow(Carbon::parse('2026-02-18 12:00:00'));
@@ -111,7 +108,7 @@ final class TripPolicyTest extends TestCase
     #[Test]
     public function create_allows_when_user_is_active_and_has_car(): void
     {
-        $array = $this->makeUserWithProfile(roleId: 1 , withCar: true);
+        $array = $this->makeUserWithProfile(roleId: 1, withCar: true);
 
         $res = $this->policy->create($array[0]);
 
@@ -126,7 +123,7 @@ final class TripPolicyTest extends TestCase
     {
         [$user, $person] = $this->makeUserWithProfile(roleId: 1);
 
-        $trip = new Trip();
+        $trip = new Trip;
         $trip->person_id = $person->id + 999; // not the same driver
 
         $res = $this->policy->update($user, $trip);
@@ -142,7 +139,7 @@ final class TripPolicyTest extends TestCase
     {
         [$user, $person] = $this->makeUserWithProfile(roleId: 1);
 
-        $trip = new Trip();
+        $trip = new Trip;
         $trip->person_id = $person->id + 999; // driver is someone else
         $trip->departure_time = Carbon::parse('2026-02-18 11:00:00'); // past
 
@@ -160,7 +157,7 @@ final class TripPolicyTest extends TestCase
         [$user, $person] = $this->makeUserWithProfile(roleId: 1);
         [, $otherPerson] = $this->makeUserWithProfile(roleId: 1);
 
-        $trip = new Trip();
+        $trip = new Trip;
         $trip->person_id = $person->id + 999;
         $trip->departure_time = Carbon::parse('2026-02-18 13:00:00'); // future
 
@@ -177,7 +174,7 @@ final class TripPolicyTest extends TestCase
     {
         [$user, $person] = $this->makeUserWithProfile(roleId: 1);
 
-        $trip = new Trip();
+        $trip = new Trip;
         $trip->person_id = $person->id; // user is the driver
         $trip->departure_time = Carbon::parse('2026-02-18 13:00:00');
 
@@ -194,7 +191,7 @@ final class TripPolicyTest extends TestCase
     {
         [$user, $person] = $this->makeUserWithProfile(roleId: 1);
 
-        $trip = new Trip();
+        $trip = new Trip;
         $trip->person_id = $person->id + 999; // driver is someone else
         $trip->departure_time = Carbon::parse('2026-02-18 13:00:00');
 
@@ -208,18 +205,15 @@ final class TripPolicyTest extends TestCase
      */
     private function ensureRoles(): void
     {
-        if (!Role::query()->where('id', 1)->exists()) {
+        if (! Role::query()->where('id', 1)->exists()) {
             Role::unguarded(fn () => Role::query()->create(['id' => 1, 'name' => 'user']));
         }
-        if (!Role::query()->where('id', 2)->exists()) {
+        if (! Role::query()->where('id', 2)->exists()) {
             Role::unguarded(fn () => Role::query()->create(['id' => 2, 'name' => 'admin']));
         }
     }
 
     /**
-     * @param int $roleId
-     * @param bool $userActive
-     * @param bool $withCar
      * @return array{0:User,1:Person}
      */
     private function makeUserWithProfile(
@@ -232,23 +226,23 @@ final class TripPolicyTest extends TestCase
         $carId = null;
 
         if ($withCar) {
-            $brand = Brand::query()->create(['name' => 'brand_' . $suffix]);
-            $type  = Type::query()->create(['type' => 'type_' . $suffix]);
+            $brand = Brand::query()->create(['name' => 'brand_'.$suffix]);
+            $type = Type::query()->create(['type' => 'type_'.$suffix]);
 
             $model = CarModel::query()->create([
-                'name' => 'model_' . $suffix,
-                'seats' => 4,
+                'name' => 'model_'.$suffix,
                 'brand_id' => $brand->id,
                 'type_id' => $type->id,
             ]);
 
             $color = Color::query()->create([
-                'name' => 'color_' . $suffix,
-                'hex_code' => '#' . strtoupper(bin2hex(random_bytes(3))),
+                'name' => 'color_'.$suffix,
+                'hex_code' => '#'.strtoupper(bin2hex(random_bytes(3))),
             ]);
 
             $car = Car::query()->create([
-                'license_plate' => strtoupper('AA-' . Str::random(3) . '-ZZ'),
+                'license_plate' => strtoupper('AA-'.Str::random(3).'-ZZ'),
+                'seats' => 4,
                 'model_id' => $model->id,
                 'color_id' => $color->id,
             ]);

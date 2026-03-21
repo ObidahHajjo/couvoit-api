@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -19,6 +20,7 @@ return new class extends Migration
             $table->foreignId('type_id')->constrained();
             $table->unique(['name', 'brand_id']);
         });
+
         DB::statement('ALTER TABLE models ADD CONSTRAINT chk_seats_number CHECK (seats > 0 AND seats <= 9);');
     }
 

@@ -24,15 +24,14 @@ class CarRepositoryEloquentTest extends TestCase
 
         $model = CarModel::query()->create([
             'name' => 'rav4',
-            'seats' => 5,
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);
 
         $color = Color::query()->create(['name' => 'blue', 'hex_code' => '#0000ff']);
 
-        $c1 = Car::query()->create(['license_plate' => 'AA-1', 'model_id' => $model->id, 'color_id' => $color->id]);
-        $c2 = Car::query()->create(['license_plate' => 'AA-2', 'model_id' => $model->id, 'color_id' => $color->id]);
+        $c1 = Car::query()->create(['license_plate' => 'AA-1', 'seats' => 5, 'model_id' => $model->id, 'color_id' => $color->id]);
+        $c2 = Car::query()->create(['license_plate' => 'AA-2', 'seats' => 5, 'model_id' => $model->id, 'color_id' => $color->id]);
 
         $cache = Mockery::mock(RepositoryCacheManager::class);
         $repo = new CarRepositoryEloquent($cache);
@@ -62,9 +61,9 @@ class CarRepositoryEloquentTest extends TestCase
     {
         $brand = Brand::query()->create(['name' => 'toyota']);
         $type = Type::query()->create(['type' => 'suv']);
-        $model = CarModel::query()->create(['name' => 'rav4', 'seats' => 5, 'brand_id' => $brand->id, 'type_id' => $type->id]);
+        $model = CarModel::query()->create(['name' => 'rav4', 'brand_id' => $brand->id, 'type_id' => $type->id]);
         $color = Color::query()->create(['name' => 'blue', 'hex_code' => '#0000ff']);
-        $car = Car::query()->create(['license_plate' => 'AA-1', 'model_id' => $model->id, 'color_id' => $color->id]);
+        $car = Car::query()->create(['license_plate' => 'AA-1', 'seats' => 5, 'model_id' => $model->id, 'color_id' => $color->id]);
 
         $cache = Mockery::mock(RepositoryCacheManager::class);
         $repo = new CarRepositoryEloquent($cache);

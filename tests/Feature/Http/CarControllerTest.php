@@ -16,8 +16,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 use Throwable;
@@ -62,10 +62,9 @@ class CarControllerTest extends TestCase
     private function makeCarGraph(): Car
     {
         $brand = Brand::query()->create(['name' => 'toyota']);
-        $type  = Type::query()->create(['type' => 'suv']);
+        $type = Type::query()->create(['type' => 'suv']);
         $model = CarModel::query()->create([
             'name' => 'rav4',
-            'seats' => 5,
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);
@@ -73,6 +72,7 @@ class CarControllerTest extends TestCase
 
         return Car::query()->create([
             'license_plate' => 'AA-123-BB',
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
@@ -91,7 +91,7 @@ class CarControllerTest extends TestCase
             'first_name' => 'First',
             'last_name' => 'Last',
             'pseudo' => "pseudo_$suffix",
-            'phone' => '+336' . random_int(10000000, 99999999),
+            'phone' => '+336'.random_int(10000000, 99999999),
             'car_id' => null,
         ], $overrides));
     }
@@ -133,7 +133,7 @@ class CarControllerTest extends TestCase
         Gate::shouldReceive('authorize')->andReturnTrue();
 
         // CarService not used for non-admin index
-        $this->mock(CarServiceInterface::class, fn($m) => $m->shouldIgnoreMissing());
+        $this->mock(CarServiceInterface::class, fn ($m) => $m->shouldIgnoreMissing());
 
         $res = $this->actingAs($user)->getJson('/cars');
 
@@ -196,7 +196,7 @@ class CarControllerTest extends TestCase
 
         Gate::shouldReceive('authorize')->andReturnTrue();
 
-        $this->mock(CarServiceInterface::class, fn($m) => $m->shouldIgnoreMissing());
+        $this->mock(CarServiceInterface::class, fn ($m) => $m->shouldIgnoreMissing());
 
         $res = $this->actingAs($adminUser)->getJson("/cars/$car->id");
 

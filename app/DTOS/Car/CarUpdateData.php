@@ -6,15 +6,6 @@ use InvalidArgumentException;
 
 final readonly class CarUpdateData
 {
-    /**
-     * @param string|null $licensePlate
-     * @param string|null $modelName
-     * @param int|null    $seats
-     * @param string|null $brandName
-     * @param string|null $typeName
-     * @param string|null $colorHex
-     * @param string|null $colorName
-     */
     public function __construct(
         public ?string $licensePlate = null,
         public ?string $modelName = null,
@@ -23,18 +14,14 @@ final readonly class CarUpdateData
         public ?string $typeName = null,
         public ?string $colorHex = null,
         public ?string $colorName = null,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Build DTO from raw request payload.
      *
      * Only provided fields will be mapped.
      *
-     * @param array<string, mixed> $data
-     *
-     * @return self
+     * @param  array<string, mixed>  $data
      *
      * @throws InvalidArgumentException
      */
@@ -51,16 +38,16 @@ final readonly class CarUpdateData
         $colorName = data_get($data, 'color.name');
 
         $modelName = data_get($data, 'model.name');
-        $seats = data_get($data, 'model.seats');
+        $seats = $data['seats'] ?? data_get($data, 'model.seats');
         $brandName = data_get($data, 'brand.name');
         $typeName = data_get($data, 'type.name');
 
         $normalizedSeats = null;
         if ($seats !== null) {
-            if (!is_numeric($seats) || (int)$seats <= 0) {
-                throw new InvalidArgumentException('model.seats must be a positive integer.');
+            if (! is_numeric($seats) || (int) $seats <= 0) {
+                throw new InvalidArgumentException('seats must be a positive integer.');
             }
-            $normalizedSeats = (int)$seats;
+            $normalizedSeats = (int) $seats;
         }
 
         return new self(
@@ -69,25 +56,25 @@ final readonly class CarUpdateData
                 : null,
 
             modelName: $modelName !== null
-                ? strtolower(trim((string)$modelName))
+                ? strtolower(trim((string) $modelName))
                 : null,
 
             seats: $normalizedSeats,
 
             brandName: $brandName !== null
-                ? strtolower(trim((string)$brandName))
+                ? strtolower(trim((string) $brandName))
                 : null,
 
             typeName: $typeName !== null
-                ? strtolower(trim((string)$typeName))
+                ? strtolower(trim((string) $typeName))
                 : null,
 
-            colorHex: $colorHex !== null && trim((string)$colorHex) !== ''
-                ? strtolower(trim((string)$colorHex))
+            colorHex: $colorHex !== null && trim((string) $colorHex) !== ''
+                ? strtolower(trim((string) $colorHex))
                 : null,
 
-            colorName: $colorName !== null && trim((string)$colorName) !== ''
-                ? strtolower(trim((string)$colorName))
+            colorName: $colorName !== null && trim((string) $colorName) !== ''
+                ? strtolower(trim((string) $colorName))
                 : null,
         );
     }

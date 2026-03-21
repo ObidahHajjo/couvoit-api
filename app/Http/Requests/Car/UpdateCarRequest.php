@@ -65,6 +65,12 @@ class UpdateCarRequest extends FormRequest
                     'name' => strtolower((string) data_get($this->input('model', []), 'name', '')),
                 ]),
             ]);
+
+            if (! $this->has('seats') && data_get($this->input('model', []), 'seats') !== null) {
+                $this->merge([
+                    'seats' => data_get($this->input('model', []), 'seats'),
+                ]);
+            }
         }
 
         if ($this->has('color')) {
@@ -94,7 +100,7 @@ class UpdateCarRequest extends FormRequest
 
             'model' => ['sometimes', 'array'],
             'model.name' => ['required_with:model', 'string', 'min:1', 'max:255'],
-            'model.seats' => ['required_with:model', 'integer', 'min:1', 'max:9'],
+            'seats' => ['sometimes', 'integer', 'min:1', 'max:9'],
 
             'brand' => ['required_with:model', 'array'],
             'brand.name' => ['required_with:model', 'string', 'min:1', 'max:50'],

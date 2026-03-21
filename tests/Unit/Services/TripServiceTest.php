@@ -7,7 +7,6 @@ namespace Tests\Unit\Services;
 use App\Exceptions\ForbiddenException;
 use App\Models\Address;
 use App\Models\Car;
-use App\Models\CarModel;
 use App\Models\City;
 use App\Models\Person;
 use App\Models\Trip;
@@ -25,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Mockery;
-use Mockery\MockInterface;
 use Tests\TestCase;
 
 final class TripServiceTest extends TestCase
@@ -70,8 +68,8 @@ final class TripServiceTest extends TestCase
             $this->tripEmails,
         );
 
-        DB::shouldReceive('transaction')->andReturnUsing(static fn(callable $callback) => $callback());
-        DB::shouldReceive('afterCommit')->andReturnUsing(static fn(callable $callback) => $callback());
+        DB::shouldReceive('transaction')->andReturnUsing(static fn (callable $callback) => $callback());
+        DB::shouldReceive('afterCommit')->andReturnUsing(static fn (callable $callback) => $callback());
     }
 
     protected function tearDown(): void
@@ -87,10 +85,8 @@ final class TripServiceTest extends TestCase
         $this->expectException(ForbiddenException::class);
 
         $auth = $this->makePerson(1, 'auth@example.test');
-        $carModel = new CarModel();
-        $carModel->seats = 4;
-        $car = new Car();
-        $car->setRelation('model', $carModel);
+        $car = new Car;
+        $car->seats = 4;
         $auth->setRelation('car', $car);
 
         $payload = [
@@ -117,7 +113,8 @@ final class TripServiceTest extends TestCase
         $relation->shouldReceive('count')->once()->andReturn(0);
         $relation->shouldReceive('attach')->once()->with(10);
 
-        $lockedTrip = new class extends Trip {
+        $lockedTrip = new class extends Trip
+        {
             public BelongsToMany $passengersRelation;
 
             public function passengers(): BelongsToMany
@@ -152,7 +149,8 @@ final class TripServiceTest extends TestCase
         $relation = Mockery::mock(BelongsToMany::class);
         $relation->shouldReceive('detach')->once()->with(10)->andReturn(1);
 
-        $lockedTrip = new class extends Trip {
+        $lockedTrip = new class extends Trip
+        {
             public BelongsToMany $passengersRelation;
 
             public function passengers(): BelongsToMany
@@ -192,12 +190,12 @@ final class TripServiceTest extends TestCase
 
     private function makePerson(int $id, string $email, string $firstName = 'User'): Person
     {
-        $person = new Person();
+        $person = new Person;
         $person->id = $id;
         $person->first_name = $firstName;
         $person->last_name = 'Test';
 
-        $user = new User();
+        $user = new User;
         $user->email = $email;
         $user->role_id = 1;
         $user->is_active = true;
@@ -209,7 +207,7 @@ final class TripServiceTest extends TestCase
 
     private function makeTrip(int $id, Person $driver, Collection $passengers): Trip
     {
-        $trip = new Trip();
+        $trip = new Trip;
         $trip->id = $id;
         $trip->person_id = $driver->id;
         $trip->available_seats = 3;
@@ -223,20 +221,20 @@ final class TripServiceTest extends TestCase
 
     private function attachTripRelations(Trip $trip, Person $driver, Collection $passengers): void
     {
-        $departureCity = new City();
+        $departureCity = new City;
         $departureCity->postal_code = '75001';
         $departureCity->name = 'Paris';
 
-        $arrivalCity = new City();
+        $arrivalCity = new City;
         $arrivalCity->postal_code = '69001';
         $arrivalCity->name = 'Lyon';
 
-        $departureAddress = new Address();
+        $departureAddress = new Address;
         $departureAddress->street_number = '1';
         $departureAddress->street = 'Rue de Paris';
         $departureAddress->setRelation('city', $departureCity);
 
-        $arrivalAddress = new Address();
+        $arrivalAddress = new Address;
         $arrivalAddress->street_number = '10';
         $arrivalAddress->street = 'Rue de Lyon';
         $arrivalAddress->setRelation('city', $arrivalCity);

@@ -14,34 +14,33 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * - model.type
  * - color
  *
- * @property int         $id
- * @property string      $license_plate
+ * @property int $id
+ * @property string $license_plate
  */
 class CarResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
      *
-     * @param  Request  $request
      * @return array<string,mixed>
      */
     public function toArray(Request $request): array
     {
         return [
-            'id'            => $this->id,
+            'id' => $this->id,
             'license_plate' => $this->license_plate,
+            'seats' => (int) $this->seats,
 
             'model' => $this->whenLoaded('model', function () {
                 return [
-                    'id'    => (int) $this->model->id,
-                    'name'  => (string) $this->model->name,
-                    'seats' => (int) $this->model->seats,
+                    'id' => (int) $this->model->id,
+                    'name' => (string) $this->model->name,
 
                     'brand' => $this->when(
                         $this->model->relationLoaded('brand') && $this->model->brand,
                         function () {
                             return [
-                                'id'   => (int) $this->model->brand->id,
+                                'id' => (int) $this->model->brand->id,
                                 'name' => (string) $this->model->brand->name,
                             ];
                         }
@@ -51,7 +50,7 @@ class CarResource extends JsonResource
                         $this->model->relationLoaded('type') && $this->model->type,
                         function () {
                             return [
-                                'id'   => (int) $this->model->type->id,
+                                'id' => (int) $this->model->type->id,
                                 'type' => (string) $this->model->type->type,
                             ];
                         }
@@ -61,7 +60,7 @@ class CarResource extends JsonResource
 
             'color' => $this->whenLoaded('color', function () {
                 return [
-                    'id'       => (int) $this->color->id,
+                    'id' => (int) $this->color->id,
                     'hex_code' => (string) $this->color->hex_code,
                 ];
             }),

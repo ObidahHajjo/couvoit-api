@@ -14,7 +14,7 @@ class BrandTest extends TestCase
 
     public function test_brand_has_timestamps_disabled(): void
     {
-        $this->assertFalse((new Brand())->timestamps);
+        $this->assertFalse((new Brand)->timestamps);
     }
 
     public function test_brand_fillable_allows_mass_assignment(): void
@@ -32,8 +32,8 @@ class BrandTest extends TestCase
         $brand = Brand::query()->create(['name' => 'Renault']);
         $type = Type::query()->create(['type' => 'Hatchback']);
 
-        $m1 = CarModel::query()->create(['name' => 'Clio', 'seats' => 5, 'brand_id' => $brand->id, 'type_id' => $type->id]);
-        $m2 = CarModel::query()->create(['name' => 'Megane', 'seats' => 5, 'brand_id' => $brand->id, 'type_id' => $type->id]);
+        $m1 = CarModel::query()->create(['name' => 'Clio', 'brand_id' => $brand->id, 'type_id' => $type->id]);
+        $m2 = CarModel::query()->create(['name' => 'Megane', 'brand_id' => $brand->id, 'type_id' => $type->id]);
 
         $brand->refresh();
 

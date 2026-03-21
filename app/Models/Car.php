@@ -17,13 +17,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $id Unique identifier of the car.
  * @property string $license_plate Car registration / license plate (unique).
+ * @property int $seats Number of seats for this specific car.
  * @property int $model_id Foreign key referencing the car model.
  * @property int $color_id Foreign key referencing the car color.
  *
  * ===========================
  * Relationships
  * ===========================
- *
  * @property-read CarModel|null $model The model of the car.
  * @property-read Color|null $color The color of the car.
  */
@@ -48,8 +48,9 @@ class Car extends Model
      */
     protected $fillable = [
         'license_plate', // Unique license plate of the car
+        'seats',         // Number of seats for the car
         'model_id',       // ID of the related car model
-        'color_id'        // ID of the related car color
+        'color_id',        // ID of the related car color
     ];
 
     /**
@@ -59,15 +60,13 @@ class Car extends Model
      *
      * @var array<int, string>
      */
-    protected $guarded = ["id"];
+    protected $guarded = ['id'];
 
     /**
      * Relationship: Car belongs to a CarModel.
      *
      * Example usage:
      *   $car->model
-     *
-     * @return BelongsTo
      */
     public function model(): BelongsTo
     {
@@ -79,8 +78,6 @@ class Car extends Model
      *
      * Example usage:
      *   $car->color
-     *
-     * @return BelongsTo
      */
     public function color(): BelongsTo
     {
