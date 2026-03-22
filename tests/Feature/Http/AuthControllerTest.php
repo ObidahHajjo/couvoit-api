@@ -127,4 +127,15 @@ class AuthControllerTest extends TestCase
         $res->assertJsonPath('fields.email.0', 'Le champ e-mail est obligatoire.');
         $res->assertJsonPath('fields.password.0', 'Le champ mot de passe est obligatoire.');
     }
+
+    public function test_validation_errors_are_localized_from_normalized_arabic_accept_language(): void
+    {
+        $res = $this->withHeader('Accept-Language', 'ar-SA,ar;q=0.9,en;q=0.8')
+            ->postJson($this->loginUri, []);
+
+        $res->assertStatus(422);
+        $res->assertJsonPath('details', 'البيانات المقدمة غير صالحة.');
+        $res->assertJsonPath('fields.email.0', 'حقل البريد الإلكتروني مطلوب.');
+        $res->assertJsonPath('fields.password.0', 'حقل كلمة المرور مطلوب.');
+    }
 }

@@ -251,4 +251,13 @@ class LocalJwtAuthTest extends TestCase
         $res->assertStatus(401);
         $res->assertJsonPath('error', 'Jeton Bearer manquant');
     }
+
+    public function test_missing_bearer_token_is_localized_from_normalized_arabic_accept_language(): void
+    {
+        $res = $this->withHeader('Accept-Language', 'ar-SA,ar;q=0.9,en;q=0.8')
+            ->getJson('/protected');
+
+        $res->assertStatus(401);
+        $res->assertJsonPath('error', 'رمز Bearer مفقود');
+    }
 }

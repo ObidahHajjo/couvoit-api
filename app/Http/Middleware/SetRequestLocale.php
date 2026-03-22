@@ -12,7 +12,7 @@ final class SetRequestLocale
     /**
      * @var array<int, string>
      */
-    private const SUPPORTED_LOCALES = ['en', 'fr'];
+    private const SUPPORTED_LOCALES = ['en', 'fr', 'ar'];
 
     public function handle(Request $request, Closure $next): Response
     {

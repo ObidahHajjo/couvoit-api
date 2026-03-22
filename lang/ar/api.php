@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'auth' => [
+        'logout_success' => 'تم تسجيل الخروج بنجاح',
+        'forgot_password_notice' => 'إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، فقد تم إرسال رابط إعادة تعيين كلمة المرور.',
+        'password_reset_success' => 'تمت إعادة تعيين كلمة المرور بنجاح.',
+    ],
+    'errors' => [
+        'validation' => 'البيانات المقدمة غير صالحة.',
+        'forbidden' => 'ممنوع.',
+        'route_not_found' => 'المسار غير موجود.',
+        'model_not_found' => 'العنصر :model غير موجود.',
+        'foreign_key_constraint' => 'انتهاك قيد المفتاح الخارجي.',
+        'invalid_input_syntax' => 'صيغة الإدخال غير صالحة.',
+        'database_query' => 'خطأ في استعلام قاعدة البيانات.',
+        'server_error' => 'خطأ في الخادم',
+        'missing_bearer_token' => 'رمز Bearer مفقود',
+        'invalid_jwt_format' => 'تنسيق JWT غير صالح',
+        'invalid_token_payload' => 'محتوى الرمز غير صالح.',
+        'unauthorized' => 'غير مصرح',
+        'account_inactive' => 'الحساب غير نشط',
+        'token_expired' => 'انتهت صلاحية الرمز',
+    ],
+];
