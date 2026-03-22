@@ -11,23 +11,7 @@ jobs:
   phpunit:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
     env:
-      # Same idea as your phpunit.xml (and OK even if phpunit sets them too)
       APP_ENV: testing
       APP_MAINTENANCE_DRIVER: file
       BCRYPT_ROUNDS: 4
@@ -40,12 +24,8 @@ jobs:
       TELESCOPE_ENABLED: "false"
       NIGHTWATCH_ENABLED: "false"
 
-      DB_CONNECTION: pgsql
-      DB_HOST: 127.0.0.1
-      DB_PORT: 5432
-      DB_DATABASE: covoiturage_test
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
 
     steps:
       - name: Checkout
@@ -55,7 +35,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
-          extensions: mbstring, dom, fileinfo, pdo, pdo_pgsql, pgsql
+          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3
           coverage: xdebug
           tools: composer:v2
 
@@ -75,14 +55,10 @@ jobs:
       - name: Prepare environment
         run: |
           cp .env.example .env
+          mkdir -p database
+          touch database/database.sqlite
           php artisan key:generate
           php artisan config:clear
-
-      - name: Create test database
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE covoiturage_test;" || true
 
       - name: Run migrations
         run: php artisan migrate --force
