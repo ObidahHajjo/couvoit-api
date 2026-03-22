@@ -83,14 +83,18 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Sonar auth
+      - name: Verify Sonar server reachability
         if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
         run: |
-          curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/server/version"
+          curl -sS "${SONAR_HOST_URL}/api/system/status"
 
       - name: SonarQube Scan
         if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
-        uses: sonarsource/sonarqube-scan-action@master
+        uses: sonarsource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
             -Dsonar.projectKey=covoit-api
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
