@@ -57,6 +57,14 @@ class ConversationResource extends JsonResource
             }, null)
             : null;
 
+        $participantState = $this->relationLoaded('participantStates')
+            ? $this->participantStates->first()
+            : null;
+
+        $visibleLastMessageAt = $latestMessage?->created_at
+            ?? $participantState?->cleared_at
+            ?? $this->last_message_at;
+
         return [
             'id' => (int) $this->id,
             'participant' => $otherParticipant !== null ? [
@@ -69,7 +77,8 @@ class ConversationResource extends JsonResource
                 'from' => $this->trip->departureAddress?->city?->name,
                 'to' => $this->trip->arrivalAddress?->city?->name,
             ] : null,
-            'last_message_at' => optional($this->last_message_at)?->toISOString(),
+            'last_message_at' => optional($visibleLastMessageAt)?->toISOString(),
+            'cleared_at' => optional($participantState?->cleared_at)?->toISOString(),
             'latest_message' => $latestMessage ? new ConversationMessageResource($latestMessage) : null,
             'messages' => $this->whenLoaded('messages', fn () => ConversationMessageResource::collection($this->messages)),
         ];

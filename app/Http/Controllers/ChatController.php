@@ -59,6 +59,19 @@ class ChatController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    public function clear(Request $request, int $conversation): JsonResponse
+    {
+        /** @var User $authUser */
+        $authUser = $request->user();
+
+        $clearedConversation = $this->chat->clearConversationForPerson($conversation, $authUser->person);
+
+        return response()->json([
+            'message' => __('api.chat.conversation_cleared'),
+            'data' => (new ConversationResource($clearedConversation))->toArray($request),
+        ], Response::HTTP_OK);
+    }
+
     public function contactDriver(SendChatMessageRequest $request, Trip $trip): JsonResponse
     {
         /** @var User $authUser */

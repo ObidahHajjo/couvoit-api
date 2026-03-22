@@ -61,9 +61,11 @@ Route::middleware('jwt')->group(function () {
     Route::get('/conversations', [ChatController::class, 'index']);
     Route::get('/conversations/{conversation}', [ChatController::class, 'show']);
     Route::post('/conversations/{conversation}/messages', [ChatController::class, 'send']);
+    Route::post('/conversations/{conversation}/clear', [ChatController::class, 'clear']);
     Route::get('/chat/conversations', [ChatController::class, 'index']);
     Route::get('/chat/conversations/{conversation}', [ChatController::class, 'show']);
     Route::post('/chat/conversations/{conversation}/messages', [ChatController::class, 'send']);
+    Route::post('/chat/conversations/{conversation}/clear', [ChatController::class, 'clear']);
     Route::post('/my-trips/{trip}/contact-passenger/{person}', [ChatController::class, 'contactPassenger']);
     Route::post('/broadcasting/auth-proxy', [ChatController::class, 'proxy']);
 

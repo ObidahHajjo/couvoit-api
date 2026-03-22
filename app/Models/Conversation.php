@@ -60,6 +60,14 @@ class Conversation extends Model
     }
 
     /**
+     * Get the per-participant state rows for this conversation.
+     */
+    public function participantStates(): HasMany
+    {
+        return $this->hasMany(ConversationParticipantState::class);
+    }
+
+    /**
      * Determine whether the given person participates in the conversation.
      */
     public function involvesPerson(int $personId): bool

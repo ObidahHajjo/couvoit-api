@@ -7,6 +7,7 @@ use App\Exceptions\ForbiddenException;
 use App\Exceptions\NotFoundException;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
+use App\Models\ConversationParticipantState;
 use App\Models\Person;
 use App\Models\Trip;
 use App\Services\Interfaces\ChatServiceInterface;
@@ -29,7 +30,11 @@ class ChatService implements ChatServiceInterface
                 'participantTwo',
                 'trip.departureAddress.city',
                 'trip.arrivalAddress.city',
-                'messages' => fn ($query) => $query->orderByDesc('created_at')->orderByDesc('id')->limit(1),
+                'participantStates' => fn ($query) => $query->where('person_id', $authPerson->id),
+                'messages' => fn ($query) => $this->applyVisibleMessagesScope($query, $authPerson)
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
+                    ->limit(1),
             ])
             ->orderByDesc('last_message_at')
             ->get();
@@ -43,7 +48,11 @@ class ChatService implements ChatServiceInterface
                 'participantTwo',
                 'trip.departureAddress.city',
                 'trip.arrivalAddress.city',
-                'messages' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with('sender'),
+                'participantStates' => fn ($query) => $query->where('person_id', $authPerson->id),
+                'messages' => fn ($query) => $this->applyVisibleMessagesScope($query, $authPerson)
+                    ->orderBy('created_at')
+                    ->orderBy('id')
+                    ->with('sender'),
             ])
             ->find($conversationId);
 
@@ -63,6 +72,23 @@ class ChatService implements ChatServiceInterface
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
 
         return $this->appendMessage($conversation, $authPerson, $message);
+    }
+
+    public function clearConversationForPerson(int $conversationId, Person $authPerson): Conversation
+    {
+        $conversation = $this->getConversationForPerson($conversationId, $authPerson);
+
+        ConversationParticipantState::query()->updateOrCreate(
+            [
+                'conversation_id' => $conversation->id,
+                'person_id' => $authPerson->id,
+            ],
+            [
+                'cleared_at' => now(),
+            ]
+        );
+
+        return $this->getConversationForPerson($conversationId, $authPerson);
     }
 
     public function openOrCreateDriverConversation(Trip $trip, Person $authPerson): Conversation
@@ -160,5 +186,20 @@ class ChatService implements ChatServiceInterface
         event(new ChatMessageSent($conversation->fresh(), $created->fresh()));
 
         return $created;
+    }
+
+    /**
+     * Apply per-person visibility rules to a conversation messages query.
+     */
+    private function applyVisibleMessagesScope($query, Person $authPerson)
+    {
+        return $query->whereNotExists(function ($subQuery) use ($authPerson): void {
+            $subQuery->selectRaw('1')
+                ->from('conversation_participant_states as cps')
+                ->whereColumn('cps.conversation_id', 'conversation_messages.conversation_id')
+                ->where('cps.person_id', $authPerson->id)
+                ->whereNotNull('cps.cleared_at')
+                ->whereColumn('conversation_messages.created_at', '<=', 'cps.cleared_at');
+        });
     }
 }

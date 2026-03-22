@@ -238,4 +238,45 @@ final class ChatControllerTest extends TestCase
         $res->assertOk();
         $res->assertJsonPath('data.0.latest_message.body', 'Newest message');
     }
+
+    public function test_clear_conversation_only_hides_history_for_authenticated_person(): void
+    {
+        $driver = $this->makePerson(['first_name' => 'Dina', 'last_name' => 'Driver']);
+        $passenger = $this->makePerson(['first_name' => 'Paul', 'last_name' => 'Passenger']);
+        $driverUser = $this->makeUser($driver);
+        $passengerUser = $this->makeUser($passenger);
+
+        $conversation = Conversation::query()->create([
+            'participant_one_id' => min($driver->id, $passenger->id),
+            'participant_two_id' => max($driver->id, $passenger->id),
+            'last_message_at' => now(),
+        ]);
+
+        $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'First message',
+        ]);
+
+        $conversation->messages()->create([
+            'sender_person_id' => $passenger->id,
+            'body' => 'Second message',
+        ]);
+
+        $clearResponse = $this->authenticate($passengerUser)->postJson("/conversations/{$conversation->id}/clear");
+
+        $clearResponse->assertOk();
+        $clearResponse->assertJsonPath('message', 'Conversation cleared for your account.');
+        $clearResponse->assertJsonCount(0, 'data.messages');
+        $clearResponse->assertJsonPath('data.latest_message', null);
+
+        $passengerView = $this->authenticate($passengerUser)->getJson("/conversations/{$conversation->id}");
+        $passengerView->assertOk();
+        $passengerView->assertJsonCount(0, 'data.messages');
+        $passengerView->assertJsonPath('data.latest_message', null);
+
+        $driverView = $this->authenticate($driverUser)->getJson("/conversations/{$conversation->id}");
+        $driverView->assertOk();
+        $driverView->assertJsonCount(2, 'data.messages');
+        $driverView->assertJsonPath('data.latest_message.body', 'Second message');
+    }
 }

@@ -31,6 +31,11 @@ interface ChatServiceInterface
     public function sendMessageInConversation(int $conversationId, Person $authPerson, string $message): ConversationMessage;
 
     /**
+     * Clear the visible history of a conversation for the authenticated person only.
+     */
+    public function clearConversationForPerson(int $conversationId, Person $authPerson): Conversation;
+
+    /**
      * Open the conversation between the authenticated person and the trip driver.
      */
     public function openOrCreateDriverConversation(Trip $trip, Person $authPerson): Conversation;

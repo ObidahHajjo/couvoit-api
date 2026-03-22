@@ -6,6 +6,9 @@ return [
         'forgot_password_notice' => 'If an account exists for this email, a reset link has been sent.',
         'password_reset_success' => 'Password reset successfully.',
     ],
+    'chat' => [
+        'conversation_cleared' => 'Conversation cleared for your account.',
+    ],
     'errors' => [
         'validation' => 'The given data was invalid.',
         'forbidden' => 'Forbidden.',

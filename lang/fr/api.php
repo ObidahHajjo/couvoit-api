@@ -6,6 +6,9 @@ return [
         'forgot_password_notice' => 'Si un compte existe pour cet e-mail, un lien de reinitialisation a ete envoye.',
         'password_reset_success' => 'Mot de passe reinitialise avec succes.',
     ],
+    'chat' => [
+        'conversation_cleared' => 'La conversation a ete effacee pour votre compte.',
+    ],
     'errors' => [
         'validation' => 'Les donnees fournies sont invalides.',
         'forbidden' => 'Acces interdit.',
