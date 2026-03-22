@@ -1,11 +1,9 @@
-# 🚗 Couvoit API
-### منصة مشاركة الركوب — Laravel 12
+<div align="center">
+<img src="https://img.shields.io/badge/-%F0%9F%9A%97%20COVOIT%20BACKEND-0a0a0a?style=for-the-badge&labelColor=0a0a0a" />
 
-<p align="left">
-  🌐 <a href="README.md">Français</a> | <a href="README.en.md">English</a> | <strong>العربية</strong>
-</p>
+### Plateforme de Covoiturage — Laravel 12
 
-<p align="center">
+<p>
   <img src="https://img.shields.io/badge/Laravel-12-red?style=for-the-badge&logo=laravel" />
   <img src="https://img.shields.io/badge/PHP-8.2+-blue?style=for-the-badge&logo=php" />
   <img src="https://img.shields.io/badge/PostgreSQL-DB-blue?style=for-the-badge&logo=postgresql" />
@@ -14,6 +12,12 @@
   <img src="https://img.shields.io/badge/Architecture-SOLID-black?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Realtime-Reverb-orange?style=for-the-badge" />
 </p>
+
+<p>
+  <a href="README.en.md">English</a> &nbsp;|&nbsp; <a href="README.md">Français</a> &nbsp;|&nbsp; 🌐  <strong>العربية</strong>
+</p>
+
+</div>
 
 واجهة برمجية REST **موجّهة للإنتاج** لمنصة مشاركة الركوب، مبنية بـ **Laravel 12** و**PHP 8.2+** و**PostgreSQL** ونظام **JWT محلي مخصص**.
 

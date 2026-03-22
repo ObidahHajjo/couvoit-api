@@ -1,7 +1,9 @@
-# 🚗 Couvoit API
+<div align="center">
+<img src="https://img.shields.io/badge/-%F0%9F%9A%97%20COVOIT%20BACKEND-0a0a0a?style=for-the-badge&labelColor=0a0a0a" />
+
 ### Plateforme de Covoiturage — Laravel 12
 
-<p align="center">
+<p>
   <img src="https://img.shields.io/badge/Laravel-12-red?style=for-the-badge&logo=laravel" />
   <img src="https://img.shields.io/badge/PHP-8.2+-blue?style=for-the-badge&logo=php" />
   <img src="https://img.shields.io/badge/PostgreSQL-DB-blue?style=for-the-badge&logo=postgresql" />
@@ -10,6 +12,13 @@
   <img src="https://img.shields.io/badge/Architecture-SOLID-black?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Realtime-Reverb-orange?style=for-the-badge" />
 </p>
+
+<p>
+  <a href="README.md">English</a> &nbsp;|&nbsp;🌐 <strong>Français</strong> &nbsp;|&nbsp; <a href="README.ar.md">العربية</a>
+</p>
+
+</div>
+
 
 API REST de covoiturage **orientée production**, développée avec **Laravel 12**, **PHP 8.2+**, **PostgreSQL** et un système **JWT local personnalisé**.
 

@@ -1,11 +1,9 @@
-# 🚗 Couvoit API
-### Carpooling Platform — Laravel 12
+<div align="center">
+<img src="https://img.shields.io/badge/-%F0%9F%9A%97%20COVOIT%20BACKEND-0a0a0a?style=for-the-badge&labelColor=0a0a0a" />
 
-<p align="right">
-  🌐 <a href="README.md">Français</a> | <a href="README.ar.md">العربية</a> | <strong>English</strong>
-</p>
+### Plateforme de Covoiturage — Laravel 12
 
-<p align="center">
+<p>
   <img src="https://img.shields.io/badge/Laravel-12-red?style=for-the-badge&logo=laravel" />
   <img src="https://img.shields.io/badge/PHP-8.2+-blue?style=for-the-badge&logo=php" />
   <img src="https://img.shields.io/badge/PostgreSQL-DB-blue?style=for-the-badge&logo=postgresql" />
@@ -14,6 +12,12 @@
   <img src="https://img.shields.io/badge/Architecture-SOLID-black?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Realtime-Reverb-orange?style=for-the-badge" />
 </p>
+
+<p>
+  🌐 <strong>English</strong> &nbsp;|&nbsp; <a href="README.md">Français</a> &nbsp;|&nbsp; <a href="README.ar.md">العربية</a>
+</p>
+
+</div>
 
 A **production-ready** carpooling REST API built with **Laravel 12**, **PHP 8.2+**, **PostgreSQL**, and a **custom local JWT system**.
 
