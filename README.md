@@ -1,602 +1,800 @@
-# Couvoit API
+# 🚗 Couvoit API
+### Plateforme de Covoiturage — Laravel 12
 
-Production-oriented Laravel backend for a carpooling platform. The API manages authentication, user profiles, vehicles, trip publishing and booking, driver/passenger messaging, email notifications, and generated OpenAPI documentation.
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-12-red?style=for-the-badge&logo=laravel" />
+  <img src="https://img.shields.io/badge/PHP-8.2+-blue?style=for-the-badge&logo=php" />
+  <img src="https://img.shields.io/badge/PostgreSQL-DB-blue?style=for-the-badge&logo=postgresql" />
+  <img src="https://img.shields.io/badge/Auth-JWT-black?style=for-the-badge&logo=jsonwebtokens" />
+  <img src="https://img.shields.io/badge/Tests-PHPUnit_11-purple?style=for-the-badge&logo=php" />
+  <img src="https://img.shields.io/badge/Architecture-SOLID-black?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Realtime-Reverb-orange?style=for-the-badge" />
+</p>
 
-## Table of Contents
+API REST de covoiturage **orientée production**, développée avec **Laravel 12**, **PHP 8.2+**, **PostgreSQL** et un système **JWT local personnalisé**.
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Tech Stack and Integrations](#tech-stack-and-integrations)
-- [Architecture](#architecture)
-- [Core Domains and Modules](#core-domains-and-modules)
-- [Authentication and Authorization](#authentication-and-authorization)
-- [Realtime Chat and Broadcasting](#realtime-chat-and-broadcasting)
-- [API Documentation](#api-documentation)
-- [Environment Configuration](#environment-configuration)
-- [Local Setup](#local-setup)
-- [Development Workflow](#development-workflow)
-- [Testing and Quality](#testing-and-quality)
-- [Caching, Mail, Queues, and Scheduled Tasks](#caching-mail-queues-and-scheduled-tasks)
-- [Deployment Considerations](#deployment-considerations)
-- [Project Structure](#project-structure)
-- [Troubleshooting](#troubleshooting)
+Le projet applique une **architecture en couches propre** avec séparation stricte des responsabilités, Policies d'autorisation, messagerie temps réel via Reverb, cache structuré, emails transactionnels Resend et couverture de tests robuste.
 
-## Overview
+> ⚠️ **Note importante** : les routes API de cette application ne suivent **pas** le préfixe `/api` par défaut de Laravel. Les endpoints sont exposés directement : `/auth/login`, `/trips`, `/cars`, etc.
 
-Couvoit API is a backend application built with Laravel 12 and PHP 8.2+ for a ride-sharing domain.
+---
 
-The current codebase includes:
+# 📚 Sommaire
 
-- local JWT-based authentication with refresh token rotation
-- profile and role management through `User` and `Person` aggregates
-- car management and trip search/publication/reservation flows
-- private trip conversations with realtime broadcast events
-- Swagger/OpenAPI generation through `l5-swagger`
-- ORS-backed geocoding and routing for trip distance and duration
-- Resend-based transactional emails for password reset and trip events
-- repository/service layering with policy-based authorization and cache helpers
+- [🏗 Architecture](#-architecture)
+- [🧱 Stack Technique](#-stack-technique)
+- [📦 Modèle Métier](#-modèle-métier)
+- [🔐 Authentification](#-authentification)
+- [💬 Messagerie Temps Réel](#-messagerie-temps-réel)
+- [📧 Emails Transactionnels](#-emails-transactionnels)
+- [🚀 Installation](#-installation)
+- [⚙ Configuration](#-configuration)
+- [📖 Documentation API](#-documentation-api)
+- [🧪 Tests & Qualité](#-tests--qualité)
+- [📌 Cache](#-cache)
+- [🛡 Autorisation](#-autorisation)
+- [📍 Création d'un trajet](#-création-dun-trajet)
+- [🔄 Tâches planifiées](#-tâches-planifiées)
+- [🌍 Déploiement](#-déploiement)
+- [📁 Structure du projet](#-structure-du-projet)
+- [📊 Endpoints](#-endpoints)
+- [🔄 Roadmap](#-roadmap)
+- [🔧 Dépannage](#-dépannage)
+- [👤 Auteur](#-auteur)
 
-Important routing note: this application intentionally runs API routes without Laravel's default `/api` prefix. Endpoints such as login and trips are exposed as `/auth/login` and `/trips`, not `/api/auth/login` and `/api/trips`.
+---
 
-## Key Features
+# 🏗 Architecture
 
-- JWT auth with access tokens, refresh token rotation, logout, `me`, forgot password, and reset password
-- Role-aware permissions for admins, drivers, and passengers
-- Person profile completion and account lifecycle handling, including soft deletion and delayed personal-data purge
-- Vehicle creation, lookup, update, and search with brand/model/type/color references
-- Trip creation with ORS geocoding and route summary calculation
-- Seat reservation and cancellation flows with business-rule checks
-- Driver/passenger conversations tied to trips, plus realtime message broadcasting
-- OpenAPI docs generated from PHP attributes/annotations in controllers, requests, and Swagger bootstrap classes
+Architecture en couches strictement séparées :
 
-## Tech Stack and Integrations
+```
+HTTP
+└── Controllers
+    └── Requests (validation)
+    └── Resources (transformation)
 
-- `Laravel 12`
-- `PHP 8.2+` in app requirements; CI and Dockerfile currently target PHP 8.5
-- `firebase/php-jwt` for local JWT issuance and verification
-- `laravel/reverb` and `pusher/pusher-php-server` for broadcasting and WebSocket-compatible realtime messaging
-- `darkaonline/l5-swagger` for OpenAPI/Swagger UI
-- `resend/resend-laravel` for password reset and trip notification emails
-- `predis/predis` is installed; `.env.example` currently defaults Redis client selection to `phpredis`
-- `OpenRouteService` for address geocoding and route distance/duration lookup
-- `PHPUnit 11` for unit and feature testing
-- `Laravel Pint` for code style tooling
-- `SonarQube` support in CI via `sonar-project.properties` and `.github/workflows/tests.yml`
+Application
+└── Services (orchestration métier)
+    ├── DTOs (normalisation des entrées)
+    └── Resolvers (résolution des références)
 
-## Architecture
+Domaine
+└── Models (Eloquent)
+└── Policies (autorisation)
 
-The codebase follows a layered Laravel backend structure rather than a pure CRUD layout.
-
-- `Controllers` handle HTTP concerns, validation handoff, resources, and authorization entry points
-- `Requests` define validation rules for incoming payloads
-- `Services` contain application workflows and domain orchestration
-- `Repositories` wrap persistence concerns behind interfaces and Eloquent implementations
-- `Resolvers` normalize and resolve reference data such as addresses and car catalog relations
-- `Policies` enforce authorization rules at the model/use-case boundary
-- `Resources` shape API responses
-- `Support/Cache/RepositoryCacheManager` centralizes tagged cache keys and invalidation strategy
-
-Service and repository bindings are registered in `app/Providers/AppServiceProvider.php` and `app/Providers/RepositoryProvider.php`.
-
-## Core Domains and Modules
-
-### Auth and Accounts
-
-- `User` is the authenticated identity
-- `Person` is the profile aggregate linked through `users.person_id`
-- registration creates both a `Person` and a `User`
-- refresh tokens are stored hashed in `refresh_tokens`
-- soft-deleted accounts can be restored on login during the 90-day retention window
-- accounts older than 90 days after soft deletion can be anonymized by the purge command
-
-### Profiles and Roles
-
-- persons can complete or update their own profile
-- admins can list persons and update roles
-- role-derived behavior is implemented in `App\Models\User` with helpers such as `isAdmin()`, `isDriver()`, `canPublishTrip()` and `canBookTrip()`
-
-### Cars and Catalog Data
-
-- cars belong to persons through `persons.car_id`
-- catalog references include brands, models, types, and colors
-- car creation/update uses DTOs and reference resolvers instead of directly trusting raw payloads
-- `/cars/search` provides catalog-oriented car lookup for UI flows
-
-### Trips and Reservations
-
-- trips belong to a driver (`persons.id`)
-- passengers are attached through the `reservations` pivot table
-- trip creation resolves addresses, geocodes both endpoints, computes route duration and distance, and stores derived values such as `arrival_time`
-- reservation logic prevents self-booking, duplicate booking, overbooking, and actions on already-started trips
-
-### Conversations and Messages
-
-- conversations are two-party threads around a trip
-- messages are stored in `conversation_messages`
-- a driver can contact a passenger on their own trip
-- a passenger can contact the driver of a trip
-- messages broadcast a `chat.message.sent` event to private channels
-
-### Operations and Housekeeping
-
-- scheduled password reset cleanup via `auth:clear-resets`
-- scheduled personal-data purge via `accounts:purge-deleted`
-- health endpoint available at `/up`
-- root endpoint `/` returns a simple JSON `{"message":"ok"}` response
-
-## Authentication and Authorization
-
-### Auth Flow
-
-Public endpoints:
-
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `POST /auth/forgot-password`
-- `POST /auth/reset-password`
-
-Protected endpoints use the custom `jwt` middleware defined in `app/Http/Middleware/LocalJwtAuth.php`.
-
-The middleware accepts either:
-
-- an `access_token` HTTP-only cookie, or
-- an `Authorization: Bearer <token>` header
-
-At login/register/refresh time, the API returns token data in JSON and also sets secure-by-configuration HTTP-only cookies.
-
-### JWT Details
-
-JWT settings are configured in `config/jwt.php`:
-
-- `JWT_SECRET`
-- `JWT_ISSUER`
-- `JWT_AUDIENCE`
-- `JWT_ACCESS_TTL`
-- `JWT_REFRESH_TTL`
-
-The middleware verifies signature and claims, resolves the authenticated user, and caches token-to-user identity lookups with a TTL aligned to token expiration.
-
-### Refresh Tokens
-
-- refresh tokens are generated server-side
-- plain values are only returned to the client
-- stored values are hashed in the database
-- refresh rotates the token through the refresh token repository
-- logout deletes all refresh tokens for the authenticated user
-
-### Authorization
-
-Authorization is handled with Laravel policies:
-
-- `app/Policies/PersonPolicy.php`
-- `app/Policies/CarPolicy.php`
-- `app/Policies/TripPolicy.php`
-
-High-level behavior in the current codebase:
-
-- admins bypass most policy checks via `before()`
-- non-admin users can only manage their own profile and car
-- only drivers can publish trips
-- only trip owners can update/cancel their trips
-- admins can manage cross-user operations such as role changes and broader data access
-
-## Realtime Chat and Broadcasting
-
-Realtime chat support is present in the repository.
-
-- broadcasting is wired in `bootstrap/app.php`
-- private channel authorization lives in `routes/channels.php`
-- chat events use `App\Events\ChatMessageSent`
-- the event implements `ShouldBroadcastNow`, so broadcasting is immediate rather than queued
-- broadcast auth is exposed through `POST /broadcasting/auth-proxy`
-
-Relevant chat endpoints:
-
-- `GET /conversations`
-- `GET /conversations/{conversation}`
-- `POST /conversations/{conversation}/messages`
-- `POST /trips/{trip}/contact-driver`
-- `POST /my-trips/{trip}/contact-passenger/{person}`
-
-The API also exposes duplicate `/chat/conversations...` aliases for conversation listing, detail, and message sending.
-
-Reverb-related configuration is defined in:
-
-- `config/broadcasting.php`
-- `config/reverb.php`
-
-Default private channels used by the app:
-
-- `chat.user.{personId}`
-- `chat.conversation.{conversationId}`
-
-## API Documentation
-
-Swagger/OpenAPI support is built in with `l5-swagger`.
-
-- Swagger UI route: `/api/documentation`
-- generated docs route: `/docs`
-- annotations are scanned from `app/Http/Controllers`, `app/Http/Requests`, and `app/Swagger`
-
-Generate docs with:
-
-```bash
-php artisan l5-swagger:generate
+Infrastructure
+├── Repositories (interfaces + implémentations Eloquent)
+├── Support/Cache (RepositoryCacheManager)
+├── Security (JWT issuer)
+└── Clients (OpenRouteService)
 ```
 
-OpenAPI bootstrap definitions live in:
+Les bindings Service/Repository sont enregistrés dans `AppServiceProvider` et `RepositoryProvider`.
 
-- `app/Swagger/OpenApi.php`
-- `app/Swagger/Bootstrap.php`
+### 🔎 Principes appliqués
 
-## Environment Configuration
+- Séparation stricte des responsabilités (Single Responsibility)
+- Repository Pattern (interfaces + implémentations Eloquent)
+- DTOs pour validation et normalisation des entrées
+- Authorization via Policies (avec bypass admin)
+- Cache avec tags (read-through / write-through)
+- Broadcasting temps réel via Laravel Reverb
+- Emails transactionnels via Resend
+- Documentation OpenAPI (Swagger / l5-swagger)
+- Tests unitaires et feature robustes (PHPUnit 11)
+- CI/CD via GitHub Actions + SonarQube
 
-Start from `.env.example` and adjust for your environment.
+---
 
-### Core Application
+# 🧱 Stack Technique
 
-```env
-APP_NAME=Laravel
-APP_ENV=production
-APP_KEY=
-APP_DEBUG=false
-APP_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:3000
+| Technologie | Usage |
+|-------------|--------|
+| Laravel 12 | Framework principal |
+| PHP 8.2+ | Langage (CI/Docker cible PHP 8.5) |
+| PostgreSQL | Base de données relationnelle (runtime) |
+| SQLite | Base de données pour tests/CI |
+| firebase/php-jwt | Émission et vérification JWT locale |
+| laravel/reverb | Broadcasting WebSocket temps réel |
+| pusher/pusher-php-server | Compatible Reverb |
+| PHPUnit 11 | Tests unitaires et feature |
+| darkaonline/l5-swagger | Documentation OpenAPI |
+| resend/resend-laravel | Emails transactionnels |
+| predis/predis | Client Redis |
+| OpenRouteService | Géocodage & calcul distance/durée |
+| Laravel Pint | Style de code |
+| SonarQube | Qualité de code (CI) |
+
+---
+
+# 📦 Modèle Métier
+
+## Entités principales
+
+- **User** — identité authentifiée
+- **Person** — profil agrégat lié via `users.person_id`
+- **Car** — véhicule appartenant à une personne
+- **Trip** — trajet publié par un conducteur
+- **Reservation** — réservation d'un passager pour un trajet
+- **Conversation / ConversationMessage** — messagerie privée liée aux trajets
+- **Brand / CarModel / Type / Color** — données catalogue véhicule
+- **Address / City** — données géographiques
+- **Role** — rôle utilisateur (`admin` / `user`)
+
+## Règles métier importantes
+
+### 👤 Person / User
+- L'inscription crée simultanément un `Person` et un `User`
+- Possède un seul véhicule (optionnel) via `persons.car_id`
+- Possède un rôle (`admin` ou `user`)
+- Peut être désactivée (`is_active = false`) — accès bloqué par le middleware
+- Les comptes supprimés (soft delete) peuvent être restaurés à la reconnexion pendant **90 jours**
+- Après 90 jours : anonymisation automatique par la commande `accounts:purge-deleted`
+
+### 🚗 Trip
+- `available_seats > 0`
+- `distance_km > 0`
+- Ne peut pas être annulé s'il a déjà commencé
+- Création : géocodage ORS → calcul distance/durée → persistance + `arrival_time` dérivé
+
+### 📌 Reservation
+- Clé primaire composite (`person_id + trip_id`)
+- Le conducteur ne peut pas réserver son propre trajet
+- Pas de double réservation
+- Pas de sur-réservation (vérification des sièges disponibles)
+- Impossible sur un trajet déjà commencé
+
+### 💬 Conversation
+- Fils de discussion à deux parties autour d'un trajet
+- Un conducteur peut contacter un passager de son trajet
+- Un passager peut contacter le conducteur d'un trajet
+
+---
+
+# 🔐 Authentification (Local JWT)
+
+L'API utilise un système d'authentification local basé sur JWT (HS256). Elle ne dépend d'aucun service tiers : génération, validation et rotation des tokens sont entièrement gérées côté serveur.
+
+## 🧩 Architecture d'authentification
+
+| Token | Durée | Usage |
+|-------|-------|--------|
+| `access_token` | Court terme (ex: 1h) | Accès aux routes protégées |
+| `refresh_token` | Long terme (ex: 30 jours) | Renouvellement du JWT |
+
+## 🔄 Flux d'authentification
+
+### 1️⃣ L'utilisateur s'inscrit ou se connecte via :
+```
+POST /auth/register
+POST /auth/login
 ```
 
-`FRONTEND_URL` is used when generating password reset URLs.
+### 2️⃣ Le serveur :
+- Vérifie les identifiants et le statut `is_active`
+- Hash le mot de passe (bcrypt)
+- Génère un `access_token` JWT signé HS256
+- Génère un `refresh_token` aléatoire (`random_bytes(32)`)
+- Stocke le refresh token haché en base (`refresh_tokens`)
+- Retourne les tokens en JSON **et** les pose en cookies HTTP-only sécurisés
 
-### Database
+### 3️⃣ Le client envoie le JWT via :
+```
+Authorization: Bearer <access_token>
+```
+ou via le cookie `access_token` (HTTP-only).
 
-The repository defaults to PostgreSQL for normal runtime configuration:
+### 4️⃣ Le middleware `jwt` (`LocalJwtAuth`) :
+- Vérifie la signature (HS256)
+- Vérifie les claims `iss`, `aud`, `exp`
+- Résout `sub` → `User`
+- Cache le mapping token → user (TTL aligné sur l'expiration du token)
+- Charge `auth()->user()`
 
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=covoiturage
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
+---
+
+# 🧾 Structure du JWT
+
+```json
+{
+  "iss": "couvoit-api",
+  "aud": "couvoit-client",
+  "iat": 1700000000,
+  "exp": 1700000900,
+  "sub": "12",
+  "role_id": 1,
+  "user_id": 1,
+  "jti": "a1b2c3d4e5f6..."
+}
 ```
 
-SQLite is also configured and used by tests/CI:
+## 🔎 Claims utilisés
 
-```env
-DB_CONNECTION=sqlite
-DB_DATABASE=database/database.sqlite
+| Claim | Description |
+|-------|-------------|
+| `iss` | Émetteur |
+| `aud` | Audience |
+| `sub` | Identifiant interne utilisateur |
+| `exp` | Expiration |
+| `role_id` | Rôle utilisateur |
+| `jti` | Identifiant unique du token |
+
+---
+
+# 🔁 Refresh Token (Rotation Sécurisée)
+
+## Le refresh token :
+- Est généré via `random_bytes(32)`
+- Seule la valeur brute est retournée au client
+- Est stocké **haché** en base (`refresh_tokens`) avec date d'expiration
+- Est révoqué à chaque rotation
+
+## 🔄 Endpoint
+```
+POST /auth/refresh
 ```
 
-### JWT and Auth Cookies
+## Processus :
+1. Vérification du refresh token fourni
+2. Révocation du token utilisé
+3. Génération d'un nouveau couple `access_token` + `refresh_token`
+
+### Cette stratégie protège contre :
+- Vol de token
+- Replay attack
+- Réutilisation après compromission
+
+## 🔒 Déconnexion
+
+```
+POST /auth/logout
+```
+Supprime **tous** les refresh tokens de l'utilisateur authentifié.
+
+---
+
+# 🔒 Sécurité
+
+- Mot de passe hashé via **bcrypt**
+- JWT signé via **HS256** avec secret long (≥ 32 bytes)
+- Rotation des refresh tokens à chaque renouvellement
+- Support de révocation complète (logout)
+- Utilisateurs inactifs (`is_active = false`) bloqués par le middleware
+- Middleware JWT centralisé (`LocalJwtAuth`)
+- Cookie HTTP-only avec `Secure` et `SameSite` configurables
+
+---
+
+# ⚙ Configuration `.env`
 
 ```env
-JWT_SECRET=base64:replace_me
-JWT_ISSUER=couvoit-api
-JWT_AUDIENCE=couvoit-client
+# JWT
+JWT_SECRET=base64:...
 JWT_ACCESS_TTL=3600
 JWT_REFRESH_TTL=2592000
+JWT_ISSUER=couvoit-api
+JWT_AUDIENCE=couvoit-client
 
+# Cookies Auth
 AUTH_COOKIE_PATH=/
 AUTH_COOKIE_DOMAIN=null
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAMESITE=lax
 ```
 
-### Redis and Cache
+---
 
-```env
-CACHE_STORE=redis
-REDIS_CLIENT=phpredis
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-REDIS_PASSWORD=null
-REDIS_PREFIX=couvoit_
+# 💬 Messagerie Temps Réel
+
+La messagerie temps réel est gérée via **Laravel Reverb** (compatible Pusher).
+
+## Architecture
+
+- Broadcasting configuré dans `bootstrap/app.php`
+- Autorisation des canaux privés dans `routes/channels.php`
+- Événement : `App\Events\ChatMessageSent` (implémente `ShouldBroadcastNow`)
+- Authentification broadcast exposée via `POST /broadcasting/auth-proxy`
+
+## Canaux privés
+
+```
+chat.user.{personId}
+chat.conversation.{conversationId}
 ```
 
-Because the app uses cache tags heavily, Redis is the safest production choice.
+## Endpoints de messagerie
 
-### Reverb / Broadcasting
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/conversations` | Liste des conversations |
+| GET | `/conversations/{conversation}` | Détail d'une conversation |
+| POST | `/conversations/{conversation}/messages` | Envoyer un message |
+| POST | `/trips/{trip}/contact-driver` | Contacter le conducteur |
+| POST | `/my-trips/{trip}/contact-passenger/{person}` | Contacter un passager |
 
-```env
-BROADCAST_CONNECTION=reverb
-REVERB_APP_ID=local-app
-REVERB_APP_KEY=local-key
-REVERB_APP_SECRET=local-secret
-REVERB_HOST=localhost
-REVERB_PORT=8080
-REVERB_SCHEME=http
-REVERB_SERVER_HOST=0.0.0.0
-REVERB_SERVER_PORT=8080
-```
+> Des alias `/chat/conversations...` sont également disponibles.
 
-### Mail / Resend
-
-```env
-MAIL_MAILER=resend
-MAIL_FROM_ADDRESS="contact@ohajjo.online"
-MAIL_FROM_NAME="${APP_NAME}"
-RESEND_API_KEY=
-RESEND_RESET_PASSWORD_TEMPLATE_ID=
-RESEND_TRIP_RESERVATION_PASSENGER_TEMPLATE_ID=
-RESEND_TRIP_RESERVATION_DRIVER_TEMPLATE_ID=
-RESEND_TRIP_CANCELLED_PASSENGER_TEMPLATE_ID=
-RESEND_TRIP_RESERVATION_CANCEL_PASSENGER_TEMPLATE_ID=
-RESEND_TRIP_RESERVATION_CANCEL_DRIVER_TEMPLATE_ID=
-```
-
-Trip template variable guidance is documented in `docs/resend-trip-templates.md`.
-
-### OpenRouteService
-
-```env
-OPENROUTESERVICE_API_KEY=
-```
-
-Trip creation depends on a valid ORS API key when route computation is needed.
-
-## Local Setup
-
-### Prerequisites
-
-- PHP 8.2+
-- Composer 2
-- PostgreSQL if using the default app setup
-- Redis if you want production-like cache/broadcast behavior
-- a valid ORS key for route calculation
-- a valid Resend key if you want real email delivery
-
-### Standard Backend Setup
-
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-```
-
-Optional seed step:
-
-```bash
-php artisan db:seed
-```
-
-Then start the API server:
-
-```bash
-php artisan serve
-```
-
-The API is then typically available at `http://localhost:8000`.
-
-### Realtime / Broadcast Setup
-
-If you want chat broadcasting locally, start Reverb in a separate process:
+## Lancer Reverb en local
 
 ```bash
 php artisan reverb:start
 ```
 
-### Logs and Queue Worker
+---
 
-Useful local commands already reflected by `composer.json`:
+# 📧 Emails Transactionnels
+
+Les emails sont envoyés via **Resend** avec des templates configurables.
+
+## Événements couverts
+
+- Réinitialisation de mot de passe
+- Réservation créée (passager & conducteur)
+- Annulation de réservation (passager & conducteur)
+- Annulation de trajet (passagers)
+
+> La documentation des variables de templates Resend est disponible dans `docs/resend-trip-templates.md`.
+
+> ⚠️ L'envoi d'emails se fait **synchroniquement** (pas de queue job) après commit en base.
+
+---
+
+# 🚀 Installation
+
+## 1️⃣ Cloner le projet
 
 ```bash
-php artisan queue:listen --tries=1 --timeout=0
-php artisan pail --timeout=0
+git clone https://github.com/votre-compte/couvoit-api.git
+cd couvoit-api
 ```
 
-### About `composer setup` and `composer dev`
-
-The repository keeps these Composer scripts:
-
-- `composer setup`
-- `composer dev`
-
-They currently include `npm install`, `npm run build`, and `npm run dev`, but this repository does not include a committed `package.json` at the moment. For backend-only work, use the direct Composer and Artisan commands shown above instead of relying on those scripts unchanged.
-
-## Development Workflow
-
-Typical backend workflow:
-
-1. copy `.env.example` to `.env`
-2. configure database, Redis, JWT, ORS, and optional Resend values
-3. run migrations
-4. start the HTTP server
-5. start Reverb if testing realtime chat
-6. run tests before pushing changes
-
-Useful commands from the current repository:
+## 2️⃣ Installer les dépendances
 
 ```bash
-composer test
-php artisan test
-php artisan test --filter=ChatControllerTest
-php artisan config:clear
-php artisan optimize:clear
+composer install
+```
+
+## 3️⃣ Configuration environnement
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+## 4️⃣ Configurer `.env`
+
+```env
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:3000
+
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=covoiturage
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+CACHE_STORE=redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
+OPENROUTESERVICE_API_KEY=your_ors_key
+
+MAIL_MAILER=resend
+RESEND_API_KEY=your_resend_key
+```
+
+## 5️⃣ Migration base de données
+
+```bash
+php artisan migrate
+# Optionnel :
+php artisan db:seed
+```
+
+## 6️⃣ Lancer le serveur
+
+```bash
+php artisan serve
+```
+
+### API accessible sur :
+```
+http://localhost:8000
+```
+
+### (Optionnel) Broadcasting temps réel :
+```bash
+php artisan reverb:start
+```
+
+### (Optionnel) Queue worker :
+```bash
+php artisan queue:listen --tries=1 --timeout=0
+```
+
+---
+
+# 📖 Documentation API
+
+## Générer la documentation :
+
+```bash
 php artisan l5-swagger:generate
 ```
 
-## Testing and Quality
+### Swagger UI accessible via :
+```
+/api/documentation
+```
 
-The test suite is split into unit and feature tests through `phpunit.xml`.
+### Spec générée via :
+```
+/docs
+```
 
-Covered areas include:
+Les annotations sont scannées depuis `app/Http/Controllers`, `app/Http/Requests` et `app/Swagger`.
 
-- auth controller flows
-- JWT middleware behavior
-- chat endpoints
-- services
-- repositories
-- DTOs
-- resources
-- policies
-- Eloquent model behavior
+---
 
-Run the suite with:
+# 🧪 Tests & Qualité
+
+## Lancer tous les tests :
 
 ```bash
 php artisan test
+# ou
+composer test
 ```
 
-Generate a Clover coverage file for Sonar or CI:
+## Lancer un test spécifique :
+
+```bash
+php artisan test --filter=TripServiceTest
+php artisan test --filter=ChatControllerTest
+```
+
+## Générer le rapport de couverture (Clover) :
 
 ```bash
 php artisan test --coverage-clover=coverage.xml
 ```
 
-Code style tooling is available via Laravel Pint:
+## Style de code (Laravel Pint) :
 
 ```bash
 ./vendor/bin/pint
 ```
 
-CI is defined in `.github/workflows/tests.yml` and currently:
+## Convention de tests :
 
-- installs Composer dependencies
-- prepares `.env`
-- runs SQLite migrations
-- runs tests
-- generates coverage
-- optionally runs a SonarQube scan when secrets are configured
+- Chaque méthode inclut `@throws Throwable`
+- Utilisation de `Model::query()->create()`
+- Couverture complète : Services, Policies, Repositories, DTOs, Resources, Middleware, Controllers
 
-## Caching, Mail, Queues, and Scheduled Tasks
+## Domaines couverts :
+- Flux auth (register, login, refresh, logout, forgot/reset password)
+- Middleware JWT
+- Endpoints chat/conversations
+- Services et Repositories
+- DTOs et Resources
+- Policies d'autorisation
+- Comportement des modèles Eloquent
 
-### Caching
+## CI/CD (GitHub Actions)
 
-Caching is a real part of the application design, not just a framework default.
+Le workflow `.github/workflows/tests.yml` :
+1. Installe les dépendances Composer
+2. Prépare `.env` (SQLite)
+3. Exécute les migrations
+4. Lance les tests
+5. Génère la couverture de code
+6. Exécute le scan SonarQube (si secrets configurés)
 
-- repository-level cache coordination lives in `app/Support/Cache/RepositoryCacheManager.php`
-- route model bindings also cache lookups for `person`, `trip`, `brand`, and `car`
-- auth middleware caches token fingerprint to user mappings
-- trip creation caches ORS geocoding and route responses for 24 hours
+---
 
-The cache manager defines tagged keys for persons, cars, brands, models, cities, colors, trips, reservations, and types.
+# 📌 Cache
 
-### Mail
+Le cache est une composante réelle de l'architecture, pas juste un défaut framework.
 
-Mail delivery is supported through Laravel mail configuration, with Resend actively used by the codebase for:
+## Architecture
 
-- password reset notifications
-- reservation created notifications
-- reservation cancellation notifications
-- driver trip cancellation notifications
+- Coordination centralisée dans `app/Support/Cache/RepositoryCacheManager.php`
+- Tags définis pour : persons, cars, brands, models, cities, colors, trips, reservations, types
+- Route model bindings cachés pour : `person`, `trip`, `brand`, `car`
+- Middleware JWT cache le mapping token → user (TTL aligné sur l'expiration)
+- Création de trajet : réponses ORS géocodage/routage cachées **24h**
 
-Trip email sending happens after database commit, but it is currently executed synchronously by the service layer rather than dispatched as Laravel queue jobs.
+## Exemples de clés :
 
-### Queues
-
-Queue configuration exists in `config/queue.php`, and `.env.example` defaults to:
-
-```env
-QUEUE_CONNECTION=database
+```
+persons:all
+person:{id}
+cities:{name}:{postal}
+trips:all
+trip:{id}
 ```
 
-The CI/test environment overrides this to `sync`, and the repository's `composer dev` script starts `php artisan queue:listen`. At present, the main user-visible workflows in this codebase do not depend on custom queued jobs to function.
+- TTL par défaut : **3600 secondes**
+- Invalidation automatique lors des opérations create/update/delete
+- Redis recommandé en production (nécessaire pour les cache tags)
 
-### Scheduled Tasks
+> ⚠️ L'application utilise intensivement les cache tags — **Redis est indispensable en production**.
 
-Scheduled commands are declared in `routes/console.php`:
+---
 
-- `auth:clear-resets` every 15 minutes
-- `accounts:purge-deleted` daily
+# 🛡 Autorisation
 
-Manual purge command:
+## Policies principales :
+
+| Policy | Modèle couvert |
+|--------|----------------|
+| `PersonPolicy` | Gestion des profils et rôles |
+| `CarPolicy` | Gestion des véhicules |
+| `TripPolicy` | Publication, modification, annulation des trajets |
+
+## Comportement clé :
+
+- **Admins** : bypass via `before()` sur toutes les policies
+- **Utilisateurs** : gestion de leur propre profil et véhicule uniquement
+- **Conducteurs** : publication de trajets réservée aux drivers (`canPublishTrip()`)
+- **Propriétaires de trajets** : seuls autorisés à modifier/annuler leurs trajets
+- **Helpers sur `User`** : `isAdmin()`, `isDriver()`, `canPublishTrip()`, `canBookTrip()`
+
+## Bypass admin :
+
+```php
+public function before(Person $user): ?bool
+{
+    return $user->isAdmin() ? true : null;
+}
+```
+
+---
+
+# 📍 Création d'un trajet
+
+1. Validation via DTO
+2. Vérification que le conducteur possède une voiture
+3. Résolution des références (Brand, Type, Model, Color, Addresses)
+4. Géocodage des deux points via ORS (avec cache 24h)
+5. Calcul distance & durée via ORS (avec cache 24h)
+6. Calcul de `arrival_time` dérivé
+7. Persistance du trajet
+8. Retour du modèle rafraîchi avec relations
+
+---
+
+# 🔄 Tâches planifiées
+
+Déclarées dans `routes/console.php` :
+
+| Commande | Fréquence | Description |
+|----------|-----------|-------------|
+| `auth:clear-resets` | Toutes les 15 min | Nettoyage des tokens de réinitialisation expirés |
+| `accounts:purge-deleted` | Quotidien | Anonymisation des comptes supprimés depuis > 90 jours |
+
+### Exécution manuelle :
 
 ```bash
 php artisan accounts:purge-deleted
 ```
 
-## Deployment Considerations
+> Le scheduler Laravel doit être lancé toutes les minutes sur votre serveur.
 
-Deployment details depend on your environment, but the current repository suggests the following operational needs.
+---
 
-- run the app behind a standard Laravel-compatible web server setup pointing to `public/`
-- configure `APP_URL` and `FRONTEND_URL` correctly for generated links and cookie behavior
-- use Redis for cache tags and for Reverb scaling if you run multiple instances
-- run a separate Reverb process if realtime chat is enabled in the target environment
-- run Laravel scheduler every minute so password reset cleanup and account purge tasks execute
-- set `AUTH_COOKIE_SECURE=true` and review `AUTH_COOKIE_SAMESITE` in HTTPS environments
-- provide valid `JWT_SECRET`, `OPENROUTESERVICE_API_KEY`, and any required `RESEND_*` template IDs
-- generate and publish Swagger docs only as appropriate for the environment
+# 🌍 Déploiement
 
-The repository also includes a basic `Dockerfile` based on `php:8.5-apache` with PostgreSQL and Redis extensions enabled and Apache configured to serve from `public/`.
+## Stack recommandée :
 
-## Project Structure
+- VPS (ex : Hetzner)
+- Ubuntu 22.04+
+- Apache ou Nginx (pointer vers `public/`)
+- UFW Firewall
+- Cloudflare DNS
+- SSL Let's Encrypt
+- **Redis en production** (obligatoire pour les cache tags)
+- Reverb en processus séparé (si chat temps réel activé)
+- Scheduler Laravel (`* * * * * php artisan schedule:run`)
 
-```text
+## Points d'attention production :
+
+- Configurer `APP_URL` et `FRONTEND_URL` correctement (liens générés, cookies)
+- `AUTH_COOKIE_SECURE=true` en HTTPS
+- Revoir `AUTH_COOKIE_SAMESITE` selon le contexte
+- Fournir `JWT_SECRET`, `OPENROUTESERVICE_API_KEY`, `RESEND_API_KEY` et les template IDs Resend
+- Générer et publier la doc Swagger si approprié
+
+## Dockerfile
+
+Un `Dockerfile` basé sur `php:8.5-apache` est fourni avec les extensions PostgreSQL et Redis activées, et Apache configuré pour servir depuis `public/`.
+
+---
+
+# 📁 Structure du projet
+
+```
 app/
-  Console/Commands/         Operational commands
-  DTOS/                     Input data objects for car flows
-  Events/                   Broadcast events
-  Exceptions/               API exception mapping and domain exceptions
+  Console/Commands/         Commandes opérationnelles (purge, clear-resets)
+  DTOS/                     Objets de données d'entrée (cars, trips...)
+  Events/                   Événements de broadcast (ChatMessageSent)
+  Exceptions/               Mapping exceptions → réponses API
   Http/
-    Controllers/            API endpoints
-    Middleware/             Custom JWT middleware
-    Requests/               Validation request objects
-    Resources/              JSON response transformers
-  Models/                   Eloquent models
-  Policies/                 Authorization policies
-  Providers/                Service, repo, auth, and route binding registration
-  Repositories/             Interfaces and Eloquent implementations
-  Resolvers/                Reference/address resolution logic
-  Security/                 JWT issuer contracts and implementation
-  Services/                 Application services
-  Support/Cache/            Cache key/tag management
-  Swagger/                  OpenAPI bootstrap definitions
+    Controllers/            Endpoints API
+    Middleware/             Middleware JWT personnalisé (LocalJwtAuth)
+    Requests/               Objets de validation
+    Resources/              Transformateurs de réponses JSON
+  Models/                   Modèles Eloquent
+  Policies/                 Policies d'autorisation
+  Providers/                ServiceProvider, RepositoryProvider, RouteBindings
+  Repositories/             Interfaces + implémentations Eloquent
+  Resolvers/                Résolution références / adresses
+  Security/                 Contrats et implémentation JWT issuer
+  Services/                 Services applicatifs
+  Support/Cache/            Gestion clés/tags cache (RepositoryCacheManager)
+  Swagger/                  Définitions bootstrap OpenAPI
 bootstrap/
-  app.php                   Routing, middleware aliases, exception wiring
-config/                     Framework and integration configuration
+  app.php                   Routing, aliases middleware, exceptions
+config/                     Configuration framework et intégrations
 database/
   factories/
   migrations/
   seeders/
-docs/                       Supplemental integration notes
-routes/                     API, channel, and console routes
-tests/                      Unit and feature tests
+docs/                       Notes complémentaires (templates Resend...)
+routes/
+  api.php                   Routes API (sans préfixe /api)
+  channels.php              Autorisation canaux broadcast
+  console.php               Commandes planifiées
+tests/                      Tests unitaires et feature (PHPUnit 11)
 ```
 
-## Troubleshooting
+---
+
+# 📊 Endpoints
+
+## 🔐 Authentification — Routes Publiques
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/auth/register` | Inscription |
+| POST | `/auth/login` | Connexion |
+| POST | `/auth/refresh` | Renouvellement du token JWT |
+| POST | `/auth/logout` | Déconnexion (révocation tokens) |
+| GET | `/auth/me` | Profil de l'utilisateur courant |
+| POST | `/auth/forgot-password` | Demande de réinitialisation |
+| POST | `/auth/reset-password` | Réinitialisation du mot de passe |
+
+## 👤 Persons
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/persons` | Liste des utilisateurs |
+| GET | `/persons/{person}` | Détail d'un utilisateur |
+| GET | `/persons/{person}/trips-driver` | Trajets en tant que conducteur |
+| GET | `/persons/{person}/trips-passenger` | Trajets en tant que passager |
+| POST | `/persons` | Création d'un utilisateur |
+| PATCH | `/persons/role` | Mise à jour du rôle |
+| PATCH | `/persons/{person}` | Mise à jour d'un utilisateur |
+| DELETE | `/persons/{person}` | Suppression d'un utilisateur |
+
+## 🚗 Trajets
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/trips` | Liste des trajets |
+| GET | `/trips/{trip}` | Détail d'un trajet |
+| GET | `/trips/{trip}/person` | Liste des passagers |
+| POST | `/trips` | Création d'un trajet |
+| PATCH | `/trips/{trip}` | Mise à jour d'un trajet |
+| PATCH | `/trips/{trip}/cancel` | Annulation d'un trajet |
+| DELETE | `/trips/{trip}` | Suppression d'un trajet |
+| POST | `/trips/{trip}/person` | Réservation d'un siège |
+| DELETE | `/trips/{trip}/reservations` | Annulation d'une réservation |
+| POST | `/trips/{trip}/contact-driver` | Contacter le conducteur |
+| POST | `/my-trips/{trip}/contact-passenger/{person}` | Contacter un passager |
+
+## 🏷 Marques & Catalogue
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/brands` | Liste des marques |
+| GET | `/brand/{brand}` | Détail d'une marque |
+
+## 🚘 Voitures
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/cars` | Liste des voitures |
+| GET | `/cars/{car}` | Détail d'une voiture |
+| GET | `/cars/search` | Recherche catalogue |
+| POST | `/cars` | Création d'une voiture |
+| PUT | `/cars/{car}` | Mise à jour complète |
+| DELETE | `/cars/{car}` | Suppression d'une voiture |
+
+## 💬 Conversations
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/conversations` | Liste des conversations |
+| GET | `/conversations/{conversation}` | Détail d'une conversation |
+| POST | `/conversations/{conversation}/messages` | Envoyer un message |
+| POST | `/broadcasting/auth-proxy` | Auth canaux privés Reverb |
+
+## 🩺 Santé
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/up` | Health check |
+| GET | `/` | Ping (`{"message":"ok"}`) |
+
+## 📌 Remarques importantes
+
+- Toutes les routes protégées passent par le middleware `jwt` (`LocalJwtAuth`)
+- Les autorisations sont gérées via `CarPolicy`, `TripPolicy` et `PersonPolicy`
+- Les administrateurs bénéficient d'un bypass via `before()`
+- Les utilisateurs inactifs (`is_active = false`) sont bloqués au niveau middleware
+- Les routes n'utilisent **pas** le préfixe `/api` par défaut
+
+---
+
+# 🔧 Dépannage
 
 ### `Missing Bearer token`
+- Envoyer `Authorization: Bearer <access_token>` ou s'appuyer sur le cookie `access_token`
+- Vérifier que la requête atteint bien une route protégée et que les cookies sont transmis
 
-- send `Authorization: Bearer <access_token>` or rely on the `access_token` cookie returned by auth endpoints
-- confirm the request is hitting a protected route and cookies are being sent for the configured domain/path
+### `Token expired` ou échecs d'auth inattendus
+- Appeler `POST /auth/refresh` avec un refresh token valide
+- Si la config a changé : `php artisan config:clear`
+- Si le cache est incohérent : `php artisan optimize:clear`
 
-### `Token expired` or unexpected auth failures
+### La création de trajet échoue avec des erreurs ORS
+- Vérifier `OPENROUTESERVICE_API_KEY`
+- Confirmer que les adresses de départ/arrivée sont géocodables par ORS
+- Consulter les logs : `php artisan pail --timeout=0`
 
-- call `POST /auth/refresh` with a valid refresh token
-- if configuration changed, run `php artisan config:clear`
-- if cached auth state becomes stale during development, run `php artisan optimize:clear`
+### Le chat temps réel ne reçoit pas d'événements
+- Vérifier `BROADCAST_CONNECTION=reverb`
+- S'assurer que `php artisan reverb:start` est lancé
+- Confirmer que le client s'authentifie via `POST /broadcasting/auth-proxy`
+- Vérifier que l'utilisateur appartient au canal privé demandé
 
-### Trip creation fails with ORS errors
-
-- verify `OPENROUTESERVICE_API_KEY`
-- confirm the departure and arrival addresses can be geocoded by ORS
-- check app logs with `php artisan pail --timeout=0`
-
-### Realtime chat is not receiving events
-
-- verify `BROADCAST_CONNECTION=reverb`
-- ensure `php artisan reverb:start` is running
-- confirm the client authenticates against `POST /broadcasting/auth-proxy`
-- check that the authenticated user belongs to the requested private channel
-
-### Cache tag errors or inconsistent cached reads
-
-- prefer Redis in runtime environments because the application relies heavily on tagged caches
-- clear caches after changing environment or cache driver settings:
-
+### Erreurs de cache tags ou lectures incohérentes
+- Préférer Redis en environnement runtime (nécessaire pour les tagged caches)
+- Après changement de config ou de driver :
 ```bash
 php artisan optimize:clear
 ```
 
-### Emails are not sent
+### Les emails ne sont pas envoyés
+- Vérifier `MAIL_MAILER=resend` et `RESEND_API_KEY`
+- Vérifier les template IDs Resend dans `.env`
+- Si les template IDs sont vides, l'envoi est silencieusement ignoré
 
-- verify `MAIL_MAILER=resend`
-- verify `RESEND_API_KEY` and the template IDs used by the codebase
-- note that if template IDs are blank, trip emails are skipped intentionally
+### `composer setup` ou `composer dev` échoue sur les commandes npm
+- Ce dépôt backend n'inclut pas de `package.json` committé
+- Utiliser directement les commandes PHP/Artisan
 
-### `composer setup` or `composer dev` fails on npm commands
+---
 
-- this backend repository currently has no committed `package.json`
-- run the PHP and Artisan commands directly instead of those Composer scripts unless you add the missing frontend tooling
+# 🔄 Roadmap
+
+- Redis en production (configuration complète)
+- Dispatch des emails via Laravel Queue jobs
+- Architecture événementielle
+- Versioning API (`/v1/...`)
+- Rate limiting par rôle
+- Dockerisation complète (docker-compose)
+- CI/CD GitHub Actions complet
+- WebSockets pour trajets temps réel (statuts live)
+
+---
+
+# 👤 Auteur
+
+### Obidah Hajjo
+### Full Stack Developer
