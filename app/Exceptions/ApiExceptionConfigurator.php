@@ -34,7 +34,7 @@ final class ApiExceptionConfigurator
 
             return response()->json([
                 'error'   => 'VALIDATION_ERROR',
-                'details' => 'The given data was invalid.',
+                'details' => __('api.errors.validation'),
                 'fields'  => $e->errors(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         });
@@ -43,7 +43,7 @@ final class ApiExceptionConfigurator
         $exceptions->render(function (AuthorizationException $e, Request $request) {
             return response()->json([
                 'error'   => 'FORBIDDEN',
-                'details' => $e->getMessage() ?: 'Forbidden.',
+                'details' => $e->getMessage() ?: __('api.errors.forbidden'),
             ], Response::HTTP_FORBIDDEN);
         });
 
@@ -56,7 +56,7 @@ final class ApiExceptionConfigurator
 
             return response()->json([
                 'error'   => 'NOT_FOUND',
-                'details' => "$model not found",
+                'details' => __('api.errors.model_not_found', ['model' => $model]),
                 'meta'    => [
                     'model' => $model,
                     'id'    => $id,
@@ -76,7 +76,7 @@ final class ApiExceptionConfigurator
 
                 return response()->json([
                     'error'   => 'NOT_FOUND',
-                    'details' => "{$model} not found",
+                    'details' => __('api.errors.model_not_found', ['model' => $model]),
                     'meta'    => [
                         'model' => $model,
                         'id'    => $id,
@@ -87,7 +87,7 @@ final class ApiExceptionConfigurator
             // Otherwise: real route 404
             return response()->json([
                 'error'   => 'NOT_FOUND',
-                'details' => 'Route not found',
+                'details' => __('api.errors.route_not_found'),
             ], Response::HTTP_NOT_FOUND);
         });
 
@@ -128,7 +128,7 @@ final class ApiExceptionConfigurator
             if ($sqlState === '23503') {
                 return response()->json([
                     'error'   => 'CONFLICT',
-                    'details' => 'Foreign key constraint violation.',
+                    'details' => __('api.errors.foreign_key_constraint'),
                 ], Response::HTTP_CONFLICT);
             }
 
@@ -136,27 +136,27 @@ final class ApiExceptionConfigurator
             if ($sqlState === '22P02') {
                 return response()->json([
                     'error'   => 'INVALID_INPUT',
-                    'details' => 'Invalid input syntax.',
+                    'details' => __('api.errors.invalid_input_syntax'),
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             return response()->json([
                 'error'   => 'DATABASE_ERROR',
-                'details' => 'Database query error.',
+                'details' => __('api.errors.database_query'),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         });
 
         $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
             return response()->json([
                 'error'   => 'FORBIDDEN',
-                'details' => $e->getMessage() ?: 'Forbidden.',
+                'details' => $e->getMessage() ?: __('api.errors.forbidden'),
             ], Response::HTTP_FORBIDDEN);
         });
 
         $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
             $status =  $e->getStatusCode();
             // Keep production safe
-            $message = config('app.debug') ? $e->getMessage() : 'Server Error';
+            $message = config('app.debug') ? $e->getMessage() : __('api.errors.server_error');
 
             return response()->json([
                 'error'   => class_basename($e),

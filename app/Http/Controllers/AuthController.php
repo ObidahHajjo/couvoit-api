@@ -131,7 +131,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'message' => 'Logged out successfully',
+                'message' => __('api.auth.logout_success'),
             ],
         ])->withoutCookie('access_token', $this->cookiePath(), $this->cookieDomain())
             ->withoutCookie('refresh_token', $this->cookiePath(), $this->cookieDomain());
@@ -154,7 +154,7 @@ class AuthController extends Controller
         $user = $this->auth->guard()->user();
 
         if (! $user instanceof User) {
-            abort(Response::HTTP_UNAUTHORIZED, 'Unauthorized');
+            abort(Response::HTTP_UNAUTHORIZED, __('api.errors.unauthorized'));
         }
 
         $user->refresh();
@@ -214,7 +214,7 @@ class AuthController extends Controller
         Log::info('status: '.$status);
 
         return response()->json([
-            'message' => 'If an account exists for this email, a reset link has been sent.',
+            'message' => __('api.auth.forgot_password_notice'),
             'status' => $status,
         ]);
     }
@@ -248,7 +248,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Password reset successfully.',
+            'message' => __('api.auth.password_reset_success'),
             'status' => $status,
         ]);
     }

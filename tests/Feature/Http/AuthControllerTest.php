@@ -13,6 +13,7 @@ class AuthControllerTest extends TestCase
     private string $registerUri = '/auth/register';
     private string $loginUri = '/auth/login';
     private string $refreshUri = '/auth/refresh';
+    private string $forgotPasswordUri = '/auth/forgot-password';
 
     public function test_register_returns_created_with_token_resource(): void
     {
@@ -95,5 +96,35 @@ class AuthControllerTest extends TestCase
 
         $res->assertJsonPath('data.access_token', 'new_access');
         $res->assertJsonPath('data.refresh_token', 'new_refresh');
+    }
+
+    public function test_forget_password_message_is_localized_from_accept_language(): void
+    {
+        $this->mock(AuthServiceInterface::class, function ($mock) {
+            $mock->shouldReceive('forgetPassword')
+                ->once()
+                ->with('john@example.com')
+                ->andReturn('passwords.sent');
+        });
+
+        $res = $this->withHeader('Accept-Language', 'fr-FR,fr;q=0.9,en;q=0.8')
+            ->postJson($this->forgotPasswordUri, [
+                'email' => 'john@example.com',
+            ]);
+
+        $res->assertOk();
+        $res->assertJsonPath('message', 'Si un compte existe pour cet e-mail, un lien de reinitialisation a ete envoye.');
+        $res->assertJsonPath('status', 'passwords.sent');
+    }
+
+    public function test_validation_errors_are_localized_from_accept_language(): void
+    {
+        $res = $this->withHeader('Accept-Language', 'fr-FR')
+            ->postJson($this->loginUri, []);
+
+        $res->assertStatus(422);
+        $res->assertJsonPath('details', 'Les donnees fournies sont invalides.');
+        $res->assertJsonPath('fields.email.0', 'Le champ e-mail est obligatoire.');
+        $res->assertJsonPath('fields.password.0', 'Le champ mot de passe est obligatoire.');
     }
 }
