@@ -50,12 +50,12 @@ class AuthController extends Controller
                 'access_token',
                 $result['access_token'],
                 60,
-                '/',              // path
-                null,             // domain (null = current domain)
-                true,             // Secure (HTTPS only)
-                true,             // HttpOnly (not accessible via JS)
-                false,            // raw
-                'Strict'          // SameSite
+                '/',
+                '.ohajjo.online',
+                true,
+                true,
+                false,
+                'None'
             )
             ->setStatusCode(Response::HTTP_CREATED);
     }
@@ -85,23 +85,24 @@ class AuthController extends Controller
             ->cookie(
                 'access_token',
                 $result['access_token'],
-                60,
-                '/',              // path
-                null,             // domain (null = current domain)
-                false,             // Secure (HTTPS only)
-                true,             // HttpOnly (not accessible via JS)
-                false,            // raw
-                'Lax'          // SameSite
-            )->cookie(
+                21600,
+                '/',
+                '.ohajjo.online',
+                true,
+                true,
+                false,
+                'None'
+            )
+            ->cookie(
                 'refresh_token',
                 $result['refresh_token'],
                 43200,
                 '/',
-                null,
-                false,
+                '.ohajjo.online',
+                true,
                 true,
                 false,
-                'Lax'
+                'None'
             )
             ->setStatusCode(Response::HTTP_OK);
     }
@@ -132,23 +133,23 @@ class AuthController extends Controller
                 'access_token',
                 $result['access_token'],
                 21600,
-                '/',              // path
-                null,             // domain (null = current domain)
-                true,             // Secure (HTTPS only)
-                true,             // HttpOnly (not accessible via JS)
-                false,            // raw
-                'Strict'          // SameSite
+                '/',
+                '.ohajjo.online',
+                true,
+                true,
+                false,
+                'None'
             )
             ->cookie(
                 'refresh_token',
                 $result['refresh_token'],
                 43200,
                 '/',
-                null,
+                '.ohajjo.online',
                 true,
                 true,
                 false,
-                'Strict'
+                'None'
             )
             ->setStatusCode(Response::HTTP_OK);
     }

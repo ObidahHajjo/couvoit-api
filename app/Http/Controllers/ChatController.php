@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Interfaces\ChatServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Symfony\Component\HttpFoundation\Response;
 
 class ChatController extends Controller
@@ -98,5 +99,14 @@ class ChatController extends Controller
                 'conversation' => (new ConversationResource($conversation))->toArray($request),
             ],
         ], Response::HTTP_CREATED);
+    }
+
+    public function proxy(Request $request): JsonResponse
+    {
+        // At this point LocalJwtAuth already ran, user is authenticated
+        // Just forward to Laravel's broadcaster
+        return response()->json(
+            Broadcast::auth($request)
+        );
     }
 }
