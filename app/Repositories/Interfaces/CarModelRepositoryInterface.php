@@ -68,9 +68,11 @@ interface CarModelRepositoryInterface
 
     /**
      * Find a model by its search_key and brand name
+     *
      * @param string $brandSearchKey
      * @param string $modelSearchKey
-     * @return Collection
+     *
+     * @return Collection<int, CarModel>
      */
     public function findBySearchKey(string $brandSearchKey, string $modelSearchKey): Collection;
 }

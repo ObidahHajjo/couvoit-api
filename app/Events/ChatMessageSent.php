@@ -17,6 +17,9 @@ class ChatMessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * Create a new chat message broadcast event.
+     */
     public function __construct(
         public Conversation $conversation,
         public ConversationMessage $message,

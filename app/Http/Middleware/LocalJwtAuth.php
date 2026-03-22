@@ -12,10 +12,16 @@ use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
+/**
+ * Authenticate API requests against locally issued JWT access tokens.
+ */
 final readonly class LocalJwtAuth
 {
     private const AUTH_CACHE_PREFIX = 'local:auth:'; // local:auth:{sub}
 
+    /**
+     * Create a new local JWT middleware instance.
+     */
     public function __construct(private JwtIssuerInterface $jwt)
     {
     }
@@ -26,7 +32,10 @@ final readonly class LocalJwtAuth
      * Caching:
      * - Auth cache maps "sub" => ['token_fp' => ..., 'user_id' => ...] with TTL aligned to token exp (clamped)
      *
-     * @throws Throwable
+     * @param Request $request Incoming HTTP request.
+     * @param Closure $next    Next middleware in the pipeline.
+     *
+     * @throws Throwable Propagates unexpected token parsing or infrastructure failures.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -112,6 +121,9 @@ final readonly class LocalJwtAuth
         }
     }
 
+    /**
+     * Create a stable fingerprint for a JWT string.
+     */
     private function tokenFingerprint(string $jwt): string
     {
         return hash('sha256', $jwt);
@@ -119,6 +131,8 @@ final readonly class LocalJwtAuth
 
     /**
      * Align cache TTL with exp claim if present (clamped).
+     *
+     * @param object $claims Verified JWT claims object.
      */
     private function ttlFromClaims(object $claims): int
     {
@@ -142,7 +156,7 @@ final readonly class LocalJwtAuth
     /**
      * Decode payload WITHOUT verifying signature (best-effort only) to get sub and clear cache.
      *
-     * @param array<int,string> $parts
+     * @param array<int, string> $parts JWT segments produced by exploding the token.
      */
     private function bestEffortInvalidateCacheFromTokenParts(array $parts): void
     {

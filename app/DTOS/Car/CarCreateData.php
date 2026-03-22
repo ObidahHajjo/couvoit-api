@@ -9,6 +9,9 @@ use InvalidArgumentException;
  */
 final readonly class CarCreateData
 {
+    /**
+     * Create a new car creation data object.
+     */
     public function __construct(
         public string $licensePlate,
         public string $modelName,

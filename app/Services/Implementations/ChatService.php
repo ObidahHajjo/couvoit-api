@@ -19,6 +19,7 @@ use Illuminate\Support\Collection;
  */
 class ChatService implements ChatServiceInterface
 {
+    /** @inheritDoc */
     public function listConversations(Person $authPerson): Collection
     {
         return Conversation::query()
@@ -41,6 +42,7 @@ class ChatService implements ChatServiceInterface
             ->get();
     }
 
+    /** @inheritDoc */
     public function getConversationForPerson(int $conversationId, Person $authPerson): Conversation
     {
         $conversation = Conversation::query()
@@ -68,6 +70,7 @@ class ChatService implements ChatServiceInterface
         return $conversation;
     }
 
+    /** @inheritDoc */
     public function sendMessageInConversation(int $conversationId, Person $authPerson, string $message): ConversationMessage
     {
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
@@ -75,6 +78,7 @@ class ChatService implements ChatServiceInterface
         return $this->appendMessage($conversation, $authPerson, $message);
     }
 
+    /** @inheritDoc */
     public function clearConversationForPerson(int $conversationId, Person $authPerson): Conversation
     {
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
@@ -92,11 +96,13 @@ class ChatService implements ChatServiceInterface
         return $this->getConversationForPerson($conversationId, $authPerson);
     }
 
+    /** @inheritDoc */
     public function clearMessageForPerson(int $conversationId, int $messageId, Person $authPerson): Conversation
     {
         return $this->clearMessagesForPerson($conversationId, [$messageId], $authPerson);
     }
 
+    /** @inheritDoc */
     public function clearMessagesForPerson(int $conversationId, array $messageIds, Person $authPerson): Conversation
     {
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
@@ -126,6 +132,7 @@ class ChatService implements ChatServiceInterface
         return $this->getConversationForPerson($conversationId, $authPerson);
     }
 
+    /** @inheritDoc */
     public function openOrCreateDriverConversation(Trip $trip, Person $authPerson): Conversation
     {
         if ((int) $trip->person_id === (int) $authPerson->id) {
@@ -135,6 +142,7 @@ class ChatService implements ChatServiceInterface
         return $this->findOrCreateConversation($authPerson, $trip->driver, $trip);
     }
 
+    /** @inheritDoc */
     public function contactDriver(Trip $trip, Person $authPerson, ?string $message): ?ConversationMessage
     {
         $conversation = $this->openOrCreateDriverConversation($trip, $authPerson);
@@ -146,6 +154,7 @@ class ChatService implements ChatServiceInterface
         return $this->appendMessage($conversation, $authPerson, $message);
     }
 
+    /** @inheritDoc */
     public function openOrCreatePassengerConversation(Trip $trip, Person $passenger, Person $authPerson): Conversation
     {
         if ((int) $trip->person_id !== (int) $authPerson->id) {
@@ -163,6 +172,7 @@ class ChatService implements ChatServiceInterface
         return $this->findOrCreateConversation($authPerson, $passenger, $trip);
     }
 
+    /** @inheritDoc */
     public function contactPassenger(Trip $trip, Person $passenger, Person $authPerson, ?string $message): ?ConversationMessage
     {
         $conversation = $this->openOrCreatePassengerConversation($trip, $passenger, $authPerson);
@@ -174,6 +184,9 @@ class ChatService implements ChatServiceInterface
         return $this->appendMessage($conversation, $authPerson, $message);
     }
 
+    /**
+     * Find or create a conversation for two participants and a trip.
+     */
     private function findOrCreateConversation(Person $first, Person $second, Trip $trip): Conversation
     {
         $participantIds = [(int) $first->id, (int) $second->id];
@@ -199,6 +212,9 @@ class ChatService implements ChatServiceInterface
         return $conversation;
     }
 
+    /**
+     * Append a message to a conversation.
+     */
     private function appendMessage(Conversation $conversation, Person $sender, string $message): ConversationMessage
     {
         $body = trim($message);

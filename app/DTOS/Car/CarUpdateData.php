@@ -9,6 +9,9 @@ use InvalidArgumentException;
  */
 final readonly class CarUpdateData
 {
+    /**
+     * Create a new car update data object.
+     */
     public function __construct(
         public ?string $licensePlate = null,
         public ?string $modelName = null,

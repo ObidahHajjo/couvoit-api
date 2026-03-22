@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Message persisted within a conversation thread.
+ *
+ * @property int                             $id
+ * @property int                             $conversation_id
+ * @property int                             $sender_person_id
+ * @property string                          $body
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property-read Conversation               $conversation
+ * @property-read Person                     $sender
  */
 class ConversationMessage extends Model
 {

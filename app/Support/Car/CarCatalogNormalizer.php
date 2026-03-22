@@ -7,12 +7,18 @@ namespace App\Support\Car;
  */
 final class CarCatalogNormalizer
 {
+    /**
+     * Normalize a car catalog label for display.
+     */
     public function normalizeDisplayName(string $value): string
     {
         $value = trim($value);
         return preg_replace('/\s+/u', ' ', $value) ?? $value;
     }
 
+    /**
+     * Normalize a car catalog label for search.
+     */
     public function normalizeSearchKey(string $value): string
     {
         $value = $this->normalizeDisplayName($value);
@@ -28,6 +34,9 @@ final class CarCatalogNormalizer
         return $value;
     }
 
+    /**
+     * Determine whether the normalized haystack contains the normalized needle.
+     */
     public function containsNormalized(string $needle, string $haystack): bool
     {
         $needleKey = $this->normalizeSearchKey($needle);

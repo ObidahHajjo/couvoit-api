@@ -8,6 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Stores per-person conversation state such as clearing timestamps.
+ *
+ * @property int                             $id
+ * @property int                             $conversation_id
+ * @property int                             $person_id
+ * @property \Illuminate\Support\Carbon|null $cleared_at
+ * @property-read Conversation               $conversation
+ * @property-read Person                     $person
  */
 class ConversationParticipantState extends Model
 {

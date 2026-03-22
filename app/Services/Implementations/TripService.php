@@ -37,6 +37,9 @@ use Throwable;
  */
 readonly class TripService implements TripServiceInterface
 {
+    /**
+     * Create a new trip service instance.
+     */
     public function __construct(
         private TripRepositoryInterface $trips,
         private PersonRepositoryInterface $persons,
@@ -324,6 +327,9 @@ readonly class TripService implements TripServiceInterface
         }
     }
 
+    /**
+     * Send a trip email callback and log failures.
+     */
     private function sendEmailSafely(callable $callback, string $context, array $extra = []): void
     {
         try {

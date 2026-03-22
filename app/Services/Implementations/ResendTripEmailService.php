@@ -13,6 +13,7 @@ use Resend\Laravel\Facades\Resend;
  */
 final readonly class ResendTripEmailService implements TripEmailServiceInterface
 {
+    /** @inheritDoc */
     public function sendReservationCreated(Trip $trip, Person $passenger): void
     {
         $driver = $trip->driver;
@@ -46,6 +47,7 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         }
     }
 
+    /** @inheritDoc */
     public function sendReservationCancelled(Trip $trip, Person $passenger): void
     {
         $driver = $trip->driver;
@@ -79,6 +81,7 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         }
     }
 
+    /** @inheritDoc */
     public function sendTripCancelledByDriver(Trip $trip): void
     {
         $driver = $trip->driver;
@@ -104,6 +107,9 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         }
     }
 
+    /**
+     * Send a trip email to a person when email data is available.
+     */
     private function sendToPerson(
         Person $recipient,
         string $templateId,
@@ -132,6 +138,9 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         ]);
     }
 
+    /**
+     * Build base template variables for trip emails.
+     */
     private function baseVariables(Person $recipient, Trip $trip): array
     {
         return [
@@ -146,11 +155,17 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         ];
     }
 
+    /**
+     * Build a readable route label for a trip.
+     */
     private function routeName(Trip $trip): string
     {
         return $this->formatAddress($trip->departureAddress) . ' -> ' . $this->formatAddress($trip->arrivalAddress);
     }
 
+    /**
+     * Format an address for email output.
+     */
     private function formatAddress(mixed $address): string
     {
         if ($address === null) {
@@ -167,6 +182,9 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         return $parts === [] ? 'Unknown location' : implode(' ', $parts);
     }
 
+    /**
+     * Build a display name for a person.
+     */
     private function personName(mixed $person): string
     {
         if (!$person instanceof Person) {
@@ -189,11 +207,17 @@ final readonly class ResendTripEmailService implements TripEmailServiceInterface
         return 'traveler';
     }
 
+    /**
+     * Format a trip date and time for email output.
+     */
     private function formatDateTime(mixed $value): string
     {
         return $value?->format('d/m/Y H:i') ?? 'Unknown time';
     }
 
+    /**
+     * Get the application name for email templates.
+     */
     private function appName(): string
     {
         return (string) config('app.name', 'Covoiturage');

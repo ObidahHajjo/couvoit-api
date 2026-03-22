@@ -28,6 +28,9 @@ use Illuminate\Support\Facades\Http;
  */
 readonly class CarService implements CarServiceInterface
 {
+    /**
+     * Create a new car service instance.
+     */
     public function __construct(
         private CarRepositoryInterface $carRepository,
         private CarReferenceResolverInterface $carReferenceResolver,

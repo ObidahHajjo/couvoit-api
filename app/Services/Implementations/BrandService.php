@@ -12,6 +12,9 @@ use Illuminate\Support\Collection;
  */
 readonly class BrandService implements BrandServiceInterface
 {
+    /**
+     * Create a new brand service instance.
+     */
     public function __construct(
         private BrandRepositoryInterface $brands
     ) {}

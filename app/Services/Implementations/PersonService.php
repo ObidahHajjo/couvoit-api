@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Log;
  */
 readonly class PersonService implements PersonServiceInterface
 {
+    /**
+     * Create a new person service instance.
+     */
     public function __construct(
         private PersonRepositoryInterface $persons,
         private TripRepositoryInterface $trips,

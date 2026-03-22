@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Persisted refresh token record for a user session.
+ *
+ * @property int                             $id
+ * @property int                             $user_id
+ * @property string                          $token_hash
+ * @property \Illuminate\Support\Carbon    $expires_at
+ * @property \Illuminate\Support\Carbon|null $revoked_at
+ * @property-read User                       $user
  */
 class RefreshToken extends Model
 {

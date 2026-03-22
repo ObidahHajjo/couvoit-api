@@ -17,15 +17,15 @@ use Illuminate\Support\Facades\Password;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Auth endpoints (Local JWT).
- */
 #[OA\Tag(name: 'Auth', description: 'Authentication endpoints (register/login/refresh).')]
 /**
  * Handles authentication endpoints.
  */
 class AuthController extends Controller
 {
+    /**
+     * Create a new auth controller instance.
+     */
     public function __construct(
         private readonly AuthServiceInterface $authService,
         private readonly AuthFactory $auth,
@@ -45,6 +45,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Register a new user account.
+     */
     public function register(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -71,6 +74,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Authenticate a user and issue tokens.
+     */
     public function login(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -98,6 +104,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Rotate access and refresh tokens.
+     */
     public function refresh(RefreshRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -125,6 +134,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Log out the authenticated user.
+     */
     public function logout(): JsonResponse
     {
         $this->authService->logout();
@@ -148,6 +160,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Return the authenticated user profile.
+     */
     public function me(): JsonResponse
     {
         /** @var User $user */
@@ -207,6 +222,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Send a password reset link.
+     */
     public function forgetPassword(ForgetPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -234,6 +252,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Reset a user password with a valid token.
+     */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -253,6 +274,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Build an authentication cookie.
+     */
     private function authCookie(string $name, string $value, int $minutes): \Symfony\Component\HttpFoundation\Cookie
     {
         return Cookie::make(
@@ -268,11 +292,17 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * Get the configured auth cookie path.
+     */
     private function cookiePath(): string
     {
         return (string) config('auth.cookies.path', '/');
     }
 
+    /**
+     * Get the configured auth cookie domain.
+     */
     private function cookieDomain(): ?string
     {
         $domain = config('auth.cookies.domain');
@@ -282,11 +312,17 @@ class AuthController extends Controller
             : null;
     }
 
+    /**
+     * Determine whether auth cookies must be secure.
+     */
     private function cookieSecure(): bool
     {
         return (bool) config('auth.cookies.secure', false);
     }
 
+    /**
+     * Get the configured SameSite policy.
+     */
     private function cookieSameSite(): string
     {
         return (string) config('auth.cookies.same_site', 'lax');

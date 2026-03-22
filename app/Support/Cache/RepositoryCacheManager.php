@@ -19,21 +19,33 @@ class RepositoryCacheManager
     public const TTL_LONG = 360;
     public const TTL_LIST = 60;
 
+    /**
+     * Remember a value for the given cache tags and key.
+     */
     public function remember(array $tags, string $key, int $ttl, Closure $callback): mixed
     {
         return Cache::tags($tags)->remember($key, $ttl, $callback);
     }
 
+    /**
+     * Store a value for the given cache tags and key.
+     */
     public function put(array $tags, string $key, mixed $value, int $ttl = self::TTL_LONG): void
     {
         Cache::tags($tags)->put($key, $value, $ttl);
     }
 
+    /**
+     * Forget a cache entry for the given tags and key.
+     */
     public function forget(array $tags, string $key): void
     {
         Cache::tags($tags)->forget($key);
     }
 
+    /**
+     * Flush all cache entries for the given tags.
+     */
     public function flush(array $tags): void
     {
         Cache::tags($tags)->flush();
@@ -45,21 +57,33 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for person.
+     */
     public function personTags(?int $id = null): array
     {
         return $id === null ? ['persons'] : ['persons', "person:$id"];
     }
 
+    /**
+     * Get the cache key for person.
+     */
     public function personKey(int $id): string
     {
         return "persons:$id";
     }
 
+    /**
+     * Get the cache key for persons all.
+     */
     public function personsAllKey(): string
     {
         return 'persons:all';
     }
 
+    /**
+     * Remember cached persons all.
+     */
     public function rememberPersonsAll(Closure $callback): Collection
     {
         /** @var Collection $people */
@@ -73,6 +97,9 @@ class RepositoryCacheManager
         return $people;
     }
 
+    /**
+     * Remember cached person by id.
+     */
     public function rememberPersonById(int $id, Closure $callback): Person
     {
         /** @var Person $person */
@@ -86,6 +113,9 @@ class RepositoryCacheManager
         return $person;
     }
 
+    /**
+     * Store cached person.
+     */
     public function putPerson(Person $person): void
     {
         $this->put(
@@ -95,22 +125,34 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Forget cached person.
+     */
     public function forgetPerson(int $id): void
     {
         $this->forget($this->personTags($id), $this->personKey($id));
     }
 
+    /**
+     * Forget cached persons all.
+     */
     public function forgetPersonsAll(): void
     {
         $this->forget($this->personTags(), $this->personsAllKey());
     }
 
+    /**
+     * Invalidate cached person list and item.
+     */
     public function invalidatePersonListAndItem(int $id): void
     {
         $this->forgetPerson($id);
         $this->forgetPersonsAll();
     }
 
+    /**
+     * Invalidate cached persons by car id.
+     */
     public function invalidatePersonsByCarId(int $carId): void
     {
         $personIds = Person::query()
@@ -129,21 +171,33 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for car.
+     */
     public function carTags(?int $id = null): array
     {
         return $id === null ? ['cars'] : ['cars', "car:$id"];
     }
 
+    /**
+     * Get the cache key for car.
+     */
     public function carKey(int $id): string
     {
         return "cars:$id";
     }
 
+    /**
+     * Get the cache key for cars all.
+     */
     public function carsAllKey(): string
     {
         return 'cars:all';
     }
 
+    /**
+     * Remember cached cars all.
+     */
     public function rememberCarsAll(Closure $callback): Collection
     {
         /** @var Collection $cars */
@@ -157,6 +211,9 @@ class RepositoryCacheManager
         return $cars;
     }
 
+    /**
+     * Remember cached car by id.
+     */
     public function rememberCarById(int $id, Closure $callback): mixed
     {
         return $this->remember(
@@ -167,6 +224,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Store cached car.
+     */
     public function putCar(Car $car): void
     {
         $this->put(
@@ -176,16 +236,25 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Forget cached car.
+     */
     public function forgetCar(int $id): void
     {
         $this->forget($this->carTags($id), $this->carKey($id));
     }
 
+    /**
+     * Forget cached cars all.
+     */
     public function forgetCarsAll(): void
     {
         $this->forget($this->carTags(), $this->carsAllKey());
     }
 
+    /**
+     * Invalidate cached car list and item.
+     */
     public function invalidateCarListAndItem(int $id): void
     {
         $this->forgetCar($id);
@@ -193,6 +262,9 @@ class RepositoryCacheManager
         $this->invalidatePersonsByCarId($id);
     }
 
+    /**
+     * Invalidate cached cars and persons by model id.
+     */
     public function invalidateCarsAndPersonsByModelId(int $modelId): void
     {
         $carIds = Car::query()
@@ -202,6 +274,9 @@ class RepositoryCacheManager
         $this->invalidateCarsAndPersonsByCarIds($carIds->all());
     }
 
+    /**
+     * Invalidate cached cars and persons by color id.
+     */
     public function invalidateCarsAndPersonsByColorId(int $colorId): void
     {
         $carIds = Car::query()
@@ -211,6 +286,9 @@ class RepositoryCacheManager
         $this->invalidateCarsAndPersonsByCarIds($carIds->all());
     }
 
+    /**
+     * Invalidate cached cars and persons by brand id.
+     */
     public function invalidateCarsAndPersonsByBrandId(int $brandId): void
     {
         $modelIds = CarModel::query()
@@ -224,6 +302,9 @@ class RepositoryCacheManager
         $this->invalidateCarsAndPersonsByCarIds($carIds->all());
     }
 
+    /**
+     * Invalidate cached cars and persons by type id.
+     */
     public function invalidateCarsAndPersonsByTypeId(int $typeId): void
     {
         $modelIds = CarModel::query()
@@ -257,16 +338,25 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for address.
+     */
     public function addressTags(int $id): array
     {
         return ['addresses', "address:$id"];
     }
 
+    /**
+     * Get the cache key for address.
+     */
     public function addressKey(int $id): string
     {
         return "addresses:$id";
     }
 
+    /**
+     * Remember cached address by id.
+     */
     public function rememberAddressById(int $id, Closure $callback): mixed
     {
         return $this->remember(
@@ -277,6 +367,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Store cached address.
+     */
     public function putAddress(Model $address): void
     {
         $this->put(
@@ -292,21 +385,33 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for brand.
+     */
     public function brandTags(?int $id = null): array
     {
         return $id === null ? ['brands'] : ['brands', "brand:$id"];
     }
 
+    /**
+     * Get the cache key for brand.
+     */
     public function brandKey(int $id): string
     {
         return "brands:$id";
     }
 
+    /**
+     * Get the cache key for brands all.
+     */
     public function brandsAllKey(): string
     {
         return 'brands:all';
     }
 
+    /**
+     * Remember cached brands all.
+     */
     public function rememberBrandsAll(Closure $callback): Collection
     {
         /** @var Collection $brands */
@@ -320,6 +425,9 @@ class RepositoryCacheManager
         return $brands;
     }
 
+    /**
+     * Remember cached brand by id.
+     */
     public function rememberBrandById(int $id, Closure $callback): mixed
     {
         return $this->remember(
@@ -330,6 +438,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Store cached brand.
+     */
     public function putBrand(Model $brand): void
     {
         $id = (int) $brand->getKey();
@@ -337,11 +448,17 @@ class RepositoryCacheManager
         $this->put($this->brandTags($id), $this->brandKey($id), $brand);
     }
 
+    /**
+     * Forget cached brand.
+     */
     public function forgetBrand(int $id): void
     {
         $this->forget($this->brandTags($id), $this->brandKey($id));
     }
 
+    /**
+     * Forget cached brands all.
+     */
     public function forgetBrandsAll(): void
     {
         $this->forget($this->brandTags(), $this->brandsAllKey());
@@ -353,41 +470,65 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for model.
+     */
     public function modelTags(?int $id = null): array
     {
         return $id === null ? ['models'] : ['models', "model:$id"];
     }
 
+    /**
+     * Get the cache tags for model by brand.
+     */
     public function modelByBrandTags(int $brandId): array
     {
         return ['models', "brand:$brandId"];
     }
 
+    /**
+     * Get the cache tags for model by name.
+     */
     public function modelByNameTags(string $name): array
     {
         return ['models', 'name:' . $this->normalize($name)];
     }
 
+    /**
+     * Get the cache key for model.
+     */
     public function modelKey(int $id): string
     {
         return "models:$id";
     }
 
+    /**
+     * Get the cache key for models all.
+     */
     public function modelsAllKey(): string
     {
         return 'models:all';
     }
 
+    /**
+     * Get the cache key for model by brand.
+     */
     public function modelByBrandKey(int $brandId): string
     {
         return "models:brand:$brandId";
     }
 
+    /**
+     * Get the cache key for model by name.
+     */
     public function modelByNameKey(string $name): string
     {
         return 'models:name:' . $this->normalize($name);
     }
 
+    /**
+     * Remember cached models all.
+     */
     public function rememberModelsAll(Closure $callback): Collection
     {
         /** @var Collection $models */
@@ -401,6 +542,9 @@ class RepositoryCacheManager
         return $models;
     }
 
+    /**
+     * Remember cached model by id.
+     */
     public function rememberModelById(int $id, Closure $callback): mixed
     {
         return $this->remember(
@@ -411,6 +555,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Remember cached model by name.
+     */
     public function rememberModelByName(string $name, Closure $callback): mixed
     {
         return $this->remember(
@@ -421,6 +568,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Remember cached models by brand.
+     */
     public function rememberModelsByBrand(int $brandId, Closure $callback): Collection
     {
         /** @var Collection $models */
@@ -434,27 +584,42 @@ class RepositoryCacheManager
         return $models;
     }
 
+    /**
+     * Store cached model.
+     */
     public function putModel(CarModel $model): void
     {
         $this->put($this->modelTags($model->id), $this->modelKey($model->id), $model);
         $this->put($this->modelByNameTags($model->name), $this->modelByNameKey($model->name), $model);
     }
 
+    /**
+     * Forget cached model.
+     */
     public function forgetModel(int $id): void
     {
         $this->forget($this->modelTags($id), $this->modelKey($id));
     }
 
+    /**
+     * Forget cached models all.
+     */
     public function forgetModelsAll(): void
     {
         $this->forget($this->modelTags(), $this->modelsAllKey());
     }
 
+    /**
+     * Forget cached models by brand.
+     */
     public function forgetModelsByBrand(int $brandId): void
     {
         $this->forget($this->modelByBrandTags($brandId), $this->modelByBrandKey($brandId));
     }
 
+    /**
+     * Forget cached model by name.
+     */
     public function forgetModelByName(string $name): void
     {
         $this->forget($this->modelByNameTags($name), $this->modelByNameKey($name));
@@ -466,26 +631,41 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for city.
+     */
     public function cityTags(string $name, string $postalCode): array
     {
         return ['cities', 'city:' . $this->normalize($name) . ':' . trim($postalCode)];
     }
 
+    /**
+     * Get the cache key for city.
+     */
     public function cityKey(string $name, string $postalCode): string
     {
         return 'cities:' . $this->normalize($name) . ':' . trim($postalCode);
     }
 
+    /**
+     * Get the cache tags for city postcodes.
+     */
     public function cityPostcodesTags(): array
     {
         return ['cities', 'cities:postcodes'];
     }
 
+    /**
+     * Get the cache key for city postcodes.
+     */
     public function cityPostcodesKey(): string
     {
         return 'cities:postcodes';
     }
 
+    /**
+     * Remember cached city.
+     */
     public function rememberCity(string $name, string $postalCode, Closure $callback): mixed
     {
         return $this->remember(
@@ -496,6 +676,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Store cached city.
+     */
     public function putCity(Model $city, string $name, string $postalCode): void
     {
         $this->put(
@@ -505,6 +688,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Forget cached city.
+     */
     public function forgetCity(string $name, string $postalCode): void
     {
         $this->forget(
@@ -513,11 +699,17 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Forget cached city postcodes.
+     */
     public function forgetCityPostcodes(): void
     {
         $this->forget($this->cityPostcodesTags(), $this->cityPostcodesKey());
     }
 
+    /**
+     * Remember cached city postcodes.
+     */
     public function rememberCityPostcodes(Closure $callback): Collection
     {
         /** @var Collection $postcodes */
@@ -537,41 +729,65 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for color.
+     */
     public function colorTags(?int $id = null): array
     {
         return $id === null ? ['colors'] : ['colors', "color:$id"];
     }
 
+    /**
+     * Get the cache tags for color by hex.
+     */
     public function colorByHexTags(string $hex): array
     {
         return ['colors', 'hex:' . $this->normalize($hex)];
     }
 
+    /**
+     * Get the cache tags for color by name.
+     */
     public function colorByNameTags(string $name): array
     {
         return ['colors', 'name:' . $this->normalize($name)];
     }
 
+    /**
+     * Get the cache key for color.
+     */
     public function colorKey(int $id): string
     {
         return "colors:$id";
     }
 
+    /**
+     * Get the cache key for colors all.
+     */
     public function colorsAllKey(): string
     {
         return 'colors:all';
     }
 
+    /**
+     * Get the cache key for color by hex.
+     */
     public function colorByHexKey(string $hex): string
     {
         return 'colors:hex:' . $this->normalize($hex);
     }
 
+    /**
+     * Get the cache key for color by name.
+     */
     public function colorByNameKey(string $name): string
     {
         return 'colors:name:' . $this->normalize($name);
     }
 
+    /**
+     * Remember cached colors all.
+     */
     public function rememberColorsAll(Closure $callback): Collection
     {
         /** @var Collection $colors */
@@ -585,6 +801,9 @@ class RepositoryCacheManager
         return $colors;
     }
 
+    /**
+     * Remember cached color by id.
+     */
     public function rememberColorById(int $id, Closure $callback): mixed
     {
         return $this->remember(
@@ -595,6 +814,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Remember cached color by name.
+     */
     public function rememberColorByName(string $name, Closure $callback): mixed
     {
         return $this->remember(
@@ -605,6 +827,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Remember cached color by hex.
+     */
     public function rememberColorByHex(string $hex, Closure $callback): mixed
     {
         return $this->remember(
@@ -615,6 +840,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Store cached color.
+     */
     public function putColor(Model $color, string $name, string $hex): void
     {
         $id = (int) $color->getKey();
@@ -624,21 +852,33 @@ class RepositoryCacheManager
         $this->put($this->colorByHexTags($hex), $this->colorByHexKey($hex), $color);
     }
 
+    /**
+     * Forget cached color.
+     */
     public function forgetColor(int $id): void
     {
         $this->forget($this->colorTags($id), $this->colorKey($id));
     }
 
+    /**
+     * Forget cached color by name.
+     */
     public function forgetColorByName(string $name): void
     {
         $this->forget($this->colorByNameTags($name), $this->colorByNameKey($name));
     }
 
+    /**
+     * Forget cached color by hex.
+     */
     public function forgetColorByHex(string $hex): void
     {
         $this->forget($this->colorByHexTags($hex), $this->colorByHexKey($hex));
     }
 
+    /**
+     * Forget cached colors all.
+     */
     public function forgetColorsAll(): void
     {
         $this->forget($this->colorTags(), $this->colorsAllKey());
@@ -650,36 +890,57 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for trip.
+     */
     public function tripTags(?int $id = null): array
     {
         return $id === null ? ['trips'] : ['trips', "trip:$id"];
     }
 
+    /**
+     * Get the cache tags for trip search.
+     */
     public function tripSearchTags(): array
     {
         return ['trips', 'trips:search'];
     }
 
+    /**
+     * Get the cache tags for trip person.
+     */
     public function tripPersonTags(int $personId): array
     {
         return ['trips', "person:$personId"];
     }
 
+    /**
+     * Get the cache tags for trip passengers.
+     */
     public function tripPassengersTags(int $tripId): array
     {
         return ['trips', "trip:$tripId", 'reservations', 'persons'];
     }
 
+    /**
+     * Get the cache key for trip.
+     */
     public function tripKey(int $id): string
     {
         return "trips:$id";
     }
 
+    /**
+     * Get the cache key for trip passengers.
+     */
     public function tripPassengersKey(int $id): string
     {
         return "trips:$id:passengers";
     }
 
+    /**
+     * Get the cache key for trip search.
+     */
     public function tripSearchKey(
         ?string $startingCity,
         ?string $arrivalCity,
@@ -697,21 +958,33 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Get the cache key for trip driver list.
+     */
     public function tripDriverListKey(int $personId): string
     {
         return "trips:driver:$personId";
     }
 
+    /**
+     * Get the cache key for trip passenger list.
+     */
     public function tripPassengerListKey(int $personId): string
     {
         return "trips:passenger:$personId";
     }
 
+    /**
+     * Remember cached trip by id.
+     */
     public function rememberTripById(int $id, Closure $callback): mixed
     {
         return $this->remember($this->tripTags($id), $this->tripKey($id), self::TTL_LONG, $callback);
     }
 
+    /**
+     * Remember cached trip passengers.
+     */
     public function rememberTripPassengers(int $id, Closure $callback): Collection
     {
         /** @var Collection $passengers */
@@ -725,6 +998,9 @@ class RepositoryCacheManager
         return $passengers;
     }
 
+    /**
+     * Remember cached trip search.
+     */
     public function rememberTripSearch(
         ?string $startingCity,
         ?string $arrivalCity,
@@ -744,6 +1020,9 @@ class RepositoryCacheManager
         return $paginator;
     }
 
+    /**
+     * Remember cached driver trips.
+     */
     public function rememberDriverTrips(int $personId, Closure $callback): Collection
     {
         /** @var Collection $trips */
@@ -757,6 +1036,9 @@ class RepositoryCacheManager
         return $trips;
     }
 
+    /**
+     * Remember cached passenger trips.
+     */
     public function rememberPassengerTrips(int $personId, Closure $callback): Collection
     {
         /** @var Collection $trips */
@@ -770,21 +1052,33 @@ class RepositoryCacheManager
         return $trips;
     }
 
+    /**
+     * Forget cached trip.
+     */
     public function forgetTrip(int $tripId): void
     {
         $this->forget($this->tripTags($tripId), $this->tripKey($tripId));
     }
 
+    /**
+     * Forget cached trip passengers.
+     */
     public function forgetTripPassengers(int $tripId): void
     {
         $this->forget($this->tripPassengersTags($tripId), $this->tripPassengersKey($tripId));
     }
 
+    /**
+     * Forget cached trip search.
+     */
     public function forgetTripSearch(): void
     {
         $this->flush($this->tripSearchTags());
     }
 
+    /**
+     * Forget cached trip lists for person.
+     */
     public function forgetTripListsForPerson(int $personId): void
     {
         $this->forget(
@@ -798,6 +1092,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Invalidate cached trip write.
+     */
     public function invalidateTripWrite(int $tripId, int $driverId, ?int $oldDriverId = null): void
     {
         $this->forgetTrip($tripId);
@@ -810,6 +1107,9 @@ class RepositoryCacheManager
         }
     }
 
+    /**
+     * Invalidate cached reservation write.
+     */
     public function invalidateReservationWrite(int $tripId, int $passengerId, int $driverId): void
     {
         $this->forgetTripPassengers($tripId);
@@ -825,31 +1125,49 @@ class RepositoryCacheManager
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Get the cache tags for type.
+     */
     public function typeTags(?int $id = null): array
     {
         return $id === null ? ['types'] : ['types', "type_id:$id"];
     }
 
+    /**
+     * Get the cache tags for type by value.
+     */
     public function typeByValueTags(string $type): array
     {
         return ['types', 'type:' . $this->normalize($type)];
     }
 
+    /**
+     * Get the cache key for type.
+     */
     public function typeKey(int $id): string
     {
         return "types:$id";
     }
 
+    /**
+     * Get the cache key for types all.
+     */
     public function typesAllKey(): string
     {
         return 'types:all';
     }
 
+    /**
+     * Get the cache key for type by value.
+     */
     public function typeByValueKey(string $type): string
     {
         return 'types:type:' . $this->normalize($type);
     }
 
+    /**
+     * Remember cached types all.
+     */
     public function rememberTypesAll(Closure $callback): Collection
     {
         /** @var Collection $types */
@@ -863,6 +1181,9 @@ class RepositoryCacheManager
         return $types;
     }
 
+    /**
+     * Remember cached type by id.
+     */
     public function rememberTypeById(int $id, Closure $callback): mixed
     {
         return $this->remember(
@@ -873,6 +1194,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Remember cached type by value.
+     */
     public function rememberTypeByValue(string $type, Closure $callback): mixed
     {
         return $this->remember(
@@ -883,6 +1207,9 @@ class RepositoryCacheManager
         );
     }
 
+    /**
+     * Store cached type.
+     */
     public function putType(Model $type, string $value): void
     {
         $id = (int) $type->getKey();
@@ -891,21 +1218,33 @@ class RepositoryCacheManager
         $this->put($this->typeByValueTags($value), $this->typeByValueKey($value), $type);
     }
 
+    /**
+     * Forget cached type.
+     */
     public function forgetType(int $id): void
     {
         $this->forget($this->typeTags($id), $this->typeKey($id));
     }
 
+    /**
+     * Forget cached type by value.
+     */
     public function forgetTypeByValue(string $value): void
     {
         $this->forget($this->typeByValueTags($value), $this->typeByValueKey($value));
     }
 
+    /**
+     * Forget cached types all.
+     */
     public function forgetTypesAll(): void
     {
         $this->forget($this->typeTags(), $this->typesAllKey());
     }
 
+    /**
+     * Normalize a cache key segment.
+     */
     private function normalize(string $value): string
     {
         return mb_strtolower(trim($value));

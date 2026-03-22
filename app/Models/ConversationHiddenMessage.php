@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Stores per-person hidden chat messages.
+ *
+ * @property int               $id
+ * @property int               $conversation_id
+ * @property int               $person_id
+ * @property int               $conversation_message_id
+ * @property-read Conversation $conversation
+ * @property-read Person       $person
+ * @property-read ConversationMessage $message
  */
 class ConversationHiddenMessage extends Model
 {

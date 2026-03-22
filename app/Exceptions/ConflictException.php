@@ -9,6 +9,9 @@ use Exception;
  */
 class ConflictException extends DomainException
 {
+    /**
+     * Create a new conflict exception.
+     */
     public function __construct(string $message = 'Conflict')
     {
         parent::__construct($message, 409, 'CONFLICT');

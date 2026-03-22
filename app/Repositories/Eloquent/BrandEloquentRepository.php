@@ -14,6 +14,9 @@ use Illuminate\Support\Collection;
  */
 readonly class BrandEloquentRepository implements BrandRepositoryInterface
 {
+    /**
+     * Create a new brand repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {

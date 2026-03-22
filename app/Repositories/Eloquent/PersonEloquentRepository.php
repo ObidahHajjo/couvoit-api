@@ -16,6 +16,9 @@ use Illuminate\Support\Collection;
  */
 readonly class PersonEloquentRepository implements PersonRepositoryInterface
 {
+    /**
+     * Create a new person repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {

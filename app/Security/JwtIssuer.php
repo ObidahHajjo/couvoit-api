@@ -14,6 +14,9 @@ final class JwtIssuer implements JwtIssuerInterface
 {
     private const ALG = 'HS256';
 
+    /**
+     * Resolve the configured JWT signing secret.
+     */
     private function secret(): string
     {
         $secret = (string) config('jwt.secret');

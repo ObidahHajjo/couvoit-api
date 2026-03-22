@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Set the application locale from the incoming request.
+ */
 final class SetRequestLocale
 {
     /**
@@ -14,6 +17,12 @@ final class SetRequestLocale
      */
     private const SUPPORTED_LOCALES = ['en', 'fr', 'ar'];
 
+    /**
+     * Set the request locale before continuing the pipeline.
+     *
+     * @param Request $request Incoming HTTP request.
+     * @param Closure $next    Next middleware in the pipeline.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         App::setLocale($this->resolveLocale($request));
@@ -21,6 +30,11 @@ final class SetRequestLocale
         return $next($request);
     }
 
+    /**
+     * Resolve the best supported locale for the request.
+     *
+     * @param Request $request Incoming HTTP request.
+     */
     private function resolveLocale(Request $request): string
     {
         $header = (string) $request->header('Accept-Language', '');
@@ -47,6 +61,10 @@ final class SetRequestLocale
     }
 
     /**
+     * Parse the `Accept-Language` header into ordered locale candidates.
+     *
+     * @param string $header Raw `Accept-Language` header value.
+     *
      * @return array<int, string>
      */
     private function parseAcceptLanguage(string $header): array
@@ -94,6 +112,11 @@ final class SetRequestLocale
         return array_map(static fn (array $item): string => $item['locale'], $locales);
     }
 
+    /**
+     * Normalize a locale value to a supported language code.
+     *
+     * @param string $locale Raw locale candidate.
+     */
     private function normalizeLocale(string $locale): ?string
     {
         $normalized = strtolower(str_replace('_', '-', trim($locale)));

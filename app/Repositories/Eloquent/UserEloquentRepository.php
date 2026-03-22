@@ -56,6 +56,7 @@ final class UserEloquentRepository implements UserRepositoryInterface
         $user->delete();
     }
 
+    /** @inheritDoc */
     public function restore(User $user): void
     {
         $user->restore();

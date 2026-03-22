@@ -9,6 +9,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Conversation between two participants around a trip.
+ *
+ * @property int                             $id
+ * @property int                             $participant_one_id
+ * @property int                             $participant_two_id
+ * @property int                             $trip_id
+ * @property \Illuminate\Support\Carbon|null $last_message_at
+ * @property-read Person                     $participantOne
+ * @property-read Person                     $participantTwo
+ * @property-read Trip                       $trip
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ConversationMessage> $messages
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ConversationParticipantState> $participantStates
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ConversationHiddenMessage> $hiddenMessages
  */
 class Conversation extends Model
 {
@@ -77,6 +89,8 @@ class Conversation extends Model
 
     /**
      * Determine whether the given person participates in the conversation.
+     *
+     * @param int $personId Person identifier.
      */
     public function involvesPerson(int $personId): bool
     {

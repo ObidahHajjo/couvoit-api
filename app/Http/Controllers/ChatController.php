@@ -19,10 +19,18 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ChatController extends Controller
 {
+    /**
+     * Create a new chat controller instance.
+     */
     public function __construct(
         private readonly ChatServiceInterface $chat,
     ) {}
 
+    /**
+     * List conversations for the authenticated user.
+     *
+     * @param Request $request Current HTTP request.
+     */
     public function index(Request $request): JsonResponse
     {
         /** @var User $authUser */
@@ -33,6 +41,12 @@ class ChatController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
+    /**
+     * Show a conversation visible to the authenticated user.
+     *
+     * @param Request $request      Current HTTP request.
+     * @param int     $conversation Conversation identifier.
+     */
     public function show(Request $request, int $conversation): JsonResponse
     {
         /** @var User $authUser */
@@ -43,6 +57,12 @@ class ChatController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
+    /**
+     * Send a message in a conversation.
+     *
+     * @param SendChatMessageRequest $request      Validated message payload.
+     * @param int                    $conversation Conversation identifier.
+     */
     public function send(SendChatMessageRequest $request, int $conversation): JsonResponse
     {
         /** @var User $authUser */
@@ -59,6 +79,12 @@ class ChatController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * Clear a conversation for the authenticated user.
+     *
+     * @param Request $request      Current HTTP request.
+     * @param int     $conversation Conversation identifier.
+     */
     public function clear(Request $request, int $conversation): JsonResponse
     {
         /** @var User $authUser */
@@ -72,6 +98,13 @@ class ChatController extends Controller
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Hide a single message for the authenticated user.
+     *
+     * @param Request $request      Current HTTP request.
+     * @param int     $conversation Conversation identifier.
+     * @param int     $message      Conversation message identifier.
+     */
     public function clearMessage(Request $request, int $conversation, int $message): JsonResponse
     {
         /** @var User $authUser */
@@ -85,6 +118,12 @@ class ChatController extends Controller
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Hide multiple messages for the authenticated user.
+     *
+     * @param Request $request      Current HTTP request.
+     * @param int     $conversation Conversation identifier.
+     */
     public function clearMessages(Request $request, int $conversation): JsonResponse
     {
         /** @var User $authUser */
@@ -107,6 +146,12 @@ class ChatController extends Controller
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Open or reuse a conversation with a trip driver.
+     *
+     * @param SendChatMessageRequest $request Validated contact payload.
+     * @param Trip                   $trip    Route-bound trip.
+     */
     public function contactDriver(SendChatMessageRequest $request, Trip $trip): JsonResponse
     {
         /** @var User $authUser */
@@ -129,6 +174,13 @@ class ChatController extends Controller
         ], Response::HTTP_CREATED);
     }
 
+    /**
+     * Open or reuse a conversation with a passenger.
+     *
+     * @param SendChatMessageRequest $request Validated contact payload.
+     * @param Trip                   $trip    Route-bound trip.
+     * @param Person                 $person  Route-bound passenger.
+     */
     public function contactPassenger(SendChatMessageRequest $request, Trip $trip, Person $person): JsonResponse
     {
         /** @var User $authUser */
@@ -152,6 +204,11 @@ class ChatController extends Controller
         ], Response::HTTP_CREATED);
     }
 
+    /**
+     * Proxy broadcaster authentication requests.
+     *
+     * @param Request $request Current HTTP request.
+     */
     public function proxy(Request $request): JsonResponse
     {
         // At this point LocalJwtAuth already ran, user is authenticated

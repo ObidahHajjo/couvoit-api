@@ -16,7 +16,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class ReserveTripRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the request is authorized.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -24,7 +26,7 @@ class ReserveTripRequest extends FormRequest
     }
 
     /**
-     * Validation rules.
+     * Get the validation rules for reservation requests.
      *
      * @return array<string, ValidationRule|array|string>
      */

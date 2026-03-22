@@ -22,6 +22,9 @@ use Illuminate\Support\Collection;
  */
 readonly class TripEloquentRepository implements TripRepositoryInterface
 {
+    /**
+     * Create a new trip repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {

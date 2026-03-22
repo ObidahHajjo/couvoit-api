@@ -20,6 +20,9 @@ use Illuminate\Support\Collection;
  */
 readonly class CarModelEloquentRepository implements CarModelRepositoryInterface
 {
+    /**
+     * Create a new car model repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {

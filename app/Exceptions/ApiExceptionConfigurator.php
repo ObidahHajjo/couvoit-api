@@ -18,6 +18,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 final class ApiExceptionConfigurator
 {
+    /**
+     * Register API exception renderers.
+     */
     public static function register(Exceptions $exceptions): void
     {
         // 0) Your domain/business exceptions

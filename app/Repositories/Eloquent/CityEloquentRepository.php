@@ -19,11 +19,17 @@ use Illuminate\Support\Facades\DB;
  */
 readonly class CityEloquentRepository implements CityRepositoryInterface
 {
+    /**
+     * Create a new city repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {
     }
 
+    /**
+     * Normalize a city name for cache lookups.
+     */
     private function normalizeName(string $name): string
     {
         return mb_strtolower(trim($name));

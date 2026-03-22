@@ -36,10 +36,11 @@ interface CityRepositoryInterface
     /**
      * Find a city by (name, postal_code) or create it.
      *
-     * @param string $cityName
-     * @param string $postalCode
-     * @return City
+     * @param string $cityName   City name as provided by the caller.
+     * @param string $postalCode Postal code paired with the city name.
+     *
+     * @return City Matching or newly created city instance.
      */
-    public function firstOrCreate(string $cityName, string $postalCode);
+    public function firstOrCreate(string $cityName, string $postalCode): City;
 
 }

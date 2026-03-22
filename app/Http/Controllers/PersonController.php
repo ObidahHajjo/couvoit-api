@@ -11,8 +11,8 @@ use App\Models\Person;
 use App\Models\User;
 use App\Services\Interfaces\PersonServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 #[OA\Tag(name: 'Persons', description: 'Person endpoints (admin listing, profile, trips).')]
@@ -21,6 +21,9 @@ use Throwable;
  */
 class PersonController extends Controller
 {
+    /**
+     * Create a new person controller instance.
+     */
     public function __construct(
         private readonly PersonServiceInterface $persons
     ) {
@@ -39,6 +42,9 @@ class PersonController extends Controller
             new OA\Response(response: 403, description: 'Forbidden'),
         ]
     )]
+    /**
+     * List persons.
+     */
     public function index(): JsonResponse
     {
         $people = $this->persons->list();
@@ -62,6 +68,9 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Show a single person profile.
+     */
     public function show(Person $person): JsonResponse
     {
         return PersonResource::make($person)
@@ -83,9 +92,12 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * List trips driven by the given person.
+     */
     public function tripsDriver(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsDriver', [Person::class,$person]);
+        $this->authorize('viewTripsDriver', [Person::class, $person]);
 
         $trips = $this->persons->tripsAsDriver($person);
 
@@ -108,9 +120,12 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * List trips reserved by the given person.
+     */
     public function tripsPassenger(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsPassenger', [Person::class,$person]);
+        $this->authorize('viewTripsPassenger', [Person::class, $person]);
 
         $trips = $this->persons->tripsAsPassenger($person);
 
@@ -119,13 +134,6 @@ class PersonController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Complete my profile.
-     *
-     * Now: authenticated user is User, profile is User->person.
-     *
-     * @throws Throwable
-     */
     #[OA\Post(
         path: '/persons',
         operationId: 'personsStore',
@@ -140,13 +148,18 @@ class PersonController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Complete or initialize the authenticated user's profile.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function store(StorePersonRequest $request): JsonResponse
     {
         /** @var User $user */
         $user = auth()->user();
 
         $person = $user->person;
-        if (!$person) {
+        if (! $person) {
             $person = $this->persons->createForUser($user, []);
         }
 
@@ -158,9 +171,6 @@ class PersonController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[OA\Patch(
         path: '/persons/{id}',
         operationId: 'personsUpdate',
@@ -177,6 +187,11 @@ class PersonController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Update an existing person profile.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function update(UpdatePersonRequest $request, Person $person): JsonResponse
     {
         $updated = $this->persons->update($person, $request->validated());
@@ -201,6 +216,9 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Soft delete a person profile.
+     */
     public function destroy(Person $person): Response
     {
         $this->persons->softDelete($person);
@@ -222,6 +240,9 @@ class PersonController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Update the role attached to a person account.
+     */
     public function updateRole(UpdateRolePersonRequest $request): JsonResponse
     {
         $this->authorize('updateRole', Person::class);
