@@ -26,6 +26,7 @@ jobs:
 
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
+
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
@@ -77,11 +78,9 @@ jobs:
           curl -sS "${SONAR_HOST_URL}/api/system/status"
 
       - name: Check token fingerprint
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
         run: |
           printf '%s' "$SONAR_TOKEN" | sha256sum
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Debug Sonar config
         if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
@@ -94,11 +93,11 @@ jobs:
         if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
         uses: sonarsource/sonarqube-scan-action@v6
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         with:
           args: >
             -Dsonar.projectKey=covoit-api
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ env.SONAR_TOKEN }}
             -Dsonar.verbose=true
             -X
