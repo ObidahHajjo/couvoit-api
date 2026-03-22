@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -25,8 +26,11 @@ return new class extends Migration
             $table->softDeletes();
             $table->unique(['departure_time', 'person_id']);
         });
-        DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_available_seats CHECK (available_seats > 0);');
-        DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_distance_km CHECK (distance_km > 0);');
+
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_available_seats CHECK (available_seats > 0);');
+            DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_distance_km CHECK (distance_km > 0);');
+        }
     }
 
     /**

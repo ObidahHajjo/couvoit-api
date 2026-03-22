@@ -20,66 +20,54 @@ use App\Resolvers\Interfaces\CarReferenceResolverInterface;
  */
 final readonly class CarReferenceResolver implements CarReferenceResolverInterface
 {
-    /**
-     * @param BrandRepositoryInterface    $brands
-     * @param TypeRepositoryInterface     $types
-     * @param CarModelRepositoryInterface $models
-     * @param ColorRepositoryInterface    $colors
-     */
     public function __construct(
         private BrandRepositoryInterface $brands,
         private TypeRepositoryInterface $types,
         private CarModelRepositoryInterface $models,
         private ColorRepositoryInterface $colors,
-    ) {
-    }
+    ) {}
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function resolveForCreate(array $data): ResolvedCarRefs
     {
         $brandName = data_get($data, 'brand.name');
         $modelSearchKey = data_get($data, 'model.search_key');
-        $typeName  = data_get($data, 'type.name');
+        $typeName = data_get($data, 'type.name');
         $modelName = data_get($data, 'model.name');
-        $seats     = data_get($data, 'model.seats');
         $colorName = data_get($data, 'color.name');
-        $hexCode   = data_get($data, 'color.hex_code');
+        $hexCode = data_get($data, 'color.hex_code');
 
-        if (!is_string($brandName) || trim($brandName) === '') {
+        if (! is_string($brandName) || trim($brandName) === '') {
             throw new ValidationLogicException('brand.name is required.');
         }
-        if (!is_string($modelSearchKey) || trim($modelSearchKey) === '') {
+        if (! is_string($modelSearchKey) || trim($modelSearchKey) === '') {
             throw new ValidationLogicException('model.search_key is required.');
         }
-        if (!is_string($typeName) || trim($typeName) === '') {
+        if (! is_string($typeName) || trim($typeName) === '') {
             throw new ValidationLogicException('type.name is required.');
         }
-        if (!is_string($modelName) || trim($modelName) === '') {
+        if (! is_string($modelName) || trim($modelName) === '') {
             throw new ValidationLogicException('model.name is required.');
         }
-        if ($seats === null) {
-            throw new ValidationLogicException('model.seats is required.');
-        }
-        if (!is_string($colorName) || trim($colorName) === '') {
+        if (! is_string($colorName) || trim($colorName) === '') {
             throw new ValidationLogicException('color.name is required.');
         }
-        if (!is_string($hexCode) || trim($hexCode) === '') {
+        if (! is_string($hexCode) || trim($hexCode) === '') {
             throw new ValidationLogicException('color.hex_code is required.');
         }
 
         $brand = $this->brands->createOrFirst(strtolower(trim($brandName)));
-        $type  = $this->types->createOrFirst(strtolower(trim($typeName)));
+        $type = $this->types->createOrFirst(strtolower(trim($typeName)));
 
         $model = $this->models->createOrFirst([
-            'name'     => strtolower(trim($modelName)),
-            'seats'    => (int) $seats,
+            'name' => strtolower(trim($modelName)),
             'brand_id' => $brand->id,
-            'type_id'  => $type->id,
+            'type_id' => $type->id,
             'search_key' => $modelSearchKey,
         ]);
 
         $color = $this->colors->createOrFirst([
-            'name'     => strtolower(trim($colorName)),
+            'name' => strtolower(trim($colorName)),
             'hex_code' => strtolower(trim($hexCode)),
         ]);
 
@@ -91,7 +79,7 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         );
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function resolveModelForUpdate(Car $car, array $data): ?int
     {
         $modelName = data_get($data, 'model.name');
@@ -104,12 +92,10 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         $car->loadMissing('model');
 
         $currentBrandId = $car->model->brand_id;
-        $currentTypeId  = $car->model->type_id;
-        $currentSeats   = $car->model->seats;
+        $currentTypeId = $car->model->type_id;
 
         $brandName = data_get($data, 'brand.name');
-        $typeName  = data_get($data, 'type.name');
-        $seats     = data_get($data, 'model.seats');
+        $typeName = data_get($data, 'type.name');
 
         $brandId = $currentBrandId;
         if ($brandName !== null && trim((string) $brandName) !== '') {
@@ -121,23 +107,17 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
             $typeId = $this->types->createOrFirst(strtolower(trim((string) $typeName)))->id;
         }
 
-        $finalSeats = $currentSeats;
-        if ($seats !== null) {
-            $finalSeats = (int) $seats;
-        }
-
         $model = $this->models->createOrFirst([
-            'name'     => strtolower(trim((string) $modelName)),
+            'name' => strtolower(trim((string) $modelName)),
             'brand_id' => $brandId,
-            'type_id'  => $typeId,
-            'seats'    => $finalSeats,
+            'type_id' => $typeId,
             'search_key' => $modelSearchKey,
         ]);
 
         return $model->id;
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function resolveColorForUpdate(array $data): ?int
     {
         $colorName = data_get($data, 'color.name');
@@ -153,7 +133,7 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         }
 
         $color = $this->colors->createOrFirst([
-            'name'     => strtolower(trim((string) $colorName)),
+            'name' => strtolower(trim((string) $colorName)),
             'hex_code' => strtolower(trim((string) $hexCode)),
         ]);
 

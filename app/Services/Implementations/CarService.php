@@ -22,7 +22,6 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 readonly class CarService implements CarServiceInterface
 {
@@ -33,22 +32,21 @@ readonly class CarService implements CarServiceInterface
         private CarModelRepositoryInterface $modelRepository,
         private CarCatalogNormalizer $normalizer,
         private RepositoryCacheManager $cache,
-    ) {
-    }
+    ) {}
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function getCars(): Collection
     {
         return $this->carRepository->all();
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function findCar(Car $car): Car
     {
         return $car;
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function createCar(CarCreateData $dto, Person $person): Car
     {
         if ($person->car_id !== null) {
@@ -60,15 +58,16 @@ readonly class CarService implements CarServiceInterface
         return DB::transaction(function () use ($dto, $person, $modelSearchKey) {
             $refs = $this->carReferenceResolver->resolveForCreate([
                 'brand' => ['name' => $dto->brandName],
-                'type'  => ['name' => $dto->typeName],
-                'model' => ['name' => $dto->modelName, 'seats' => $dto->seats, 'search_key' => $modelSearchKey],
+                'type' => ['name' => $dto->typeName],
+                'model' => ['name' => $dto->modelName, 'search_key' => $modelSearchKey],
                 'color' => ['hex_code' => $dto->colorHex, 'name' => $dto->colorName],
             ]);
 
             $car = $this->carRepository->create([
-                'color_id'      => $refs->colorId,
-                'model_id'      => $refs->modelId,
+                'color_id' => $refs->colorId,
+                'model_id' => $refs->modelId,
                 'license_plate' => $dto->licensePlate,
+                'seats' => $dto->seats,
             ]);
 
             $this->personRepository->attachCar($person, $car->id);
@@ -77,7 +76,7 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function updateCar(Car $car, CarUpdateData $dto): Car
     {
         if ($dto->isEmpty()) {
@@ -92,7 +91,7 @@ readonly class CarService implements CarServiceInterface
                 $modelId = $this->carReferenceResolver->resolveModelForUpdate($car, [
                     'brand' => ['name' => $dto->brandName],
                     'type' => ['name' => $dto->typeName],
-                    'model' => ['name' => $dto->modelName, 'seats' => $dto->seats, 'search_key' => $modelSearchKey],
+                    'model' => ['name' => $dto->modelName, 'search_key' => $modelSearchKey],
                 ]);
 
                 $editable['model_id'] = $modelId;
@@ -119,6 +118,10 @@ readonly class CarService implements CarServiceInterface
                 $editable['license_plate'] = $dto->licensePlate;
             }
 
+            if ($dto->seats !== null) {
+                $editable['seats'] = $dto->seats;
+            }
+
             if ($editable === []) {
                 throw new ValidationLogicException('Nothing to update.');
             }
@@ -129,13 +132,13 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function deleteCar(Car $car): void
     {
         $person = auth()->user()->person;
         $trips = $person->trips;
-        if(!$trips->isEmpty()){
-            if($trips->contains(fn(Trip $trip) => Carbon::parse($trip->departure_time)->isAfter(Carbon::now()))){
+        if (! $trips->isEmpty()) {
+            if ($trips->contains(fn (Trip $trip) => Carbon::parse($trip->departure_time)->isAfter(Carbon::now()))) {
                 throw new ConflictException('You cannot delete a car that is in use.');
             }
         }
@@ -145,7 +148,7 @@ readonly class CarService implements CarServiceInterface
         $this->cache->invalidatePersonListAndItem($person->id);
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function search(string $q, string $brand): array
     {
         $q = trim($q);
@@ -186,7 +189,6 @@ readonly class CarService implements CarServiceInterface
                     'model' => [
                         'id' => $model->id,
                         'name' => $model->name,
-                        'seats' => $model->seats,
                         'brand' => [
                             'id' => $model->brand?->id ?? 0,
                             'name' => $model->brand?->name ?? '',
@@ -206,7 +208,7 @@ readonly class CarService implements CarServiceInterface
         $response = Http::timeout(30)
             ->acceptJson()
             ->get(
-                'https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/' . rawurlencode($brand),
+                'https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/'.rawurlencode($brand),
                 ['format' => 'json']
             );
 
@@ -230,13 +232,13 @@ readonly class CarService implements CarServiceInterface
                 continue;
             }
 
-            if (!$this->normalizer->containsNormalized($q, $modelName)) {
+            if (! $this->normalizer->containsNormalized($q, $modelName)) {
                 continue;
             }
 
             $dedupeKey = $this->normalizer->normalizeSearchKey($makeName)
-                . '|'
-                . $this->normalizer->normalizeSearchKey($modelName);
+                .'|'
+                .$this->normalizer->normalizeSearchKey($modelName);
 
             if (isset($seen[$dedupeKey])) {
                 continue;
@@ -249,7 +251,6 @@ readonly class CarService implements CarServiceInterface
                 'model' => [
                     'id' => 0,
                     'name' => $modelName,
-                    'seats' => null,
                     'brand' => [
                         'id' => 0,
                         'name' => $makeName,

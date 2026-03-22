@@ -24,15 +24,12 @@ class CarResourceTest extends TestCase
 
     /**
      * Dummy request instance used by JsonResource::toArray().
-     *
-     * @var Request
      */
     private Request $request;
 
     /**
      * Setup shared request instance.
      *
-     * @return void
      *
      * @throws Throwable
      */
@@ -45,18 +42,16 @@ class CarResourceTest extends TestCase
     /**
      * toArray() should include model.brand/type and color when relations are loaded.
      *
-     * @return void
      *
      * @throws Throwable
      */
     public function test_to_array_includes_nested_relations_when_loaded(): void
     {
         $brand = Brand::query()->create(['name' => 'toyota']);
-        $type  = Type::query()->create(['type' => 'suv']);
+        $type = Type::query()->create(['type' => 'suv']);
 
         $model = CarModel::query()->create([
             'name' => 'rav4',
-            'seats' => 5,
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);
@@ -68,6 +63,7 @@ class CarResourceTest extends TestCase
 
         $car = Car::query()->create([
             'license_plate' => 'AA-123-BB',
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
@@ -79,11 +75,11 @@ class CarResourceTest extends TestCase
 
         $this->assertSame($car->id, $payload['id']);
         $this->assertSame('AA-123-BB', $payload['license_plate']);
+        $this->assertSame(5, $payload['seats']);
 
         $this->assertIsArray($payload['model']);
         $this->assertSame($model->id, $payload['model']['id']);
         $this->assertSame('rav4', $payload['model']['name']);
-        $this->assertSame(5, $payload['model']['seats']);
 
         $this->assertIsArray($payload['model']['brand']);
         $this->assertSame($brand->id, $payload['model']['brand']['id']);
@@ -101,18 +97,16 @@ class CarResourceTest extends TestCase
     /**
      * toArray() should omit nested sections when relations are NOT loaded.
      *
-     * @return void
      *
      * @throws Throwable
      */
     public function test_to_array_omits_nested_relations_when_not_loaded(): void
     {
         $brand = Brand::query()->create(['name' => 'toyota']);
-        $type  = Type::query()->create(['type' => 'suv']);
+        $type = Type::query()->create(['type' => 'suv']);
 
         $model = CarModel::query()->create([
             'name' => 'rav4',
-            'seats' => 5,
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);
@@ -124,6 +118,7 @@ class CarResourceTest extends TestCase
 
         $car = Car::query()->create([
             'license_plate' => 'AA-123-BB',
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
@@ -142,11 +137,11 @@ class CarResourceTest extends TestCase
 
         $this->assertSame($car->id, $payload['id']);
         $this->assertSame('AA-123-BB', $payload['license_plate']);
+        $this->assertSame(5, $payload['seats']);
 
         if (isset($payload['model']) && is_array($payload['model'])) {
             $this->assertArrayHasKey('id', $payload['model']);
             $this->assertArrayHasKey('name', $payload['model']);
-            $this->assertArrayHasKey('seats', $payload['model']);
 
             $this->assertArrayNotHasKey('brand', $payload['model']);
             $this->assertArrayNotHasKey('type', $payload['model']);

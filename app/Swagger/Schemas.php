@@ -57,10 +57,9 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(
             property: 'model',
-            required: ['name', 'seats'],
+            required: ['name'],
             properties: [
                 new OA\Property(property: 'name', type: 'string', example: '308'),
-                new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5),
             ],
             type: 'object',
         ),
@@ -74,7 +73,7 @@ use OpenApi\Attributes as OA;
             type: 'object',
         ),
         new OA\Property(property: 'carregistration', type: 'string', example: 'AA123BB'),
-        new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5, nullable: true),
+        new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5),
     ],
     type: 'object'
 )]
@@ -96,11 +95,11 @@ use OpenApi\Attributes as OA;
             property: 'model',
             properties: [
                 new OA\Property(property: 'name', type: 'string', example: '308', nullable: true),
-                new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5, nullable: true),
             ],
             type: 'object',
             nullable: true,
         ),
+        new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5, nullable: true),
         new OA\Property(
             property: 'brand',
             properties: [

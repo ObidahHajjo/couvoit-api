@@ -42,11 +42,9 @@ class StoreCarRequest extends FormRequest
             ]);
         }
 
-        if ($this->has('seats')) {
+        if (! $this->has('seats') && data_get($this->input('model', []), 'seats') !== null) {
             $this->merge([
-                'model' => array_merge((array) $this->input('model', []), [
-                    'seats' => $this->input('seats'),
-                ]),
+                'seats' => data_get($this->input('model', []), 'seats'),
             ]);
         }
 
@@ -94,7 +92,7 @@ class StoreCarRequest extends FormRequest
 
             'model' => ['required', 'array'],
             'model.name' => ['required', 'string', 'min:1', 'max:255'],
-            'model.seats' => ['required', 'integer', 'min:1', 'max:9'],
+            'seats' => ['required', 'integer', 'min:1', 'max:9'],
 
             'color' => ['required', 'array'],
             'color.name' => ['required', 'string', 'min:1', 'max:50'],

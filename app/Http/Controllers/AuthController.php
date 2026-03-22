@@ -12,8 +12,8 @@ use App\Services\Interfaces\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
-use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Auth endpoints (Local JWT).
@@ -95,7 +95,7 @@ class AuthController extends Controller
                 false,
                 $cookieOptions['same_site']
             )->cookie(
-                "refresh_token",
+                'refresh_token',
                 $result['refresh_token'],
                 43200,
                 '/',
@@ -188,6 +188,7 @@ class AuthController extends Controller
     public function logout(): JsonResponse
     {
         $this->authService->logout();
+
         return response()->json([
             'data' => [
                 'message' => 'Logged out successfully',
@@ -212,6 +213,7 @@ class AuthController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
+        $user->refresh();
         $user->loadMissing(['person', 'role']);
 
         return response()->json([
@@ -265,7 +267,8 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
         $status = $this->authService->forgetPassword($validated['email']);
-        Log::info('status: ' . $status);
+        Log::info('status: '.$status);
+
         return response()->json([
             'message' => 'If an account exists for this email, a reset link has been sent.',
             'status' => $status,

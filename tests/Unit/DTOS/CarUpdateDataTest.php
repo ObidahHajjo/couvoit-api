@@ -16,7 +16,6 @@ class CarUpdateDataTest extends TestCase
     /**
      * fromArray() should map partial updates and normalize values.
      *
-     * @return void
      *
      * @throws Throwable
      */
@@ -24,9 +23,10 @@ class CarUpdateDataTest extends TestCase
     {
         $dto = CarUpdateData::fromArray([
             'license_plate' => ' ab-123-cd ',
-            'model' => ['name' => '  Golf  ', 'seats' => 4],
+            'model' => ['name' => '  Golf  '],
+            'seats' => 4,
             'brand' => ['name' => '  VW '],
-            'type'  => ['name' => '  Hatch '],
+            'type' => ['name' => '  Hatch '],
             'color' => ['hex_code' => ' #00AAFF '],
         ]);
 
@@ -42,7 +42,6 @@ class CarUpdateDataTest extends TestCase
     /**
      * isEmpty() should return true when no supported keys are provided.
      *
-     * @return void
      *
      * @throws Throwable
      */

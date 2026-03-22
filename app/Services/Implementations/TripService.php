@@ -11,17 +11,16 @@ use App\Models\Trip;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\TripRepositoryInterface;
-use App\Services\Interfaces\TripEmailServiceInterface;
+use App\Resolvers\Interfaces\AddressResolverInterface;
 use App\Services\Interfaces\OrsRoutingClientInterface;
+use App\Services\Interfaces\TripEmailServiceInterface;
 use App\Services\Interfaces\TripServiceInterface;
 use App\Support\Cache\RepositoryCacheManager;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Resolvers\Interfaces\AddressResolverInterface;
 use Throwable;
 
 /**
@@ -39,50 +38,47 @@ use Throwable;
 readonly class TripService implements TripServiceInterface
 {
     public function __construct(
-        private TripRepositoryInterface    $trips,
-        private PersonRepositoryInterface  $persons,
-        private AddressResolverInterface   $addressResolver,
+        private TripRepositoryInterface $trips,
+        private PersonRepositoryInterface $persons,
+        private AddressResolverInterface $addressResolver,
         private AddressRepositoryInterface $addresses,
-        private OrsRoutingClientInterface  $orsRoutingClient,
-        private RepositoryCacheManager     $cache,
-        private TripEmailServiceInterface  $tripEmails
-    )
-    {
-    }
+        private OrsRoutingClientInterface $orsRoutingClient,
+        private RepositoryCacheManager $cache,
+        private TripEmailServiceInterface $tripEmails
+    ) {}
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function searchTrips(
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int     $perPage = 15
-    ): LengthAwarePaginator
-    {
+        int $perPage = 15
+    ): LengthAwarePaginator {
         return $this->trips->search($startingCity, $arrivalCity, $tripDate, $perPage);
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function getTripPassengers(Trip $trip): Collection
     {
         return $this->trips->passengers($trip);
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function createTrip(array $payload, Person $authPerson): Trip
     {
-        $driverId = (int)($payload['person_id'] ?? $authPerson->id);
+        $driverId = (int) ($payload['person_id'] ?? $authPerson->id);
         $user = $authPerson->user;
 
-        $availableSeats = (int)($payload['available_seats'] ?? 0);
-        $personCarAvailableSeats = $authPerson->car->model->seats;
+        $availableSeats = (int) ($payload['available_seats'] ?? 0);
+        $personCarAvailableSeats = $authPerson->car->seats;
 
-        if($availableSeats > $personCarAvailableSeats) {
+        if ($availableSeats > $personCarAvailableSeats) {
             throw new ValidationLogicException('Available seats cannot be greater than the car\'s seats.');
         }
 
-        if ($driverId !== $authPerson->id && !$user->isAdmin()) {
+        if ($driverId !== $authPerson->id && ! $user->isAdmin()) {
             throw new ForbiddenException('You cannot create a trip for another user.');
         }
 
@@ -117,61 +113,72 @@ readonly class TripService implements TripServiceInterface
                 $arrival->city?->name
             );
 
-            $from = cache()->remember('geo:' . sha1($depStr), 86400, fn() => $this->orsRoutingClient->geocode($depStr));
-            $to = cache()->remember('geo:' . sha1($arrStr), 86400, fn() => $this->orsRoutingClient->geocode($arrStr));
+            $from = cache()->remember('geo:'.sha1($depStr), 86400, fn () => $this->orsRoutingClient->geocode($depStr));
+            $to = cache()->remember('geo:'.sha1($arrStr), 86400, fn () => $this->orsRoutingClient->geocode($arrStr));
 
             $routeSummary = cache()->remember(
-                'route:' . sha1(json_encode([$from, $to])),
+                'route:'.sha1(json_encode([$from, $to])),
                 86400,
-                fn() => $this->orsRoutingClient->routeSummary($from, $to)
+                fn () => $this->orsRoutingClient->routeSummary($from, $to)
             );
 
             $departureTime = Carbon::parse($payload['trip_datetime']);
-            $durationSeconds = (int)$routeSummary['duration_seconds'];
+            $durationSeconds = (int) $routeSummary['duration_seconds'];
             $arrivalTime = $departureTime->copy()->addSeconds($durationSeconds);
 
             $trip = $this->trips->create([
                 'departure_time' => $payload['trip_datetime'],
                 'distance_km' => $routeSummary['distance_km'],
                 'available_seats' => $payload['available_seats'],
-                'smoking_allowed' => (bool)($payload['smoking_allowed'] ?? false),
+                'smoking_allowed' => (bool) ($payload['smoking_allowed'] ?? false),
                 'departure_address_id' => $departureAddressId,
                 'arrival_address_id' => $arrivalAddressId,
                 'person_id' => $driver->id,
                 'arrival_time' => $arrivalTime,
             ]);
 
-            return $this->trips->findByIdOrFail((int)$trip->id);
+            return $this->trips->findByIdOrFail((int) $trip->id);
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function updateTrip(Trip $trip, array $payload, Person $authPerson): Trip
     {
         return DB::transaction(function () use ($trip, $payload) {
             $updates = [];
 
-            if (array_key_exists('kms', $payload)) $updates['distance_km'] = $payload['kms'];
-            if (array_key_exists('trip_datetime', $payload)) $updates['departure_time'] = $payload['trip_datetime'];
-            if (array_key_exists('available_seats', $payload)) $updates['available_seats'] = $payload['available_seats'];
-            if (array_key_exists('smoking_allowed', $payload)) $updates['smoking_allowed'] = (bool)$payload['smoking_allowed'];
+            if (array_key_exists('kms', $payload)) {
+                $updates['distance_km'] = $payload['kms'];
+            }
+            if (array_key_exists('trip_datetime', $payload)) {
+                $updates['departure_time'] = $payload['trip_datetime'];
+            }
+            if (array_key_exists('available_seats', $payload)) {
+                $updates['available_seats'] = $payload['available_seats'];
+            }
+            if (array_key_exists('smoking_allowed', $payload)) {
+                $updates['smoking_allowed'] = (bool) $payload['smoking_allowed'];
+            }
 
-            if (!empty($payload['starting_address'] ?? null)) {
+            if (! empty($payload['starting_address'] ?? null)) {
                 $updates['departure_address_id'] = $this->addressResolver->resolveId($payload['starting_address']);
             }
 
-            if (!empty($payload['arrival_address'] ?? null)) {
+            if (! empty($payload['arrival_address'] ?? null)) {
                 $updates['arrival_address_id'] = $this->addressResolver->resolveId($payload['arrival_address']);
             }
 
-            if (empty($updates)) throw new ValidationLogicException('Nothing to update.');
+            if (empty($updates)) {
+                throw new ValidationLogicException('Nothing to update.');
+            }
 
             $this->trips->update($trip->id, $updates);
+
             return $this->trips->findByIdOrFail($trip->id);
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function cancelTrip(Trip $trip, Person $authPerson): void
     {
         $this->assertTripNotStarted($trip);
@@ -186,15 +193,15 @@ readonly class TripService implements TripServiceInterface
         DB::transaction(function () use ($trip, $tripForEmail) {
             $this->trips->delete($trip->id);
 
-            DB::afterCommit(fn() => $this->sendEmailSafely(
-                fn() => $this->tripEmails->sendTripCancelledByDriver($tripForEmail),
+            DB::afterCommit(fn () => $this->sendEmailSafely(
+                fn () => $this->tripEmails->sendTripCancelledByDriver($tripForEmail),
                 'driver trip cancellation',
                 ['trip_id' => $trip->id]
             ));
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function deleteTripPermanently(Trip $trip, Person $authPerson): void
     {
         DB::transaction(function () use ($trip) {
@@ -202,11 +209,11 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function reserveSeat(Trip $trip, int $personId, Person $authPerson): bool
     {
         $user = $authPerson->user;
-        if (!$user->isAdmin() && $personId !== $authPerson->id) {
+        if (! $user->isAdmin() && $personId !== $authPerson->id) {
             throw new ForbiddenException('You can only reserve for yourself.');
         }
         if ($trip->person_id === $personId) {
@@ -222,7 +229,9 @@ readonly class TripService implements TripServiceInterface
                 ->wherePivot('person_id', $personId)
                 ->exists();
 
-            if ($already) throw new ConflictException('You already reserved this trip.');
+            if ($already) {
+                throw new ConflictException('You already reserved this trip.');
+            }
 
             $reserved = $lockedTrip->passengers()->count();
             if ($reserved >= $lockedTrip->available_seats) {
@@ -246,7 +255,7 @@ readonly class TripService implements TripServiceInterface
                 );
 
                 $this->sendEmailSafely(
-                    fn() => $this->tripEmails->sendReservationCreated($tripForEmail, $passenger),
+                    fn () => $this->tripEmails->sendReservationCreated($tripForEmail, $passenger),
                     'reservation confirmation',
                     ['trip_id' => $trip->id, 'person_id' => $personId]
                 );
@@ -256,11 +265,11 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function cancelReservation(Trip $trip, int $personId, Person $authPerson): bool
     {
         $user = $authPerson->user;
-        if (!$user->isAdmin() && $personId !== $authPerson->id) {
+        if (! $user->isAdmin() && $personId !== $authPerson->id) {
             throw new ForbiddenException('You can only cancel for yourself.');
         }
 
@@ -277,7 +286,9 @@ readonly class TripService implements TripServiceInterface
             ]);
 
             $deleted = $lockedTrip->passengers()->detach($personId);
-            if ($deleted === 0) throw new NotFoundException('Reservation not found.');
+            if ($deleted === 0) {
+                throw new NotFoundException('Reservation not found.');
+            }
 
             DB::afterCommit(function () use ($trip, $personId, $passenger, $tripForEmail) {
                 $this->cache->invalidateReservationWrite(
@@ -287,7 +298,7 @@ readonly class TripService implements TripServiceInterface
                 );
 
                 $this->sendEmailSafely(
-                    fn() => $this->tripEmails->sendReservationCancelled($tripForEmail, $passenger),
+                    fn () => $this->tripEmails->sendReservationCancelled($tripForEmail, $passenger),
                     'reservation cancellation',
                     ['trip_id' => $trip->id, 'person_id' => $personId]
                 );
@@ -297,7 +308,7 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function getPersonById(int $personId): Person
     {
         return $this->persons->findById($personId);
@@ -318,7 +329,7 @@ readonly class TripService implements TripServiceInterface
         try {
             $callback();
         } catch (Throwable $exception) {
-            Log::warning('Failed to send trip email after ' . $context . '.', array_merge($extra, [
+            Log::warning('Failed to send trip email after '.$context.'.', array_merge($extra, [
                 'exception' => $exception->getMessage(),
             ]));
         }

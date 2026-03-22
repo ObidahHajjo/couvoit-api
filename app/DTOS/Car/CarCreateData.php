@@ -6,15 +6,6 @@ use InvalidArgumentException;
 
 final readonly class CarCreateData
 {
-    /**
-     * @param string $licensePlate
-     * @param string $modelName
-     * @param int    $seats
-     * @param string $brandName
-     * @param string $typeName
-     * @param string $colorHex
-     * @param string $colorName
-     */
     public function __construct(
         public string $licensePlate,
         public string $modelName,
@@ -30,9 +21,7 @@ final readonly class CarCreateData
      *
      * Supports both normalized keys and legacy payload structure.
      *
-     * @param array<string, mixed> $data
-     *
-     * @return self
+     * @param  array<string, mixed>  $data
      *
      * @throws InvalidArgumentException
      */
@@ -44,9 +33,9 @@ final readonly class CarCreateData
             ?? null;
 
         $modelName = data_get($data, 'model.name');
-        $seats     = data_get($data, 'model.seats');
+        $seats = $data['seats'] ?? data_get($data, 'model.seats');
         $brandName = data_get($data, 'brand.name');
-        $typeName  = data_get($data, 'type.name');
+        $typeName = data_get($data, 'type.name');
 
         // align with schema: colors.hex_code
         $colorHex = data_get($data, 'color.hex_code')
@@ -64,7 +53,7 @@ final readonly class CarCreateData
         }
 
         if (! is_numeric($seats) || (int) $seats <= 0) {
-            throw new InvalidArgumentException('model.seats must be a positive integer.');
+            throw new InvalidArgumentException('seats must be a positive integer.');
         }
 
         if (! is_string($brandName) || trim($brandName) === '') {

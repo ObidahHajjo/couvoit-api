@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\DTOS\Car\CarCreateData;
 use App\DTOS\Car\CarUpdateData;
+use App\DTOS\Car\ResolvedCarRefs;
 use App\Exceptions\ConflictException;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
@@ -15,19 +16,25 @@ use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 use App\Services\Implementations\CarService;
 use App\Support\Cache\RepositoryCacheManager;
 use App\Support\Car\CarCatalogNormalizer;
-use App\DTOS\Car\ResolvedCarRefs;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
 
 class CarServiceTest extends TestCase
 {
     private CarRepositoryInterface $cars;
+
     private CarReferenceResolverInterface $resolver;
+
     private PersonRepositoryInterface $persons;
+
     private CarModelRepositoryInterface $models;
+
     private CarCatalogNormalizer $normalizer;
+
     private RepositoryCacheManager $cache;
+
     private CarService $service;
 
     protected function setUp(): void
@@ -38,7 +45,7 @@ class CarServiceTest extends TestCase
         $this->resolver = Mockery::mock(CarReferenceResolverInterface::class);
         $this->persons = Mockery::mock(PersonRepositoryInterface::class);
         $this->models = Mockery::mock(CarModelRepositoryInterface::class);
-        $this->normalizer = new CarCatalogNormalizer();
+        $this->normalizer = new CarCatalogNormalizer;
         $this->cache = Mockery::mock(RepositoryCacheManager::class);
 
         $this->service = new CarService(
@@ -49,6 +56,8 @@ class CarServiceTest extends TestCase
             $this->normalizer,
             $this->cache
         );
+
+        DB::shouldReceive('transaction')->andReturnUsing(static fn (callable $callback) => $callback());
     }
 
     protected function tearDown(): void
@@ -59,7 +68,7 @@ class CarServiceTest extends TestCase
 
     public function test_get_cars_delegates_to_repository(): void
     {
-        $collection = new Collection([new Car()]);
+        $collection = new Collection([new Car]);
         $this->cars->shouldReceive('all')->once()->andReturn($collection);
 
         $res = $this->service->getCars();
@@ -112,10 +121,10 @@ class CarServiceTest extends TestCase
             ->once()
             ->andReturn($refs);
 
-        $created = new Car();
+        $created = new Car;
         $created->id = 99;
 
-        $fresh = new Car();
+        $fresh = new Car;
         $fresh->id = 99;
 
         $this->cars->shouldReceive('create')
@@ -124,6 +133,7 @@ class CarServiceTest extends TestCase
                 'color_id' => 1,
                 'model_id' => 2,
                 'license_plate' => 'AA-123-BB',
+                'seats' => 5,
             ])
             ->andReturn($created);
 
@@ -144,8 +154,8 @@ class CarServiceTest extends TestCase
 
     public function test_update_car_throws_when_empty(): void
     {
-        $car = new Car();
-        $dto = new CarUpdateData();
+        $car = new Car;
+        $dto = new CarUpdateData;
 
         $this->expectException(ValidationLogicException::class);
 
@@ -154,7 +164,7 @@ class CarServiceTest extends TestCase
 
     public function test_update_car_updates_license_plate(): void
     {
-        $car = new Car();
+        $car = new Car;
         $car->id = 10;
 
         $dto = new CarUpdateData(licensePlate: 'AB-999-CD');
@@ -164,7 +174,7 @@ class CarServiceTest extends TestCase
             ->with($car, ['license_plate' => 'AB-999-CD'])
             ->andReturnTrue();
 
-        $fresh = new Car();
+        $fresh = new Car;
         $fresh->id = 10;
 
         $this->cars->shouldReceive('findOrFail')
@@ -179,12 +189,11 @@ class CarServiceTest extends TestCase
 
     public function test_update_car_updates_model_via_resolver(): void
     {
-        $car = new Car();
+        $car = new Car;
         $car->id = 10;
 
         $dto = new CarUpdateData(
             modelName: 'golf',
-            seats: 5,
             brandName: 'vw',
             typeName: 'hatch',
         );
@@ -199,7 +208,32 @@ class CarServiceTest extends TestCase
             ->with($car, ['model_id' => 123])
             ->andReturnTrue();
 
-        $fresh = new Car();
+        $fresh = new Car;
+        $fresh->id = 10;
+
+        $this->cars->shouldReceive('findOrFail')
+            ->once()
+            ->with(10)
+            ->andReturn($fresh);
+
+        $res = $this->service->updateCar($car, $dto);
+
+        $this->assertSame(10, $res->id);
+    }
+
+    public function test_update_car_updates_seats(): void
+    {
+        $car = new Car;
+        $car->id = 10;
+
+        $dto = new CarUpdateData(seats: 6);
+
+        $this->cars->shouldReceive('update')
+            ->once()
+            ->with($car, ['seats' => 6])
+            ->andReturnTrue();
+
+        $fresh = new Car;
         $fresh->id = 10;
 
         $this->cars->shouldReceive('findOrFail')
