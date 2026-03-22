@@ -71,6 +71,17 @@ class AuthControllerTest extends TestCase
         $res->assertJsonPath('data.token_type', 'Bearer');
         $res->assertJsonPath('data.refresh_token', 'r');
         $res->assertJsonPath('data.expires_in', 3600);
+
+        $setCookieHeaders = $res->headers->getCookies();
+        $accessCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'access_token');
+        $refreshCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'refresh_token');
+
+        $this->assertNotNull($accessCookie);
+        $this->assertNotNull($refreshCookie);
+        $this->assertFalse($accessCookie->isSecure());
+        $this->assertFalse($refreshCookie->isSecure());
+        $this->assertSame('lax', strtolower($accessCookie->getSameSite() ?? ''));
+        $this->assertSame('lax', strtolower($refreshCookie->getSameSite() ?? ''));
     }
 
     public function test_refresh_returns_ok_with_token_resource(): void

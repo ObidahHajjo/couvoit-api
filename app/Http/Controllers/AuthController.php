@@ -43,6 +43,7 @@ class AuthController extends Controller
     {
         $data = $request->validated();
         $result = $this->authService->register($data['email'], $data['password']);
+        $cookieOptions = $this->authCookieOptions();
 
         return (new AuthTokenResource($result))
             ->response()
@@ -50,12 +51,12 @@ class AuthController extends Controller
                 'access_token',
                 $result['access_token'],
                 60,
-                '/',              // path
-                null,             // domain (null = current domain)
-                true,             // Secure (HTTPS only)
-                true,             // HttpOnly (not accessible via JS)
-                false,            // raw
-                'Strict'          // SameSite
+                '/',
+                null,
+                $cookieOptions['secure'],
+                true,
+                false,
+                $cookieOptions['same_site']
             )
             ->setStatusCode(Response::HTTP_CREATED);
     }
@@ -79,6 +80,7 @@ class AuthController extends Controller
     {
         $data = $request->validated();
         $result = $this->authService->login($data['email'], $data['password']);
+        $cookieOptions = $this->authCookieOptions();
 
         return (new AuthTokenResource($result))
             ->response()
@@ -86,22 +88,22 @@ class AuthController extends Controller
                 'access_token',
                 $result['access_token'],
                 60,
-                '/',              // path
-                null,             // domain (null = current domain)
-                true,             // Secure (HTTPS only)
-                true,             // HttpOnly (not accessible via JS)
-                false,            // raw
-                'Strict'          // SameSite
+                '/',
+                null,
+                $cookieOptions['secure'],
+                true,
+                false,
+                $cookieOptions['same_site']
             )->cookie(
                 "refresh_token",
                 $result['refresh_token'],
                 43200,
                 '/',
                 null,
-                true,
+                $cookieOptions['secure'],
                 true,
                 false,
-                'Strict'
+                $cookieOptions['same_site']
             )
             ->setStatusCode(Response::HTTP_OK);
     }
@@ -125,6 +127,7 @@ class AuthController extends Controller
     {
         $data = $request->validated();
         $result = $this->authService->refresh($data['refresh_token']);
+        $cookieOptions = $this->authCookieOptions();
 
         return (new AuthTokenResource($result))
             ->response()
@@ -132,25 +135,39 @@ class AuthController extends Controller
                 'access_token',
                 $result['access_token'],
                 21600,
-                '/',              // path
-                null,             // domain (null = current domain)
-                true,             // Secure (HTTPS only)
-                true,             // HttpOnly (not accessible via JS)
-                false,            // raw
-                'Strict'          // SameSite
+                '/',
+                null,
+                $cookieOptions['secure'],
+                true,
+                false,
+                $cookieOptions['same_site']
             )
             ->cookie(
                 'refresh_token',
                 $result['refresh_token'],
                 43200,
                 '/',
-                 null,
-                true,
+                null,
+                $cookieOptions['secure'],
                 true,
                 false,
-                'Strict'
+                $cookieOptions['same_site']
             )
             ->setStatusCode(Response::HTTP_OK);
+    }
+
+    /**
+     * @return array{secure: bool, same_site: string}
+     */
+    private function authCookieOptions(): array
+    {
+        $isHttps = request()->isSecure();
+        $isProduction = app()->environment('production');
+
+        return [
+            'secure' => $isHttps || $isProduction,
+            'same_site' => ($isHttps || $isProduction) ? 'Strict' : 'Lax',
+        ];
     }
 
     #[OA\Post(
