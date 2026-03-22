@@ -9,6 +9,7 @@ use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 use App\Services\Implementations\AuthService;
 use App\Services\Implementations\BrandService;
 use App\Services\Implementations\CarService;
+use App\Services\Implementations\ChatService;
 use App\Services\Implementations\OrsRoutingClient;
 use App\Services\Implementations\PersonService;
 use App\Services\Implementations\ResendTripEmailService;
@@ -17,6 +18,7 @@ use App\Services\Implementations\UserPersonalDataPurgeService;
 use App\Services\Interfaces\AuthServiceInterface;
 use App\Services\Interfaces\BrandServiceInterface;
 use App\Services\Interfaces\CarServiceInterface;
+use App\Services\Interfaces\ChatServiceInterface;
 use App\Services\Interfaces\OrsRoutingClientInterface;
 use App\Services\Interfaces\PersonServiceInterface;
 use App\Services\Interfaces\TripEmailServiceInterface;
@@ -37,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BrandServiceInterface::class, BrandService::class);
 
         $this->app->bind(CarServiceInterface::class, CarService::class);
+
+        $this->app->bind(ChatServiceInterface::class, ChatService::class);
 
         $this->app->bind(PersonServiceInterface::class, PersonService::class);
 
@@ -61,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
-            return config('app.frontend_url') . "/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
+            return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
     }
 }

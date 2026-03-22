@@ -1,11 +1,12 @@
 <?php
 
-use App\Http\Controllers\PersonController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\TripController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CarController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\TripController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,7 +14,7 @@ use App\Http\Controllers\CarController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return json_encode(["message" => "ok"]);
+    return json_encode(['message' => 'ok']);
 });
 
 Route::prefix('auth')->group(function () {
@@ -46,18 +47,24 @@ Route::middleware('jwt')->group(function () {
     Route::patch('/persons/{person}', [PersonController::class, 'update']);
     Route::delete('/persons/{person}', [PersonController::class, 'destroy']);
 
-
     /* ===== TRIPS ===== */
     Route::get('/trips', [TripController::class, 'index']);
     Route::get('/trips/{trip}', [TripController::class, 'show']);
-    Route::get("/trips/{trip}/person", [TripController::class, 'passengers']);
+    Route::get('/trips/{trip}/person', [TripController::class, 'passengers']);
+    Route::post('/trips/{trip}/contact-driver', [ChatController::class, 'contactDriver']);
     Route::post('/trips', [TripController::class, 'store']);
-    Route::patch("/trips/{trip}", [TripController::class, 'update']);
+    Route::patch('/trips/{trip}', [TripController::class, 'update']);
     Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
     Route::post('/trips/{trip}/person', [TripController::class, 'reserve']);
     Route::patch('/trips/{trip}/cancel', [TripController::class, 'cancel']);
     Route::delete('/trips/{trip}/reservations', [TripController::class, 'cancelReservation']);
-
+    Route::get('/conversations', [ChatController::class, 'index']);
+    Route::get('/conversations/{conversation}', [ChatController::class, 'show']);
+    Route::post('/conversations/{conversation}/messages', [ChatController::class, 'send']);
+    Route::get('/chat/conversations', [ChatController::class, 'index']);
+    Route::get('/chat/conversations/{conversation}', [ChatController::class, 'show']);
+    Route::post('/chat/conversations/{conversation}/messages', [ChatController::class, 'send']);
+    Route::post('/my-trips/{trip}/contact-passenger/{person}', [ChatController::class, 'contactPassenger']);
 
     /* ===== BRANDS ===== */
     Route::get('/brands', [BrandController::class, 'index']);
