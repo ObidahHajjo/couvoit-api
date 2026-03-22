@@ -8,6 +8,8 @@ return [
     ],
     'chat' => [
         'conversation_cleared' => 'La conversation a ete effacee pour votre compte.',
+        'message_cleared' => 'Le message a ete efface pour votre compte.',
+        'messages_cleared' => 'Les messages selectionnes ont ete effaces pour votre compte.',
     ],
     'errors' => [
         'validation' => 'Les donnees fournies sont invalides.',

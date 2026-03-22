@@ -8,6 +8,8 @@ return [
     ],
     'chat' => [
         'conversation_cleared' => 'تم مسح المحادثة لهذا الحساب فقط.',
+        'message_cleared' => 'تم مسح الرسالة لهذا الحساب فقط.',
+        'messages_cleared' => 'تم مسح الرسائل المحددة لهذا الحساب فقط.',
     ],
     'errors' => [
         'validation' => 'البيانات المقدمة غير صالحة.',

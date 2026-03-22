@@ -8,6 +8,8 @@ return [
     ],
     'chat' => [
         'conversation_cleared' => 'Conversation cleared for your account.',
+        'message_cleared' => 'Message cleared for your account.',
+        'messages_cleared' => 'Selected messages cleared for your account.',
     ],
     'errors' => [
         'validation' => 'The given data was invalid.',

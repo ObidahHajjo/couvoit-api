@@ -6,6 +6,7 @@ use App\Events\ChatMessageSent;
 use App\Exceptions\ForbiddenException;
 use App\Exceptions\NotFoundException;
 use App\Models\Conversation;
+use App\Models\ConversationHiddenMessage;
 use App\Models\ConversationMessage;
 use App\Models\ConversationParticipantState;
 use App\Models\Person;
@@ -87,6 +88,40 @@ class ChatService implements ChatServiceInterface
                 'cleared_at' => now(),
             ]
         );
+
+        return $this->getConversationForPerson($conversationId, $authPerson);
+    }
+
+    public function clearMessageForPerson(int $conversationId, int $messageId, Person $authPerson): Conversation
+    {
+        return $this->clearMessagesForPerson($conversationId, [$messageId], $authPerson);
+    }
+
+    public function clearMessagesForPerson(int $conversationId, array $messageIds, Person $authPerson): Conversation
+    {
+        $conversation = $this->getConversationForPerson($conversationId, $authPerson);
+
+        $normalizedMessageIds = array_values(array_unique(array_map('intval', $messageIds)));
+        if ($normalizedMessageIds === []) {
+            throw new ForbiddenException('At least one message must be selected.');
+        }
+
+        $messages = ConversationMessage::query()
+            ->where('conversation_id', $conversation->id)
+            ->whereIn('id', $normalizedMessageIds)
+            ->get();
+
+        if ($messages->count() !== count($normalizedMessageIds)) {
+            throw new NotFoundException('One or more messages were not found.');
+        }
+
+        foreach ($messages as $message) {
+            ConversationHiddenMessage::query()->firstOrCreate([
+                'conversation_id' => $conversation->id,
+                'person_id' => $authPerson->id,
+                'conversation_message_id' => $message->id,
+            ]);
+        }
 
         return $this->getConversationForPerson($conversationId, $authPerson);
     }
@@ -193,13 +228,20 @@ class ChatService implements ChatServiceInterface
      */
     private function applyVisibleMessagesScope($query, Person $authPerson)
     {
-        return $query->whereNotExists(function ($subQuery) use ($authPerson): void {
-            $subQuery->selectRaw('1')
-                ->from('conversation_participant_states as cps')
-                ->whereColumn('cps.conversation_id', 'conversation_messages.conversation_id')
-                ->where('cps.person_id', $authPerson->id)
-                ->whereNotNull('cps.cleared_at')
-                ->whereColumn('conversation_messages.created_at', '<=', 'cps.cleared_at');
-        });
+        return $query
+            ->whereNotExists(function ($subQuery) use ($authPerson): void {
+                $subQuery->selectRaw('1')
+                    ->from('conversation_participant_states as cps')
+                    ->whereColumn('cps.conversation_id', 'conversation_messages.conversation_id')
+                    ->where('cps.person_id', $authPerson->id)
+                    ->whereNotNull('cps.cleared_at')
+                    ->whereColumn('conversation_messages.created_at', '<=', 'cps.cleared_at');
+            })
+            ->whereNotExists(function ($subQuery) use ($authPerson): void {
+                $subQuery->selectRaw('1')
+                    ->from('conversation_hidden_messages as chm')
+                    ->whereColumn('chm.conversation_message_id', 'conversation_messages.id')
+                    ->where('chm.person_id', $authPerson->id);
+            });
     }
 }

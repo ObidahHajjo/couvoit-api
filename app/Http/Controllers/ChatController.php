@@ -72,6 +72,41 @@ class ChatController extends Controller
         ], Response::HTTP_OK);
     }
 
+    public function clearMessage(Request $request, int $conversation, int $message): JsonResponse
+    {
+        /** @var User $authUser */
+        $authUser = $request->user();
+
+        $updatedConversation = $this->chat->clearMessageForPerson($conversation, $message, $authUser->person);
+
+        return response()->json([
+            'message' => __('api.chat.message_cleared'),
+            'data' => (new ConversationResource($updatedConversation))->toArray($request),
+        ], Response::HTTP_OK);
+    }
+
+    public function clearMessages(Request $request, int $conversation): JsonResponse
+    {
+        /** @var User $authUser */
+        $authUser = $request->user();
+
+        $validated = $request->validate([
+            'message_ids' => ['required', 'array', 'min:1'],
+            'message_ids.*' => ['integer'],
+        ]);
+
+        $updatedConversation = $this->chat->clearMessagesForPerson(
+            $conversation,
+            $validated['message_ids'],
+            $authUser->person,
+        );
+
+        return response()->json([
+            'message' => __('api.chat.messages_cleared'),
+            'data' => (new ConversationResource($updatedConversation))->toArray($request),
+        ], Response::HTTP_OK);
+    }
+
     public function contactDriver(SendChatMessageRequest $request, Trip $trip): JsonResponse
     {
         /** @var User $authUser */

@@ -68,6 +68,14 @@ class Conversation extends Model
     }
 
     /**
+     * Get hidden message markers for this conversation.
+     */
+    public function hiddenMessages(): HasMany
+    {
+        return $this->hasMany(ConversationHiddenMessage::class);
+    }
+
+    /**
      * Determine whether the given person participates in the conversation.
      */
     public function involvesPerson(int $personId): bool

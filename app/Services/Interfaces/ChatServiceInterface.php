@@ -36,6 +36,18 @@ interface ChatServiceInterface
     public function clearConversationForPerson(int $conversationId, Person $authPerson): Conversation;
 
     /**
+     * Hide a single message inside a conversation for the authenticated person only.
+     */
+    public function clearMessageForPerson(int $conversationId, int $messageId, Person $authPerson): Conversation;
+
+    /**
+     * Hide multiple messages inside a conversation for the authenticated person only.
+     *
+     * @param array<int, int> $messageIds
+     */
+    public function clearMessagesForPerson(int $conversationId, array $messageIds, Person $authPerson): Conversation;
+
+    /**
      * Open the conversation between the authenticated person and the trip driver.
      */
     public function openOrCreateDriverConversation(Trip $trip, Person $authPerson): Conversation;
