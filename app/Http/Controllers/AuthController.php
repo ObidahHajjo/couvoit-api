@@ -21,6 +21,9 @@ use Symfony\Component\HttpFoundation\Response;
  * Auth endpoints (Local JWT).
  */
 #[OA\Tag(name: 'Auth', description: 'Authentication endpoints (register/login/refresh).')]
+/**
+ * Handles authentication endpoints.
+ */
 class AuthController extends Controller
 {
     public function __construct(

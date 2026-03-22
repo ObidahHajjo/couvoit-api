@@ -194,4 +194,48 @@ final class ChatControllerTest extends TestCase
         $res->assertJsonPath('data.0.participant.name', 'Dina Driver');
         $res->assertJsonPath('data.0.latest_message.body', 'Hi Dina');
     }
+
+    public function test_list_conversations_prefers_highest_message_id_when_timestamps_match(): void
+    {
+        $driver = $this->makePerson(['first_name' => 'Dina', 'last_name' => 'Driver']);
+        $passenger = $this->makePerson(['first_name' => 'Paul', 'last_name' => 'Passenger']);
+        $passengerUser = $this->makeUser($passenger);
+
+        $conversation = Conversation::query()->create([
+            'participant_one_id' => min($driver->id, $passenger->id),
+            'participant_two_id' => max($driver->id, $passenger->id),
+            'last_message_at' => now(),
+        ]);
+
+        $first = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'Older message',
+        ]);
+
+        $second = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'Newest message',
+        ]);
+
+        $sameTimestamp = '2026-03-22 12:00:05';
+
+        DB::table('conversation_messages')
+            ->whereIn('id', [$first->id, $second->id])
+            ->update([
+                'created_at' => $sameTimestamp,
+                'updated_at' => $sameTimestamp,
+            ]);
+
+        DB::table('conversations')
+            ->where('id', $conversation->id)
+            ->update([
+                'last_message_at' => $sameTimestamp,
+                'updated_at' => $sameTimestamp,
+            ]);
+
+        $res = $this->authenticate($passengerUser)->getJson('/conversations');
+
+        $res->assertOk();
+        $res->assertJsonPath('data.0.latest_message.body', 'Newest message');
+    }
 }

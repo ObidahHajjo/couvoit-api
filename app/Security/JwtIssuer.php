@@ -7,6 +7,9 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use RuntimeException;
 
+/**
+ * Firebase JWT-backed access token issuer and verifier.
+ */
 final class JwtIssuer implements JwtIssuerInterface
 {
     private const ALG = 'HS256';
@@ -31,6 +34,7 @@ final class JwtIssuer implements JwtIssuerInterface
         return $secret;
     }
 
+    /** {@inheritDoc} */
     public function issueAccessToken(User $user): string
     {
         $now = time();
@@ -54,11 +58,7 @@ final class JwtIssuer implements JwtIssuerInterface
         return JWT::encode($payload, $this->secret(), self::ALG);
     }
 
-    /**
-     * Verify JWT signature + basic claim validation.
-     *
-     * @return object decoded claims
-     */
+    /** {@inheritDoc} */
     public function verify(string $jwt): object
     {
         $decoded = JWT::decode($jwt, new Key($this->secret(), self::ALG));

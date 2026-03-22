@@ -4,6 +4,9 @@ namespace App\DTOS\Car;
 
 use InvalidArgumentException;
 
+/**
+ * Immutable data transfer object for car creation input.
+ */
 final readonly class CarCreateData
 {
     public function __construct(

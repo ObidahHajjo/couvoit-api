@@ -4,6 +4,9 @@ namespace App\Exceptions;
 
 use Exception;
 
+/**
+ * Domain exception for business validation failures.
+ */
 class ValidationLogicException extends DomainException
 {
     public function __construct(string $message = 'Unprocessable entity')

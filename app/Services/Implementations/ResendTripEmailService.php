@@ -8,6 +8,9 @@ use App\Services\Interfaces\TripEmailServiceInterface;
 use Illuminate\Support\Collection;
 use Resend\Laravel\Facades\Resend;
 
+/**
+ * Resend-backed implementation of trip email notifications.
+ */
 final readonly class ResendTripEmailService implements TripEmailServiceInterface
 {
     public function sendReservationCreated(Trip $trip, Person $passenger): void

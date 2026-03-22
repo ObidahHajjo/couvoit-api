@@ -7,6 +7,9 @@ use App\Models\Trip;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for trip persistence operations.
+ */
 interface TripRepositoryInterface
 {
     /**

@@ -4,6 +4,9 @@ namespace App\DTOS\Car;
 
 use InvalidArgumentException;
 
+/**
+ * Immutable data transfer object for partial car updates.
+ */
 final readonly class CarUpdateData
 {
     public function __construct(

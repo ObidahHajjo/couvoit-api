@@ -4,6 +4,9 @@ namespace App\Exceptions;
 
 use Exception;
 
+/**
+ * Domain exception for authentication failures.
+ */
 class UnauthorizedException extends DomainException
 {
     public function __construct(string $message = 'External service error')

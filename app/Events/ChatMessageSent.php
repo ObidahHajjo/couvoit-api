@@ -10,6 +10,9 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Broadcast event dispatched when a chat message is sent.
+ */
 class ChatMessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
@@ -19,6 +22,11 @@ class ChatMessageSent implements ShouldBroadcastNow
         public ConversationMessage $message,
     ) {}
 
+    /**
+     * Determine the channels the event should broadcast on.
+     *
+     * @return array<int, mixed>
+     */
     public function broadcastOn(): array
     {
         return [
@@ -28,11 +36,19 @@ class ChatMessageSent implements ShouldBroadcastNow
         ];
     }
 
+    /**
+     * Get the event broadcast name.
+     */
     public function broadcastAs(): string
     {
         return 'chat.message.sent';
     }
 
+    /**
+     * Get the payload broadcast with the event.
+     *
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [

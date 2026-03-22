@@ -23,6 +23,9 @@ use Throwable;
  * HTTP controller for Trip endpoints.
  */
 #[OA\Tag(name: 'Trips', description: 'Trip endpoints (search, create, update, cancel, reserve).')]
+/**
+ * Handles trip management endpoints.
+ */
 class TripController extends Controller
 {
     /**

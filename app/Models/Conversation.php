@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Conversation between two participants around a trip.
+ */
 class Conversation extends Model
 {
     use HasFactory;
@@ -24,26 +27,41 @@ class Conversation extends Model
         'updated_at' => 'datetime',
     ];
 
+    /**
+     * Get the first conversation participant.
+     */
     public function participantOne(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'participant_one_id');
     }
 
+    /**
+     * Get the second conversation participant.
+     */
     public function participantTwo(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'participant_two_id');
     }
 
+    /**
+     * Get the trip associated with the conversation.
+     */
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
     }
 
+    /**
+     * Get the messages that belong to the conversation.
+     */
     public function messages(): HasMany
     {
-        return $this->hasMany(ConversationMessage::class)->orderBy('created_at');
+        return $this->hasMany(ConversationMessage::class);
     }
 
+    /**
+     * Determine whether the given person participates in the conversation.
+     */
     public function involvesPerson(int $personId): bool
     {
         return (int) $this->participant_one_id === $personId || (int) $this->participant_two_id === $personId;

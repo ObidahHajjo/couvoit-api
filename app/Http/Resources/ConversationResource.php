@@ -6,8 +6,16 @@ use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * JSON resource for conversation list and detail payloads.
+ */
 class ConversationResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         /** @var Person|null $authPerson */
@@ -29,7 +37,24 @@ class ConversationResource extends JsonResource
         }
 
         $latestMessage = $this->relationLoaded('messages')
-            ? $this->messages->sortByDesc('created_at')->first()
+            ? $this->messages->reduce(function ($latest, $message) {
+                if ($latest === null) {
+                    return $message;
+                }
+
+                $latestCreatedAt = optional($latest->created_at)?->getTimestamp() ?? 0;
+                $messageCreatedAt = optional($message->created_at)?->getTimestamp() ?? 0;
+
+                if ($messageCreatedAt > $latestCreatedAt) {
+                    return $message;
+                }
+
+                if ($messageCreatedAt === $latestCreatedAt && (int) $message->id > (int) $latest->id) {
+                    return $message;
+                }
+
+                return $latest;
+            }, null)
             : null;
 
         return [

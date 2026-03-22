@@ -4,6 +4,9 @@ namespace App\Exceptions;
 
 use Exception;
 
+/**
+ * Domain exception for conflicting resource state.
+ */
 class ConflictException extends DomainException
 {
     public function __construct(string $message = 'Conflict')

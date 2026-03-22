@@ -4,12 +4,17 @@ namespace App\Services\Implementations;
 
 use App\Models\Person;
 use App\Models\User;
+use App\Services\Interfaces\UserPersonalDataPurgeServiceInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-class UserPersonalDataPurgeService
+/**
+ * Anonymizes personally identifiable data for deleted accounts.
+ */
+class UserPersonalDataPurgeService implements UserPersonalDataPurgeServiceInterface
 {
+    /** {@inheritDoc} */
     public function purge(User $user): void
     {
         DB::transaction(function () use ($user): void {

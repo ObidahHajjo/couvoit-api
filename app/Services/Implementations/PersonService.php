@@ -13,6 +13,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Default implementation of person application workflows.
+ */
 readonly class PersonService implements PersonServiceInterface
 {
     public function __construct(
@@ -33,7 +36,9 @@ readonly class PersonService implements PersonServiceInterface
         return $person;
     }
 
-    /** @inheritDoc */
+    /**
+     * Retrieve a person by identifier.
+     */
     public function findById(int $id): Person
     {
         return $this->persons->findById($id);

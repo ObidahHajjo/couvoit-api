@@ -7,6 +7,9 @@ use App\Repositories\Interfaces\BrandRepositoryInterface;
 use App\Services\Interfaces\BrandServiceInterface;
 use Illuminate\Support\Collection;
 
+/**
+ * Default implementation of brand application workflows.
+ */
 readonly class BrandService implements BrandServiceInterface
 {
     public function __construct(

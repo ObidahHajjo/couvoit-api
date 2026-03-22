@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * Registers custom route model bindings.
+ */
 class RouteBindingServiceProvider extends ServiceProvider
 {
     /**

@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\CarModel;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for car model persistence operations.
+ */
 interface CarModelRepositoryInterface
 {
     /**

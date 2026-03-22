@@ -16,6 +16,9 @@ use OpenApi\Attributes as OA;
 use Throwable;
 
 #[OA\Tag(name: 'Persons', description: 'Person endpoints (admin listing, profile, trips).')]
+/**
+ * Handles person profile endpoints.
+ */
 class PersonController extends Controller
 {
     public function __construct(

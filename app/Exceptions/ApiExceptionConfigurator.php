@@ -13,6 +13,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Configures JSON exception rendering for the API layer.
+ */
 final class ApiExceptionConfigurator
 {
     public static function register(Exceptions $exceptions): void

@@ -4,6 +4,9 @@ namespace App\Repositories\Interfaces;
 
 use Carbon\CarbonImmutable;
 
+/**
+ * Contract for refresh token persistence and rotation.
+ */
 interface RefreshTokenRepositoryInterface
 {
     /**

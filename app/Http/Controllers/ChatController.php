@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Handles chat conversation endpoints.
+ */
 class ChatController extends Controller
 {
     public function __construct(

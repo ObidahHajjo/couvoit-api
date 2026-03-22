@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\Color;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for color persistence operations.
+ */
 interface ColorRepositoryInterface
 {
     /**

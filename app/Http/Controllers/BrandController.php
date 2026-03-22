@@ -13,6 +13,9 @@ use OpenApi\Attributes as OA;
  * HTTP controller for Brand endpoints.
  */
 #[OA\Tag(name: 'Brands', description: 'Brand endpoints.')]
+/**
+ * Handles brand lookup endpoints.
+ */
 class BrandController extends Controller
 {
     /**

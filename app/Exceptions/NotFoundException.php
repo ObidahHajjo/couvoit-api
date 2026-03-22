@@ -4,6 +4,9 @@ namespace App\Exceptions;
 
 use Exception;
 
+/**
+ * Domain exception for missing resources.
+ */
 class NotFoundException extends DomainException
 {
     public function __construct(string $message = 'Not found')

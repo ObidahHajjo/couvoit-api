@@ -5,6 +5,9 @@ namespace App\Repositories\Eloquent;
 use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 
+/**
+ * Eloquent-backed implementation of user persistence operations.
+ */
 final class UserEloquentRepository implements UserRepositoryInterface
 {
     /** @inheritDoc */

@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\Person;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for person persistence operations.
+ */
 interface PersonRepositoryInterface
 {
     /**

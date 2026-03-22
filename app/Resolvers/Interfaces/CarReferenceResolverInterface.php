@@ -6,6 +6,9 @@ use App\DTOS\Car\ResolvedCarRefs;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
 
+/**
+ * Contract for resolving car reference identifiers from payload data.
+ */
 interface CarReferenceResolverInterface
 {
     /**

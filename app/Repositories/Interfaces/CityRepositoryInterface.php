@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\City;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for city persistence operations.
+ */
 interface CityRepositoryInterface
 {
     /**

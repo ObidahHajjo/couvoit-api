@@ -2,6 +2,9 @@
 
 namespace App\Support\Car;
 
+/**
+ * Normalizes car catalog values for storage and lookup.
+ */
 final class CarCatalogNormalizer
 {
     public function normalizeDisplayName(string $value): string

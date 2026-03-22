@@ -4,6 +4,9 @@ namespace App\Exceptions;
 
 use Exception;
 
+/**
+ * Base exception for domain-level API errors.
+ */
 class DomainException extends Exception
 {
     protected int $status = 400;

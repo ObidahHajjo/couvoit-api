@@ -12,6 +12,9 @@ use App\Models\Trip;
 use App\Services\Interfaces\ChatServiceInterface;
 use Illuminate\Support\Collection;
 
+/**
+ * Default chat service implementation.
+ */
 class ChatService implements ChatServiceInterface
 {
     public function listConversations(Person $authPerson): Collection
@@ -26,7 +29,7 @@ class ChatService implements ChatServiceInterface
                 'participantTwo',
                 'trip.departureAddress.city',
                 'trip.arrivalAddress.city',
-                'messages' => fn ($query) => $query->latest()->limit(1),
+                'messages' => fn ($query) => $query->orderByDesc('created_at')->orderByDesc('id')->limit(1),
             ])
             ->orderByDesc('last_message_at')
             ->get();
@@ -40,7 +43,7 @@ class ChatService implements ChatServiceInterface
                 'participantTwo',
                 'trip.departureAddress.city',
                 'trip.arrivalAddress.city',
-                'messages.sender',
+                'messages' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with('sender'),
             ])
             ->find($conversationId);
 

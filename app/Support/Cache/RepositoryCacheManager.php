@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Coordinates cache invalidation for repository-level cache entries.
+ */
 class RepositoryCacheManager
 {
     public const TTL_LONG = 360;

@@ -23,6 +23,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
+/**
+ * Default implementation of car application workflows.
+ */
 readonly class CarService implements CarServiceInterface
 {
     public function __construct(
