@@ -9,7 +9,9 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Resources\AuthTokenResource;
 use App\Models\User;
 use App\Services\Interfaces\AuthServiceInterface;
+use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use OpenApi\Attributes as OA;
@@ -22,7 +24,8 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthController extends Controller
 {
     public function __construct(
-        private readonly AuthServiceInterface $authService
+        private readonly AuthServiceInterface $authService,
+        private readonly AuthFactory $auth,
     ) {}
 
     #[OA\Post(
@@ -46,17 +49,7 @@ class AuthController extends Controller
 
         return (new AuthTokenResource($result))
             ->response()
-            ->cookie(
-                'access_token',
-                $result['access_token'],
-                60,
-                '/',
-                '.ohajjo.online',
-                true,
-                true,
-                false,
-                'None'
-            )
+            ->cookie($this->authCookie('access_token', $result['access_token'], 60))
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
@@ -82,28 +75,8 @@ class AuthController extends Controller
 
         return (new AuthTokenResource($result))
             ->response()
-            ->cookie(
-                'access_token',
-                $result['access_token'],
-                21600,
-                '/',
-                '.ohajjo.online',
-                true,
-                true,
-                false,
-                'None'
-            )
-            ->cookie(
-                'refresh_token',
-                $result['refresh_token'],
-                43200,
-                '/',
-                '.ohajjo.online',
-                true,
-                true,
-                false,
-                'None'
-            )
+            ->cookie($this->authCookie('access_token', $result['access_token'], 21600))
+            ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
             ->setStatusCode(Response::HTTP_OK);
     }
 
@@ -129,28 +102,8 @@ class AuthController extends Controller
 
         return (new AuthTokenResource($result))
             ->response()
-            ->cookie(
-                'access_token',
-                $result['access_token'],
-                21600,
-                '/',
-                '.ohajjo.online',
-                true,
-                true,
-                false,
-                'None'
-            )
-            ->cookie(
-                'refresh_token',
-                $result['refresh_token'],
-                43200,
-                '/',
-                '.ohajjo.online',
-                true,
-                true,
-                false,
-                'None'
-            )
+            ->cookie($this->authCookie('access_token', $result['access_token'], 21600))
+            ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
             ->setStatusCode(Response::HTTP_OK);
     }
 
@@ -177,8 +130,8 @@ class AuthController extends Controller
             'data' => [
                 'message' => 'Logged out successfully',
             ],
-        ])->withoutCookie('access_token', '/')
-            ->withoutCookie('refresh_token', '/');
+        ])->withoutCookie('access_token', $this->cookiePath(), $this->cookieDomain())
+            ->withoutCookie('refresh_token', $this->cookiePath(), $this->cookieDomain());
     }
 
     #[OA\Post(
@@ -195,7 +148,11 @@ class AuthController extends Controller
     public function me(): JsonResponse
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user = $this->auth->guard()->user();
+
+        if (! $user instanceof User) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Unauthorized');
+        }
 
         $user->refresh();
         $user->loadMissing(['person', 'role']);
@@ -291,5 +248,44 @@ class AuthController extends Controller
             'message' => 'Password reset successfully.',
             'status' => $status,
         ]);
+    }
+
+    private function authCookie(string $name, string $value, int $minutes): \Symfony\Component\HttpFoundation\Cookie
+    {
+        return Cookie::make(
+            $name,
+            $value,
+            $minutes,
+            $this->cookiePath(),
+            $this->cookieDomain(),
+            $this->cookieSecure(),
+            true,
+            false,
+            $this->cookieSameSite(),
+        );
+    }
+
+    private function cookiePath(): string
+    {
+        return (string) config('auth.cookies.path', '/');
+    }
+
+    private function cookieDomain(): ?string
+    {
+        $domain = config('auth.cookies.domain');
+
+        return is_string($domain) && strtolower($domain) !== 'null' && $domain !== ''
+            ? $domain
+            : null;
+    }
+
+    private function cookieSecure(): bool
+    {
+        return (bool) config('auth.cookies.secure', false);
+    }
+
+    private function cookieSameSite(): string
+    {
+        return (string) config('auth.cookies.same_site', 'lax');
     }
 }
