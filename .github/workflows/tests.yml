@@ -26,6 +26,8 @@ jobs:
 
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - name: Checkout
@@ -70,7 +72,7 @@ jobs:
         run: php artisan test --coverage-clover=coverage.xml
 
       - name: Debug Sonar config
-        if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
         run: |
           echo "SONAR_HOST_URL=${SONAR_HOST_URL}"
           if [ -n "${SONAR_TOKEN}" ]; then
@@ -80,24 +82,15 @@ jobs:
             echo "SONAR_TOKEN is missing"
             exit 1
           fi
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Verify Sonar auth
-        if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
         run: |
           curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/server/version"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: SonarQube Scan
-        if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
         uses: sonarsource/sonarqube-scan-action@master
         with:
           args: >
             -Dsonar.projectKey=covoit-api
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
