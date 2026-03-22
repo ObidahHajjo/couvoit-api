@@ -21,7 +21,9 @@ return new class extends Migration
             $table->unique(['name', 'brand_id']);
         });
 
-        DB::statement('ALTER TABLE models ADD CONSTRAINT chk_seats_number CHECK (seats > 0 AND seats <= 9);');
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE models ADD CONSTRAINT chk_seats_number CHECK (seats > 0 AND seats <= 9);');
+        }
     }
 
     /**

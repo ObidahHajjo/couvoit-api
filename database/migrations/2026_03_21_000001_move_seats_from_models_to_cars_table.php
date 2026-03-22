@@ -19,9 +19,11 @@ return new class extends Migration
             $table->smallInteger('seats')->nullable(false)->change();
         });
 
-        DB::statement('ALTER TABLE cars ADD CONSTRAINT chk_car_seats_number CHECK (seats > 0 AND seats <= 9)');
-
         $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver !== 'sqlite') {
+            DB::statement('ALTER TABLE cars ADD CONSTRAINT chk_car_seats_number CHECK (seats > 0 AND seats <= 9)');
+        }
 
         if ($driver === 'pgsql') {
             DB::statement('ALTER TABLE models DROP CONSTRAINT IF EXISTS chk_seats_number');
@@ -46,9 +48,11 @@ return new class extends Migration
             $table->smallInteger('seats')->nullable(false)->change();
         });
 
-        DB::statement('ALTER TABLE models ADD CONSTRAINT chk_seats_number CHECK (seats > 0 AND seats <= 9)');
-
         $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver !== 'sqlite') {
+            DB::statement('ALTER TABLE models ADD CONSTRAINT chk_seats_number CHECK (seats > 0 AND seats <= 9)');
+        }
 
         if ($driver === 'pgsql') {
             DB::statement('ALTER TABLE cars DROP CONSTRAINT IF EXISTS chk_car_seats_number');
