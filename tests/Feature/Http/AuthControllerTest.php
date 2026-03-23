@@ -62,7 +62,7 @@ class AuthControllerTest extends TestCase
         $this->mock(AuthServiceInterface::class, function ($mock) {
             $mock->shouldReceive('register')
                 ->once()
-                ->with('john@example.com', 'secret12345')
+                ->with('john@example.com', 'Secret123!')
                 ->andReturn([
                     'access_token' => 'a',
                     'token_type' => 'Bearer',
@@ -75,8 +75,8 @@ class AuthControllerTest extends TestCase
 
         $res = $this->postJson($this->registerUri, [
             'email' => 'john@example.com',
-            'password' => 'secret12345',
-            'password_confirmation' => 'secret12345',
+            'password' => 'Secret123!',
+            'password_confirmation' => 'Secret123!',
         ]);
 
         $res->assertCreated();
@@ -214,14 +214,14 @@ class AuthControllerTest extends TestCase
             $mock->shouldReceive('changePassword')
                 ->once()
                 ->withArgs(function (User $passedUser, string $password) use ($user): bool {
-                    return $passedUser->is($user) && $password === 'newsecret123';
+                    return $passedUser->is($user) && $password === 'Newsecret123!';
                 });
         });
 
         $res = $this->actingAs($user)->postJson($this->changePasswordUri, [
             'current_password' => 'secret12345',
-            'password' => 'newsecret123',
-            'password_confirmation' => 'newsecret123',
+            'password' => 'Newsecret123!',
+            'password_confirmation' => 'Newsecret123!',
         ]);
 
         $res->assertOk();
@@ -247,5 +247,43 @@ class AuthControllerTest extends TestCase
         $res->assertStatus(422);
         $res->assertJsonPath('error', 'VALIDATION_ERROR');
         $this->assertArrayHasKey('current_password', $res->json('fields'));
+    }
+
+    public function test_register_validates_password_complexity(): void
+    {
+        $this->mock(AuthServiceInterface::class, function ($mock) {
+            $mock->shouldNotReceive('register');
+        });
+
+        $res = $this->postJson($this->registerUri, [
+            'email' => 'john@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $res->assertStatus(422);
+        $res->assertJsonPath('error', 'VALIDATION_ERROR');
+        $this->assertArrayHasKey('password', $res->json('fields'));
+    }
+
+    public function test_change_password_validates_password_complexity(): void
+    {
+        $user = $this->makeUser();
+
+        $this->withoutMiddleware(LocalJwtAuth::class);
+
+        $this->mock(AuthServiceInterface::class, function ($mock) {
+            $mock->shouldNotReceive('changePassword');
+        });
+
+        $res = $this->actingAs($user)->postJson($this->changePasswordUri, [
+            'current_password' => 'secret12345',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $res->assertStatus(422);
+        $res->assertJsonPath('error', 'VALIDATION_ERROR');
+        $this->assertArrayHasKey('password', $res->json('fields'));
     }
 }
