@@ -5,16 +5,16 @@ namespace App\Services\Implementations;
 use App\Exceptions\ConflictException;
 use App\Exceptions\UnauthorizedException;
 use App\Models\User;
-use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
+use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Security\JwtIssuerInterface;
 use App\Services\Interfaces\AuthServiceInterface;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Auth\Events\PasswordReset;
 
 /**
  * Default implementation of authentication and session workflows.
@@ -31,7 +31,7 @@ final readonly class AuthService implements AuthServiceInterface
         private PersonRepositoryInterface $personRepository,
     ) {}
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function register(string $email, string $password): array
     {
         return DB::transaction(function () use ($email, $password) {
@@ -57,27 +57,36 @@ final readonly class AuthService implements AuthServiceInterface
         });
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function login(string $email, string $password): array
     {
         $email = strtolower(trim($email));
 
         /** @var User|null $user */
-        $user  = $this->userRepository->findByEmail($email);
-        if (!$user || !Hash::check($password, $user->password)) throw new UnauthorizedException('Invalid credentials.');
-        if ($user->purged_at !== null) throw new UnauthorizedException('This account has been permanently deleted.');
+        $user = $this->userRepository->findByEmail($email);
+        if (! $user || ! Hash::check($password, $user->password)) {
+            throw new UnauthorizedException('Invalid credentials.');
+        }
+        if ($user->purged_at !== null) {
+            throw new UnauthorizedException('This account has been permanently deleted.');
+        }
         if ($user->trashed()) {
-            if ($user->deleted_at === null) throw new UnauthorizedException('Invalid account state.');
-            if ($user->deleted_at->lt(now()->subDays(90))) throw new UnauthorizedException('Restore period expired. This account has been permanently deleted.');
+            if ($user->deleted_at === null) {
+                throw new UnauthorizedException('Invalid account state.');
+            }
+            if ($user->deleted_at->lt(now()->subDays(90))) {
+                throw new UnauthorizedException('Restore period expired. This account has been permanently deleted.');
+            }
 
             $this->restoreDeletedAccount($user);
             $user->refresh();
         }
         $person = $this->personRepository->findById($user->person_id);
+
         return $this->issueSession($user, $person->id);
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function refresh(string $refreshToken): array
     {
         $newRefresh = bin2hex(random_bytes(32));
@@ -86,7 +95,9 @@ final readonly class AuthService implements AuthServiceInterface
         $userId = $this->refreshTokens->consumeAndRotate($refreshToken, $newRefresh, $expiresAt);
 
         $user = $this->userRepository->findById($userId);
-        if (!$user || !$user->is_active) throw new UnauthorizedException('Unauthorized.');
+        if (! $user || ! $user->is_active) {
+            throw new UnauthorizedException('Unauthorized.');
+        }
 
         $access = $this->jwt->issueAccessToken($user);
 
@@ -98,20 +109,21 @@ final readonly class AuthService implements AuthServiceInterface
         ];
     }
 
-    /** @inheritDoc */
-    public function logout() :void
+    /** {@inheritDoc} */
+    public function logout(): void
     {
         $this->refreshTokens->deleteAllByUserId(auth()->id());
     }
 
-    /** @inheritDoc */
-    public function forgetPassword(string $email) : string{
+    /** {@inheritDoc} */
+    public function forgetPassword(string $email): string
+    {
         return Password::sendResetLink([
             'email' => $email,
         ]);
     }
 
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function resetPassword(array $data): string
     {
         return Password::broker('users')->reset(
@@ -123,12 +135,22 @@ final readonly class AuthService implements AuthServiceInterface
             ],
             function (User $user, string $password): void {
                 $user->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->save();
 
                 event(new PasswordReset($user));
             }
         );
+    }
+
+    /** {@inheritDoc} */
+    public function changePassword(User $user, string $password): void
+    {
+        $user->forceFill([
+            'password' => Hash::make($password),
+        ])->save();
+
+        $this->refreshTokens->deleteAllByUserId($user->id);
     }
 
     /**

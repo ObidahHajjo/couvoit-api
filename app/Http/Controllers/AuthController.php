@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\AuthRequest;
+use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgetPasswordRequest;
 use App\Http\Requests\Auth\RefreshRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
@@ -204,6 +205,43 @@ class AuthController extends Controller
                     'can_manage_all_bookings' => $user->canManageAllBookings(),
                 ],
             ],
+        ]);
+    }
+
+    #[OA\Post(
+        path: '/auth/change-password',
+        operationId: 'authChangePassword',
+        summary: 'Change password',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/ChangePasswordPayload')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'OK'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    /**
+     * Change the authenticated user's password.
+     */
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->auth->guard()->user();
+
+        if (! $user instanceof User) {
+            abort(Response::HTTP_UNAUTHORIZED, __('api.errors.unauthorized'));
+        }
+
+        $validated = $request->validated();
+
+        $this->authService->changePassword($user, $validated['password']);
+
+        return response()->json([
+            'message' => __('api.auth.password_changed_success'),
         ]);
     }
 

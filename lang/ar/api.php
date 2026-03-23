@@ -5,6 +5,7 @@ return [
         'logout_success' => 'تم تسجيل الخروج بنجاح',
         'forgot_password_notice' => 'إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، فقد تم إرسال رابط إعادة تعيين كلمة المرور.',
         'password_reset_success' => 'تمت إعادة تعيين كلمة المرور بنجاح.',
+        'password_changed_success' => 'تم تغيير كلمة المرور بنجاح.',
     ],
     'chat' => [
         'conversation_cleared' => 'تم مسح المحادثة لهذا الحساب فقط.',

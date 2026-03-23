@@ -5,6 +5,7 @@ return [
         'logout_success' => 'Logged out successfully',
         'forgot_password_notice' => 'If an account exists for this email, a reset link has been sent.',
         'password_reset_success' => 'Password reset successfully.',
+        'password_changed_success' => 'Password changed successfully.',
     ],
     'chat' => [
         'conversation_cleared' => 'Conversation cleared for your account.',

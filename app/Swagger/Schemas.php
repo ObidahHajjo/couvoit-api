@@ -25,6 +25,16 @@ use OpenApi\Attributes as OA;
     type: 'object'
 )]
 #[OA\Schema(
+    schema: 'ChangePasswordPayload',
+    required: ['current_password', 'password', 'password_confirmation'],
+    properties: [
+        new OA\Property(property: 'current_password', type: 'string', format: 'password', minLength: 8, example: 'secret123'),
+        new OA\Property(property: 'password', type: 'string', format: 'password', minLength: 8, example: 'secret456'),
+        new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', minLength: 8, example: 'secret456'),
+    ],
+    type: 'object'
+)]
+#[OA\Schema(
     schema: 'AuthTokenResponse',
     properties: [
         new OA\Property(property: 'access_token', type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'),
