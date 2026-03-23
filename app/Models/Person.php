@@ -72,16 +72,25 @@ class Person extends Model
         return $this->hasOne(User::class, 'person_id');
     }
 
+    /**
+     * Get the car assigned to the person.
+     */
     public function car(): BelongsTo
     {
         return $this->belongsTo(Car::class);
     }
 
+    /**
+     * Get trips driven by the person.
+     */
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
     }
 
+    /**
+     * Get trips reserved by the person.
+     */
     public function reservations(): BelongsToMany
     {
         return $this->belongsToMany(Trip::class, 'reservations', 'person_id', 'trip_id');

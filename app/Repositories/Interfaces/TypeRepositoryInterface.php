@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\Type;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for vehicle type persistence operations.
+ */
 interface TypeRepositoryInterface
 {
     /**

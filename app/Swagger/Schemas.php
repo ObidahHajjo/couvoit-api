@@ -4,6 +4,9 @@ namespace App\Swagger;
 
 use OpenApi\Attributes as OA;
 
+/**
+ * Holds reusable OpenAPI schema annotations.
+ */
 #[OA\Schema(
     schema: 'AuthRequestPayload',
     required: ['email', 'password'],

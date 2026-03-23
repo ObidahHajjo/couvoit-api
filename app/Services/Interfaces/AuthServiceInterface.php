@@ -4,6 +4,9 @@ namespace App\Services\Interfaces;
 
 use Throwable;
 
+/**
+ * Contract for authentication and session workflows.
+ */
 interface AuthServiceInterface
 {
     /**

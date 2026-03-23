@@ -7,8 +7,12 @@ use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use RuntimeException;
 
+/**
+ * OpenRouteService-backed routing client implementation.
+ */
 final class OrsRoutingClient implements OrsRoutingClientInterface
 {
+    /** {@inheritDoc} */
     public function geocode(string $fullAddress): array
     {
         $url = config('services.ors.geocode_url');
@@ -43,6 +47,7 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
         ];
     }
 
+    /** {@inheritDoc} */
     public function routeSummary(array $from, array $to): array
     {
         $url = config('services.ors.directions_url');
@@ -92,6 +97,7 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
         ];
     }
 
+    /** {@inheritDoc} */
     public function durationSeconds(array $from, array $to): int
     {
         return $this->routeSummary($from, $to)['duration_seconds'];

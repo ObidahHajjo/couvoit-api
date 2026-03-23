@@ -90,6 +90,9 @@ interface CarServiceInterface
     /**
      * Local DB first, external API second.
      *
+     * @param string $q     Search term applied to brand/model values.
+     * @param string $brand Brand filter value.
+     *
      * @return array<int, array<string, mixed>>
      */
     public function search(string $q, string $brand): array;

@@ -9,6 +9,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
+/**
+ * Eloquent-backed implementation of refresh token persistence.
+ */
 final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInterface
 {
     /** @inheritDoc */

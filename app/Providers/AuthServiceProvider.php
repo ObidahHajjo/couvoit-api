@@ -14,6 +14,9 @@ use App\Security\JwtIssuerInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
+/**
+ * Registers authorization policies for the application.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
 

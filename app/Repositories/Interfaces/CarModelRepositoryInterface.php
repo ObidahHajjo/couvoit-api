@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\CarModel;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for car model persistence operations.
+ */
 interface CarModelRepositoryInterface
 {
     /**
@@ -65,9 +68,11 @@ interface CarModelRepositoryInterface
 
     /**
      * Find a model by its search_key and brand name
+     *
      * @param string $brandSearchKey
      * @param string $modelSearchKey
-     * @return Collection
+     *
+     * @return Collection<int, CarModel>
      */
     public function findBySearchKey(string $brandSearchKey, string $modelSearchKey): Collection;
 }

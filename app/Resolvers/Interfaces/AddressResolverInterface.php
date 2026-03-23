@@ -4,6 +4,9 @@ namespace App\Resolvers\Interfaces;
 
 use App\Exceptions\ValidationLogicException;
 
+/**
+ * Contract for resolving persisted address identifiers from request payloads.
+ */
 interface AddressResolverInterface
 {
 

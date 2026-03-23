@@ -9,20 +9,26 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Resources\AuthTokenResource;
 use App\Models\User;
 use App\Services\Interfaces\AuthServiceInterface;
+use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Auth endpoints (Local JWT).
- */
 #[OA\Tag(name: 'Auth', description: 'Authentication endpoints (register/login/refresh).')]
+/**
+ * Handles authentication endpoints.
+ */
 class AuthController extends Controller
 {
+    /**
+     * Create a new auth controller instance.
+     */
     public function __construct(
-        private readonly AuthServiceInterface $authService
+        private readonly AuthServiceInterface $authService,
+        private readonly AuthFactory $auth,
     ) {}
 
     #[OA\Post(
@@ -39,25 +45,17 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Register a new user account.
+     */
     public function register(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
         $result = $this->authService->register($data['email'], $data['password']);
-        $cookieOptions = $this->authCookieOptions();
 
         return (new AuthTokenResource($result))
             ->response()
-            ->cookie(
-                'access_token',
-                $result['access_token'],
-                60,
-                '/',
-                null,
-                $cookieOptions['secure'],
-                true,
-                false,
-                $cookieOptions['same_site']
-            )
+            ->cookie($this->authCookie('access_token', $result['access_token'], 60))
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
@@ -76,35 +74,18 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Authenticate a user and issue tokens.
+     */
     public function login(AuthRequest $request): JsonResponse
     {
         $data = $request->validated();
         $result = $this->authService->login($data['email'], $data['password']);
-        $cookieOptions = $this->authCookieOptions();
 
         return (new AuthTokenResource($result))
             ->response()
-            ->cookie(
-                'access_token',
-                $result['access_token'],
-                60,
-                '/',
-                null,
-                $cookieOptions['secure'],
-                true,
-                false,
-                $cookieOptions['same_site']
-            )->cookie(
-                'refresh_token',
-                $result['refresh_token'],
-                43200,
-                '/',
-                null,
-                $cookieOptions['secure'],
-                true,
-                false,
-                $cookieOptions['same_site']
-            )
+            ->cookie($this->authCookie('access_token', $result['access_token'], 21600))
+            ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
             ->setStatusCode(Response::HTTP_OK);
     }
 
@@ -123,51 +104,19 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Rotate access and refresh tokens.
+     */
     public function refresh(RefreshRequest $request): JsonResponse
     {
         $data = $request->validated();
         $result = $this->authService->refresh($data['refresh_token']);
-        $cookieOptions = $this->authCookieOptions();
 
         return (new AuthTokenResource($result))
             ->response()
-            ->cookie(
-                'access_token',
-                $result['access_token'],
-                21600,
-                '/',
-                null,
-                $cookieOptions['secure'],
-                true,
-                false,
-                $cookieOptions['same_site']
-            )
-            ->cookie(
-                'refresh_token',
-                $result['refresh_token'],
-                43200,
-                '/',
-                null,
-                $cookieOptions['secure'],
-                true,
-                false,
-                $cookieOptions['same_site']
-            )
+            ->cookie($this->authCookie('access_token', $result['access_token'], 21600))
+            ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
             ->setStatusCode(Response::HTTP_OK);
-    }
-
-    /**
-     * @return array{secure: bool, same_site: string}
-     */
-    private function authCookieOptions(): array
-    {
-        $isHttps = request()->isSecure();
-        $isProduction = app()->environment('production');
-
-        return [
-            'secure' => $isHttps || $isProduction,
-            'same_site' => ($isHttps || $isProduction) ? 'Strict' : 'Lax',
-        ];
     }
 
     #[OA\Post(
@@ -185,16 +134,19 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Log out the authenticated user.
+     */
     public function logout(): JsonResponse
     {
         $this->authService->logout();
 
         return response()->json([
             'data' => [
-                'message' => 'Logged out successfully',
+                'message' => __('api.auth.logout_success'),
             ],
-        ])->withoutCookie('access_token', '/')
-            ->withoutCookie('refresh_token', '/');
+        ])->withoutCookie('access_token', $this->cookiePath(), $this->cookieDomain())
+            ->withoutCookie('refresh_token', $this->cookiePath(), $this->cookieDomain());
     }
 
     #[OA\Post(
@@ -208,10 +160,17 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Return the authenticated user profile.
+     */
     public function me(): JsonResponse
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user = $this->auth->guard()->user();
+
+        if (! $user instanceof User) {
+            abort(Response::HTTP_UNAUTHORIZED, __('api.errors.unauthorized'));
+        }
 
         $user->refresh();
         $user->loadMissing(['person', 'role']);
@@ -263,6 +222,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Send a password reset link.
+     */
     public function forgetPassword(ForgetPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -270,7 +232,7 @@ class AuthController extends Controller
         Log::info('status: '.$status);
 
         return response()->json([
-            'message' => 'If an account exists for this email, a reset link has been sent.',
+            'message' => __('api.auth.forgot_password_notice'),
             'status' => $status,
         ]);
     }
@@ -290,6 +252,9 @@ class AuthController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Reset a user password with a valid token.
+     */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -304,8 +269,62 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Password reset successfully.',
+            'message' => __('api.auth.password_reset_success'),
             'status' => $status,
         ]);
+    }
+
+    /**
+     * Build an authentication cookie.
+     */
+    private function authCookie(string $name, string $value, int $minutes): \Symfony\Component\HttpFoundation\Cookie
+    {
+        return Cookie::make(
+            $name,
+            $value,
+            $minutes,
+            $this->cookiePath(),
+            $this->cookieDomain(),
+            $this->cookieSecure(),
+            true,
+            false,
+            $this->cookieSameSite(),
+        );
+    }
+
+    /**
+     * Get the configured auth cookie path.
+     */
+    private function cookiePath(): string
+    {
+        return (string) config('auth.cookies.path', '/');
+    }
+
+    /**
+     * Get the configured auth cookie domain.
+     */
+    private function cookieDomain(): ?string
+    {
+        $domain = config('auth.cookies.domain');
+
+        return is_string($domain) && strtolower($domain) !== 'null' && $domain !== ''
+            ? $domain
+            : null;
+    }
+
+    /**
+     * Determine whether auth cookies must be secure.
+     */
+    private function cookieSecure(): bool
+    {
+        return (bool) config('auth.cookies.secure', false);
+    }
+
+    /**
+     * Get the configured SameSite policy.
+     */
+    private function cookieSameSite(): string
+    {
+        return (string) config('auth.cookies.same_site', 'lax');
     }
 }

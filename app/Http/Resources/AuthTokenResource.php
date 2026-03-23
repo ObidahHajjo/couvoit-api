@@ -12,6 +12,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class AuthTokenResource extends JsonResource
 {
+    /**
+     * Transform the token payload into an array.
+     */
     public function toArray(Request $request): array
     {
         return [

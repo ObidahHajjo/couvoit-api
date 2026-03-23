@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\Person;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for person persistence operations.
+ */
 interface PersonRepositoryInterface
 {
     /**
@@ -59,9 +62,10 @@ interface PersonRepositoryInterface
     public function attachCar(Person $person, int $carId): bool;
 
     /**
-     * Restore deleted account
+     * Restore a previously deleted account.
      *
      * @param int $personId
+     *
      * @return void
      */
     public function restore(int $personId): void;

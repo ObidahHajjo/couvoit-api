@@ -27,6 +27,9 @@ use App\Services\Interfaces\UserPersonalDataPurgeServiceInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Registers application service bindings and bootstrapping hooks.
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**

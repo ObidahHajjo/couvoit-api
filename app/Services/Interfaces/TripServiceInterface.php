@@ -94,9 +94,9 @@ interface TripServiceInterface
      * - starting_address (array)
      * - arrival_address (array)
      *
-     * @param Trip                $trip       Trip instance to update.
+     * @param Trip                 $trip       Trip instance to update.
      * @param array<string, mixed> $payload    Update data (validated).
-     * @param Person              $authPerson  Authenticated user.
+     * @param Person               $authPerson Authenticated user.
      *
      * @return Trip Updated trip (usually reloaded with relations).
      *
@@ -159,7 +159,7 @@ interface TripServiceInterface
      * @return Person
      *
      * @throws ModelNotFoundException If the person does not exist.
-     * @throws Throwable                                           On repository/database errors.
+     * @throws Throwable              On repository/database errors.
      */
     public function getPersonById(int $personId): Person;
 }

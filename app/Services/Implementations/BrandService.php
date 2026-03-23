@@ -7,8 +7,14 @@ use App\Repositories\Interfaces\BrandRepositoryInterface;
 use App\Services\Interfaces\BrandServiceInterface;
 use Illuminate\Support\Collection;
 
+/**
+ * Default implementation of brand application workflows.
+ */
 readonly class BrandService implements BrandServiceInterface
 {
+    /**
+     * Create a new brand service instance.
+     */
     public function __construct(
         private BrandRepositoryInterface $brands
     ) {}

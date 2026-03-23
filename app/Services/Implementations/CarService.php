@@ -23,8 +23,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
+/**
+ * Default implementation of car application workflows.
+ */
 readonly class CarService implements CarServiceInterface
 {
+    /**
+     * Create a new car service instance.
+     */
     public function __construct(
         private CarRepositoryInterface $carRepository,
         private CarReferenceResolverInterface $carReferenceResolver,

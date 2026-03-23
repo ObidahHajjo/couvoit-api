@@ -26,6 +26,9 @@ use App\Repositories\Interfaces\TypeRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Registers repository interface bindings.
+ */
 class RepositoryProvider extends ServiceProvider
 {
     /**

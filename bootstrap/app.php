@@ -3,6 +3,7 @@
 use App\Exceptions\ApiExceptionConfigurator;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Middleware\LocalJwtAuth;
+use App\Http\Middleware\SetRequestLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ['middleware' => ['jwt']]
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->appendToGroup('api', SetRequestLocale::class);
+
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
             'jwt' => LocalJwtAuth::class,

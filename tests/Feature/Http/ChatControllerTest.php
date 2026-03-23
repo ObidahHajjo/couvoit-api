@@ -194,4 +194,204 @@ final class ChatControllerTest extends TestCase
         $res->assertJsonPath('data.0.participant.name', 'Dina Driver');
         $res->assertJsonPath('data.0.latest_message.body', 'Hi Dina');
     }
+
+    public function test_list_conversations_prefers_highest_message_id_when_timestamps_match(): void
+    {
+        $driver = $this->makePerson(['first_name' => 'Dina', 'last_name' => 'Driver']);
+        $passenger = $this->makePerson(['first_name' => 'Paul', 'last_name' => 'Passenger']);
+        $passengerUser = $this->makeUser($passenger);
+
+        $conversation = Conversation::query()->create([
+            'participant_one_id' => min($driver->id, $passenger->id),
+            'participant_two_id' => max($driver->id, $passenger->id),
+            'last_message_at' => now(),
+        ]);
+
+        $first = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'Older message',
+        ]);
+
+        $second = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'Newest message',
+        ]);
+
+        $sameTimestamp = '2026-03-22 12:00:05';
+
+        DB::table('conversation_messages')
+            ->whereIn('id', [$first->id, $second->id])
+            ->update([
+                'created_at' => $sameTimestamp,
+                'updated_at' => $sameTimestamp,
+            ]);
+
+        DB::table('conversations')
+            ->where('id', $conversation->id)
+            ->update([
+                'last_message_at' => $sameTimestamp,
+                'updated_at' => $sameTimestamp,
+            ]);
+
+        $res = $this->authenticate($passengerUser)->getJson('/conversations');
+
+        $res->assertOk();
+        $res->assertJsonPath('data.0.latest_message.body', 'Newest message');
+    }
+
+    public function test_clear_conversation_only_hides_history_for_authenticated_person(): void
+    {
+        $driver = $this->makePerson(['first_name' => 'Dina', 'last_name' => 'Driver']);
+        $passenger = $this->makePerson(['first_name' => 'Paul', 'last_name' => 'Passenger']);
+        $driverUser = $this->makeUser($driver);
+        $passengerUser = $this->makeUser($passenger);
+
+        $conversation = Conversation::query()->create([
+            'participant_one_id' => min($driver->id, $passenger->id),
+            'participant_two_id' => max($driver->id, $passenger->id),
+            'last_message_at' => now(),
+        ]);
+
+        $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'First message',
+        ]);
+
+        $conversation->messages()->create([
+            'sender_person_id' => $passenger->id,
+            'body' => 'Second message',
+        ]);
+
+        $clearResponse = $this->authenticate($passengerUser)->postJson("/conversations/{$conversation->id}/clear");
+
+        $clearResponse->assertOk();
+        $clearResponse->assertJsonPath('message', 'Conversation cleared for your account.');
+        $clearResponse->assertJsonCount(0, 'data.messages');
+        $clearResponse->assertJsonPath('data.latest_message', null);
+
+        $passengerView = $this->authenticate($passengerUser)->getJson("/conversations/{$conversation->id}");
+        $passengerView->assertOk();
+        $passengerView->assertJsonCount(0, 'data.messages');
+        $passengerView->assertJsonPath('data.latest_message', null);
+
+        $driverView = $this->authenticate($driverUser)->getJson("/conversations/{$conversation->id}");
+        $driverView->assertOk();
+        $driverView->assertJsonCount(2, 'data.messages');
+        $driverView->assertJsonPath('data.latest_message.body', 'Second message');
+    }
+
+    public function test_clear_message_only_hides_one_message_for_authenticated_person(): void
+    {
+        $driver = $this->makePerson(['first_name' => 'Dina', 'last_name' => 'Driver']);
+        $passenger = $this->makePerson(['first_name' => 'Paul', 'last_name' => 'Passenger']);
+        $driverUser = $this->makeUser($driver);
+        $passengerUser = $this->makeUser($passenger);
+
+        $conversation = Conversation::query()->create([
+            'participant_one_id' => min($driver->id, $passenger->id),
+            'participant_two_id' => max($driver->id, $passenger->id),
+            'last_message_at' => now(),
+        ]);
+
+        $firstMessage = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'First message',
+        ]);
+
+        $secondMessage = $conversation->messages()->create([
+            'sender_person_id' => $passenger->id,
+            'body' => 'Second message',
+        ]);
+
+        $clearResponse = $this->authenticate($passengerUser)
+            ->postJson("/conversations/{$conversation->id}/messages/{$firstMessage->id}/clear");
+
+        $clearResponse->assertOk();
+        $clearResponse->assertJsonPath('message', 'Message cleared for your account.');
+        $clearResponse->assertJsonCount(1, 'data.messages');
+        $clearResponse->assertJsonPath('data.messages.0.body', 'Second message');
+
+        $passengerView = $this->authenticate($passengerUser)->getJson("/conversations/{$conversation->id}");
+        $passengerView->assertOk();
+        $passengerView->assertJsonCount(1, 'data.messages');
+        $passengerView->assertJsonPath('data.messages.0.body', 'Second message');
+
+        $driverView = $this->authenticate($driverUser)->getJson("/conversations/{$conversation->id}");
+        $driverView->assertOk();
+        $driverView->assertJsonCount(2, 'data.messages');
+        $driverView->assertJsonPath('data.messages.0.body', 'First message');
+        $driverView->assertJsonPath('data.messages.1.body', 'Second message');
+        $driverView->assertJsonPath('data.latest_message.body', 'Second message');
+
+        $this->assertDatabaseHas('conversation_hidden_messages', [
+            'conversation_id' => $conversation->id,
+            'person_id' => $passenger->id,
+            'conversation_message_id' => $firstMessage->id,
+        ]);
+
+        $this->assertDatabaseMissing('conversation_hidden_messages', [
+            'person_id' => $driver->id,
+            'conversation_message_id' => $firstMessage->id,
+        ]);
+
+        $this->assertSame($secondMessage->body, $passengerView->json('data.latest_message.body'));
+    }
+
+    public function test_clear_messages_hides_multiple_selected_messages_for_authenticated_person(): void
+    {
+        $driver = $this->makePerson(['first_name' => 'Dina', 'last_name' => 'Driver']);
+        $passenger = $this->makePerson(['first_name' => 'Paul', 'last_name' => 'Passenger']);
+        $driverUser = $this->makeUser($driver);
+        $passengerUser = $this->makeUser($passenger);
+
+        $conversation = Conversation::query()->create([
+            'participant_one_id' => min($driver->id, $passenger->id),
+            'participant_two_id' => max($driver->id, $passenger->id),
+            'last_message_at' => now(),
+        ]);
+
+        $firstMessage = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'First message',
+        ]);
+
+        $secondMessage = $conversation->messages()->create([
+            'sender_person_id' => $passenger->id,
+            'body' => 'Second message',
+        ]);
+
+        $thirdMessage = $conversation->messages()->create([
+            'sender_person_id' => $driver->id,
+            'body' => 'Third message',
+        ]);
+
+        $clearResponse = $this->authenticate($passengerUser)
+            ->postJson("/conversations/{$conversation->id}/messages/clear", [
+                'message_ids' => [$firstMessage->id, $secondMessage->id],
+            ]);
+
+        $clearResponse->assertOk();
+        $clearResponse->assertJsonPath('message', 'Selected messages cleared for your account.');
+        $clearResponse->assertJsonCount(1, 'data.messages');
+        $clearResponse->assertJsonPath('data.messages.0.body', 'Third message');
+
+        $driverView = $this->authenticate($driverUser)->getJson("/conversations/{$conversation->id}");
+        $driverView->assertOk();
+        $driverView->assertJsonCount(3, 'data.messages');
+        $driverView->assertJsonPath('data.messages.0.body', 'First message');
+        $driverView->assertJsonPath('data.messages.2.body', 'Third message');
+
+        $this->assertDatabaseHas('conversation_hidden_messages', [
+            'person_id' => $passenger->id,
+            'conversation_message_id' => $firstMessage->id,
+        ]);
+        $this->assertDatabaseHas('conversation_hidden_messages', [
+            'person_id' => $passenger->id,
+            'conversation_message_id' => $secondMessage->id,
+        ]);
+        $this->assertDatabaseMissing('conversation_hidden_messages', [
+            'person_id' => $passenger->id,
+            'conversation_message_id' => $thirdMessage->id,
+        ]);
+    }
 }

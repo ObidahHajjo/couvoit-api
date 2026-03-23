@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
 
     /*
@@ -62,7 +64,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
     ],
 
@@ -107,5 +109,12 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    'cookies' => [
+        'path' => env('AUTH_COOKIE_PATH', '/'),
+        'domain' => env('AUTH_COOKIE_DOMAIN'),
+        'secure' => env('AUTH_COOKIE_SECURE', false),
+        'same_site' => env('AUTH_COOKIE_SAMESITE', 'lax'),
+    ],
 
 ];

@@ -20,6 +20,9 @@ use App\Resolvers\Interfaces\CarReferenceResolverInterface;
  */
 final readonly class CarReferenceResolver implements CarReferenceResolverInterface
 {
+    /**
+     * Create a new car reference resolver instance.
+     */
     public function __construct(
         private BrandRepositoryInterface $brands,
         private TypeRepositoryInterface $types,

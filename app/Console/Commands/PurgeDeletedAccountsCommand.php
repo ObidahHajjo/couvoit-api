@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Services\Interfaces\UserPersonalDataPurgeServiceInterface;
 use Illuminate\Console\Command;
 
+/**
+ * Purge stale soft-deleted accounts and their personal data.
+ */
 class PurgeDeletedAccountsCommand extends Command
 {
     /**

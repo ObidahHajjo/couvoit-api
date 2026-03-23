@@ -14,6 +14,9 @@ use LogicException;
  */
 readonly class AddressEloquentRepository implements AddressRepositoryInterface
 {
+    /**
+     * Create a new address repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {

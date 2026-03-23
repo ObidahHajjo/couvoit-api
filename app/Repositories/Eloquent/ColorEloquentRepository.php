@@ -20,16 +20,25 @@ use Illuminate\Support\Collection;
  */
 readonly class ColorEloquentRepository implements ColorRepositoryInterface
 {
+    /**
+     * Create a new color repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {
     }
 
+    /**
+     * Normalize a color hex value for cache lookups.
+     */
     private function normalizeHex(string $hex): string
     {
         return mb_strtolower(trim($hex));
     }
 
+    /**
+     * Normalize a color name for cache lookups.
+     */
     private function normalizeName(string $name): string
     {
         return mb_strtolower(trim($name));

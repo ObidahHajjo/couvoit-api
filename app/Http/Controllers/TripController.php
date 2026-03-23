@@ -14,19 +14,18 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Services\Interfaces\TripServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-/**
- * HTTP controller for Trip endpoints.
- */
 #[OA\Tag(name: 'Trips', description: 'Trip endpoints (search, create, update, cancel, reserve).')]
+/**
+ * Handles trip management endpoints.
+ */
 class TripController extends Controller
 {
     /**
-     * @param TripServiceInterface $trips
+     * Create a new trip controller instance.
      */
     public function __construct(
         private readonly TripServiceInterface $trips,
@@ -34,16 +33,6 @@ class TripController extends Controller
         $this->authorizeResource(Trip::class, 'trip');
     }
 
-    /**
-     * Search trips.
-     *
-     * Query: startingcity, arrivalcity, tripdate, per_page
-     *
-     * @param TripIndexRequest $request
-     * @return JsonResponse
-     *
-     * @throws Throwable
-     */
     #[OA\Get(
         path: '/trips',
         operationId: 'tripsIndex',
@@ -63,12 +52,19 @@ class TripController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Search trips.
+     *
+     * Supported filters: startingcity, arrivalcity, tripdate and per_page.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function index(TripIndexRequest $request): JsonResponse
     {
         $starting = $request->validated('startingcity');
-        $arrival  = $request->validated('arrivalcity');
-        $date     = $request->validated('tripdate');
-        $perPage  = (int) ($request->validated('per_page') ?? 15);
+        $arrival = $request->validated('arrivalcity');
+        $date = $request->validated('tripdate');
+        $perPage = (int) ($request->validated('per_page') ?? 15);
 
         $paginator = $this->trips->searchTrips($starting, $arrival, $date, $perPage);
 
@@ -77,12 +73,6 @@ class TripController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Show a trip.
-     *
-     * @param Trip $trip
-     * @return JsonResponse
-     */
     #[OA\Get(
         path: '/trips/{id}',
         operationId: 'tripsShow',
@@ -99,6 +89,9 @@ class TripController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Show a trip.
+     */
     public function show(Trip $trip): JsonResponse
     {
         $trip->loadMissing(['driver', 'departureAddress.city', 'arrivalAddress.city']);
@@ -108,14 +101,6 @@ class TripController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * List passengers of a trip.
-     *
-     * @param Trip $trip
-     * @return JsonResponse
-     *
-     * @throws Throwable
-     */
     #[OA\Get(
         path: '/trips/{id}/person',
         operationId: 'tripsPassengers',
@@ -132,6 +117,11 @@ class TripController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * List passengers of a trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function passengers(Trip $trip): JsonResponse
     {
         $this->authorize('viewPassengers', $trip);
@@ -143,13 +133,6 @@ class TripController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Create a trip.
-     *
-     * @param StoreTripRequest $request
-     * @return JsonResponse
-     * @throws Throwable
-     */
     #[OA\Post(
         path: '/trips',
         operationId: 'tripsStore',
@@ -167,6 +150,11 @@ class TripController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Create a trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function store(StoreTripRequest $request): JsonResponse
     {
         /** @var User $authUser */
@@ -184,14 +172,6 @@ class TripController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * Update a trip.
-     *
-     * @param UpdateTripRequest $request
-     * @param Trip $trip
-     * @return JsonResponse
-     * @throws Throwable
-     */
     #[OA\Patch(
         path: '/trips/{id}',
         operationId: 'tripsUpdate',
@@ -213,6 +193,11 @@ class TripController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Update a trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function update(UpdateTripRequest $request, Trip $trip): JsonResponse
     {
         /** @var User $authUser */
@@ -228,13 +213,6 @@ class TripController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Permanently delete a trip.
-     *
-     * @param Trip $trip
-     * @return Response
-     * @throws Throwable
-     */
     #[OA\Delete(
         path: '/trips/{id}',
         operationId: 'tripsDestroy',
@@ -251,6 +229,11 @@ class TripController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Permanently delete a trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function destroy(Trip $trip): Response
     {
         /** @var User $authUser */
@@ -262,13 +245,6 @@ class TripController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Cancel a trip.
-     *
-     * @param Trip $trip
-     * @return Response
-     * @throws Throwable
-     */
     #[OA\Patch(
         path: '/trips/{id}/cancel',
         operationId: 'tripsCancel',
@@ -285,6 +261,11 @@ class TripController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Cancel a trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function cancel(Trip $trip): Response
     {
         /** @var User $authUser */
@@ -298,14 +279,6 @@ class TripController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Cancel a reservation for this trip.
-     *
-     * @param Trip $trip
-     * @param CancelReservationRequest $request
-     * @return Response
-     * @throws Throwable
-     */
     #[OA\Delete(
         path: '/trips/{id}/reservations',
         operationId: 'tripsCancelReservation',
@@ -327,6 +300,11 @@ class TripController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Cancel a reservation for this trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function cancelReservation(Trip $trip, CancelReservationRequest $request): Response
     {
         /** @var User $authUser */
@@ -348,14 +326,6 @@ class TripController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Reserve a seat for a trip.
-     *
-     * @param ReserveTripRequest $request
-     * @param Trip $trip
-     * @return JsonResponse
-     * @throws Throwable
-     */
     #[OA\Post(
         path: '/trips/{id}/person',
         operationId: 'tripsReserve',
@@ -378,6 +348,11 @@ class TripController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Reserve a seat for a trip.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function reserve(ReserveTripRequest $request, Trip $trip): JsonResponse
     {
         /** @var User $authUser */
@@ -387,8 +362,8 @@ class TripController extends Controller
         $requestPersonId = $request->validated('person_id');
 
         $personId = $authUser->isAdmin()
-            ? (int)$requestPersonId
-            : (is_null($requestPersonId) ? $authPerson->id : (int)$requestPersonId);
+            ? (int) $requestPersonId
+            : (is_null($requestPersonId) ? $authPerson->id : (int) $requestPersonId);
 
         $this->authorize('reserve', $trip);
 

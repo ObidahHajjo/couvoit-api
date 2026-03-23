@@ -11,7 +11,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateRolePersonRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the request is authorized.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,7 +21,7 @@ class UpdateRolePersonRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules for role reassignment.
      *
      * @return array<string, ValidationRule|array|string>
      */

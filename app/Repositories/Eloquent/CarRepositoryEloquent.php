@@ -19,6 +19,9 @@ use Illuminate\Support\Collection;
  */
 readonly class CarRepositoryEloquent implements CarRepositoryInterface
 {
+    /**
+     * Create a new car repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {

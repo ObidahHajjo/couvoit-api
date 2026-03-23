@@ -11,7 +11,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreTripRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the request is authorized.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,7 +21,7 @@ class StoreTripRequest extends FormRequest
     }
 
     /**
-     * Validation rules.
+     * Get the validation rules for trip creation.
      *
      * @return array<string, ValidationRule|array|string>
      */

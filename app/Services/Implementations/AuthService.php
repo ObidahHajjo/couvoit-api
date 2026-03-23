@@ -16,8 +16,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 
+/**
+ * Default implementation of authentication and session workflows.
+ */
 final readonly class AuthService implements AuthServiceInterface
 {
+    /**
+     * Create a new auth service instance.
+     */
     public function __construct(
         private JwtIssuerInterface $jwt,
         private RefreshTokenRepositoryInterface $refreshTokens,
@@ -125,6 +131,9 @@ final readonly class AuthService implements AuthServiceInterface
         );
     }
 
+    /**
+     * Issue a new authenticated session payload.
+     */
     private function issueSession(User $user, int $person_id): array
     {
         $access = $this->jwt->issueAccessToken($user);
@@ -144,6 +153,9 @@ final readonly class AuthService implements AuthServiceInterface
         ];
     }
 
+    /**
+     * Restore a previously soft-deleted account.
+     */
     private function restoreDeletedAccount(User $user): void
     {
         DB::transaction(function () use ($user): void {

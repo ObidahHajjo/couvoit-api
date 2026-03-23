@@ -19,6 +19,9 @@ use Illuminate\Support\Collection;
  */
 readonly class TypeEloquentRepository implements TypeRepositoryInterface
 {
+    /**
+     * Create a new type repository instance.
+     */
     public function __construct(
         private RepositoryCacheManager $cache
     ) {
