@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Exceptions\ConflictException;
 use App\Exceptions\UnauthorizedException;
 use App\Models\Person;
+use App\Models\Role;
 use App\Models\User;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
@@ -21,9 +22,13 @@ class AuthServiceTest extends TestCase
     use RefreshDatabase;
 
     private JwtIssuerInterface $jwt;
+
     private RefreshTokenRepositoryInterface $refreshTokens;
+
     private UserRepositoryInterface $userRepository;
+
     private PersonRepositoryInterface $personRepository;
+
     private AuthService $service;
 
     protected function setUp(): void
@@ -49,16 +54,23 @@ class AuthServiceTest extends TestCase
         parent::tearDown();
     }
 
+    private function seedRoles(): void
+    {
+        if (! Role::query()->whereKey(1)->exists()) {
+            Role::unguarded(fn () => Role::query()->create(['id' => 1, 'name' => 'user']));
+        }
+    }
+
     public function test_register_creates_user_and_person_when_not_existing(): void
     {
         $email = 'john@example.com';
         $password = 'secret';
         $hashed = Hash::make($password);
 
-        $person = new Person();
+        $person = new Person;
         $person->id = 10;
 
-        $user = new User();
+        $user = new User;
         $user->id = 55;
         $user->email = $email;
         $user->password = $hashed;
@@ -133,7 +145,7 @@ class AuthServiceTest extends TestCase
         $oldRefresh = 'old_refresh_token';
         $userId = 99;
 
-        $user = new User();
+        $user = new User;
         $user->id = $userId;
         $user->is_active = false;
 
@@ -158,14 +170,14 @@ class AuthServiceTest extends TestCase
         $email = 'john@example.com';
         $password = 'secret';
 
-        $user = new User();
+        $user = new User;
         $user->id = 7;
         $user->person_id = 42;
         $user->email = $email;
         $user->password = Hash::make($password);
         $user->is_active = true;
 
-        $person = new Person();
+        $person = new Person;
         $person->id = 42;
 
         $this->userRepository
@@ -202,7 +214,7 @@ class AuthServiceTest extends TestCase
         $oldRefresh = 'old_refresh_token';
         $userId = 99;
 
-        $user = new User();
+        $user = new User;
         $user->id = $userId;
         $user->is_active = true;
 
@@ -249,5 +261,37 @@ class AuthServiceTest extends TestCase
         $this->expectException(UnauthorizedException::class);
 
         $this->service->refresh($oldRefresh);
+    }
+
+    public function test_change_password_hashes_password_and_revokes_refresh_tokens(): void
+    {
+        $this->seedRoles();
+
+        $person = Person::query()->create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'pseudo' => 'john_'.uniqid(),
+            'phone' => null,
+            'car_id' => null,
+        ]);
+
+        $user = User::query()->create([
+            'email' => 'user_'.uniqid().'@example.com',
+            'password' => Hash::make('oldsecret123'),
+            'role_id' => 1,
+            'is_active' => true,
+            'person_id' => $person->id,
+        ]);
+
+        $this->refreshTokens
+            ->shouldReceive('deleteAllByUserId')
+            ->once()
+            ->with($user->id);
+
+        $this->service->changePassword($user, 'newsecret123');
+
+        $user->refresh();
+
+        $this->assertTrue(Hash::check('newsecret123', $user->password));
     }
 }

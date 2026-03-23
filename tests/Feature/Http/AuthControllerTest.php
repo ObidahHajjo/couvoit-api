@@ -2,8 +2,13 @@
 
 namespace Tests\Feature\Http;
 
+use App\Http\Middleware\LocalJwtAuth;
+use App\Models\Person;
+use App\Models\Role;
+use App\Models\User;
 use App\Services\Interfaces\AuthServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthControllerTest extends TestCase
@@ -11,9 +16,46 @@ class AuthControllerTest extends TestCase
     use RefreshDatabase;
 
     private string $registerUri = '/auth/register';
+
     private string $loginUri = '/auth/login';
+
     private string $refreshUri = '/auth/refresh';
+
     private string $forgotPasswordUri = '/auth/forgot-password';
+
+    private string $changePasswordUri = '/auth/change-password';
+
+    private function seedRoles(): void
+    {
+        if (! Role::query()->whereKey(1)->exists()) {
+            Role::unguarded(fn () => Role::query()->create(['id' => 1, 'name' => 'user']));
+        }
+
+        if (! Role::query()->whereKey(2)->exists()) {
+            Role::unguarded(fn () => Role::query()->create(['id' => 2, 'name' => 'admin']));
+        }
+    }
+
+    private function makeUser(string $password = 'secret12345'): User
+    {
+        $this->seedRoles();
+
+        $person = Person::query()->create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'pseudo' => 'john_'.uniqid(),
+            'phone' => null,
+            'car_id' => null,
+        ]);
+
+        return User::query()->create([
+            'email' => 'user_'.uniqid().'@example.com',
+            'password' => Hash::make($password),
+            'role_id' => 1,
+            'is_active' => true,
+            'person_id' => $person->id,
+        ]);
+    }
 
     public function test_register_returns_created_with_token_resource(): void
     {
@@ -148,5 +190,62 @@ class AuthControllerTest extends TestCase
         $res->assertJsonPath('details', 'البيانات المقدمة غير صالحة.');
         $res->assertJsonPath('fields.email.0', 'حقل البريد الإلكتروني مطلوب.');
         $res->assertJsonPath('fields.password.0', 'حقل كلمة المرور مطلوب.');
+    }
+
+    public function test_change_password_is_protected(): void
+    {
+        $res = $this->postJson($this->changePasswordUri, [
+            'current_password' => 'secret12345',
+            'password' => 'newsecret123',
+            'password_confirmation' => 'newsecret123',
+        ]);
+
+        $res->assertStatus(401);
+        $res->assertJsonPath('error', 'Missing Bearer token');
+    }
+
+    public function test_change_password_updates_password_for_authenticated_user(): void
+    {
+        $user = $this->makeUser();
+
+        $this->withoutMiddleware(LocalJwtAuth::class);
+
+        $this->mock(AuthServiceInterface::class, function ($mock) use ($user) {
+            $mock->shouldReceive('changePassword')
+                ->once()
+                ->withArgs(function (User $passedUser, string $password) use ($user): bool {
+                    return $passedUser->is($user) && $password === 'newsecret123';
+                });
+        });
+
+        $res = $this->actingAs($user)->postJson($this->changePasswordUri, [
+            'current_password' => 'secret12345',
+            'password' => 'newsecret123',
+            'password_confirmation' => 'newsecret123',
+        ]);
+
+        $res->assertOk();
+        $res->assertJsonPath('message', 'Password changed successfully.');
+    }
+
+    public function test_change_password_validates_current_password(): void
+    {
+        $user = $this->makeUser();
+
+        $this->withoutMiddleware(LocalJwtAuth::class);
+
+        $this->mock(AuthServiceInterface::class, function ($mock) {
+            $mock->shouldNotReceive('changePassword');
+        });
+
+        $res = $this->actingAs($user)->postJson($this->changePasswordUri, [
+            'current_password' => 'wrong-password',
+            'password' => 'newsecret123',
+            'password_confirmation' => 'newsecret123',
+        ]);
+
+        $res->assertStatus(422);
+        $res->assertJsonPath('error', 'VALIDATION_ERROR');
+        $this->assertArrayHasKey('current_password', $res->json('fields'));
     }
 }
