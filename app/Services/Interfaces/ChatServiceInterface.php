@@ -110,12 +110,22 @@ interface ChatServiceInterface
     /**
      * Contact a passenger on a trip and optionally send the first message.
      *
-     * @param Trip        $trip       Trip shared by both participants.
-     * @param Person      $passenger  Passenger to contact.
-     * @param Person      $authPerson Authenticated driver sending the message.
-     * @param string|null $message    Optional initial message body.
+     * @param Trip $trip Trip shared by both participants.
+     * @param Person $passenger Passenger to contact.
+     * @param Person $authPerson Authenticated driver sending the message.
+     * @param string|null $message Optional initial message body.
      *
      * @return ConversationMessage|null
      */
     public function contactPassenger(Trip $trip, Person $passenger, Person $authPerson, ?string $message, array $attachments = []): ?ConversationMessage;
+
+    /**
+     * Find an attachment by id and verify the person has access to its conversation.
+     *
+     * @param int $attachmentId Attachment identifier.
+     * @param Person $authPerson Authenticated person requesting the attachment.
+     *
+     * @return \App\Models\ConversationMessageAttachment|null
+     */
+    public function findAttachmentForPerson(int $attachmentId, Person $authPerson): ?\App\Models\ConversationMessageAttachment;
 }

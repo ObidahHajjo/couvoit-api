@@ -185,4 +185,35 @@ readonly class CarModelEloquentRepository implements CarModelRepositoryInterface
             ->limit(20)
             ->get();
     }
+
+    /** @inheritDoc */
+    public function create(array $attributes): CarModel
+    {
+        if (isset($attributes['name'])) {
+            $attributes['name'] = $this->normalizeName($attributes['name']);
+        }
+
+        $model = CarModel::query()->create($attributes);
+        $model->load(['brand', 'type']);
+
+        $this->cache->putModel($model);
+        $this->cache->forgetModelsAll();
+        $this->cache->forgetModelsByBrand((int) $model->brand_id);
+
+        return $model;
+    }
+
+    /** @inheritDoc */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return CarModel::query()
+            ->with(['brand', 'type'])
+            ->paginate($perPage);
+    }
+
+    /** @inheritDoc */
+    public function hasCars(CarModel $model): bool
+    {
+        return \App\Models\Car::query()->where('model_id', $model->id)->exists();
+    }
 }

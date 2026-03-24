@@ -291,4 +291,22 @@ class ChatService implements ChatServiceInterface
             })
             ->with('attachments');
     }
+
+    /**
+     * Find an attachment by id and verify the person has access to its conversation.
+     */
+    public function findAttachmentForPerson(int $attachmentId, Person $authPerson): ?ConversationMessageAttachment
+    {
+        $attachment = ConversationMessageAttachment::query()
+            ->with('message')
+            ->find($attachmentId);
+
+        if ($attachment === null) {
+            return null;
+        }
+
+        $this->getConversationForPerson((int) $attachment->message->conversation_id, $authPerson);
+
+        return $attachment;
+    }
 }

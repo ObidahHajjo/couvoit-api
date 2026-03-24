@@ -57,4 +57,12 @@ interface CarRepositoryInterface
      * @return void
      */
     public function delete(Car $car): void;
+
+    /**
+     * Get paginated cars for admin.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 }

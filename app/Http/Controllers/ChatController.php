@@ -278,13 +278,9 @@ class ChatController extends Controller
         /** @var User $authUser */
         $authUser = $request->user();
 
-        $messageAttachment = \App\Models\ConversationMessageAttachment::query()
-            ->with('message')
-            ->find($attachment);
+        $messageAttachment = $this->chat->findAttachmentForPerson($attachment, $authUser->person);
 
         abort_if($messageAttachment === null, Response::HTTP_NOT_FOUND, 'Attachment not found.');
-
-        $this->chat->getConversationForPerson((int) $messageAttachment->message->conversation_id, $authUser->person);
 
         return Storage::disk((string) $messageAttachment->disk)->download(
             (string) $messageAttachment->path,

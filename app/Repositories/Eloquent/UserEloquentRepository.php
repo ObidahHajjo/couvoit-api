@@ -64,4 +64,35 @@ final class UserEloquentRepository implements UserRepositoryInterface
             'is_active' => true,
         ])->save();
     }
+
+    /** @inheritDoc */
+    public function count(): int
+    {
+        return User::query()->count();
+    }
+
+    /** @inheritDoc */
+    public function paginateWithRelations(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return User::query()
+            ->with(['person', 'role'])
+            ->paginate($perPage);
+    }
+
+    /** @inheritDoc */
+    public function findByPersonId(int $personId): User
+    {
+        /** @var User $user */
+        $user = User::query()
+            ->where('person_id', $personId)
+            ->firstOrFail();
+
+        return $user;
+    }
+
+    /** @inheritDoc */
+    public function update(User $user, array $attributes): void
+    {
+        $user->update($attributes);
+    }
 }

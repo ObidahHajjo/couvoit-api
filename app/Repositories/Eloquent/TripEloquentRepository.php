@@ -181,12 +181,27 @@ readonly class TripEloquentRepository implements TripRepositoryInterface
     {
         return $this->cache->rememberPassengerTrips($personId, function () use ($personId) {
             return Trip::query()
-                ->whereHas('passengers', function ($query) use ($personId) {
-                    $query->where('persons.id', $personId);
-                })
-                ->with(['departureAddress.city', 'arrivalAddress.city', 'driver'])
-                ->orderByDesc('departure_time')
-                ->get();
+            ->whereHas('passengers', function ($query) use ($personId) {
+                $query->where('persons.id', $personId);
+            })
+            ->with(['departureAddress.city', 'arrivalAddress.city', 'driver'])
+            ->orderByDesc('departure_time')
+            ->get();
         });
+    }
+
+    /** @inheritDoc */
+    public function count(): int
+    {
+        return Trip::query()->count();
+    }
+
+    /** @inheritDoc */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Trip::query()
+            ->with(['driver.car', 'departureAddress.city', 'arrivalAddress.city'])
+            ->where('departure_time', '>', Carbon::now())
+            ->paginate($perPage);
     }
 }

@@ -76,4 +76,39 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         $this->cache->forgetModelsByBrand($id);
         $this->cache->invalidateCarsAndPersonsByBrandId($id);
     }
+
+    /** @inheritDoc */
+    public function create(array $attributes): Brand
+    {
+        $brand = Brand::query()->create($attributes);
+
+        $this->cache->putBrand($brand);
+        $this->cache->forgetBrandsAll();
+
+        return $brand;
+    }
+
+    /** @inheritDoc */
+    public function update(Brand $brand, array $attributes): Brand
+    {
+        $brand->update($attributes);
+        $brand->refresh();
+
+        $this->cache->putBrand($brand);
+        $this->cache->forgetBrandsAll();
+
+        return $brand;
+    }
+
+    /** @inheritDoc */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Brand::query()->paginate($perPage);
+    }
+
+    /** @inheritDoc */
+    public function hasModels(Brand $brand): bool
+    {
+        return $brand->models()->exists();
+    }
 }

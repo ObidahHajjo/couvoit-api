@@ -98,11 +98,9 @@ readonly class PersonService implements PersonServiceInterface
     /** @inheritDoc */
     public function updateUserRoleByPersonId(int $personId, int $roleId): Person
     {
-        /** @var User|null $user */
-        $user = User::query()->where('person_id', $personId)->firstOrFail();
+        $user = $this->users->findByPersonId($personId);
 
-        $user->role_id = $roleId;
-        $user->save();
+        $this->users->update($user, ['role_id' => $roleId]);
 
         return $this->persons->findById($personId);
     }

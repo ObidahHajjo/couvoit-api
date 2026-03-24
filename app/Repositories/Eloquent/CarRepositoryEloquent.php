@@ -108,4 +108,12 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         $this->cache->forgetCarsAll();
         $this->cache->invalidatePersonsByCarId($id);
     }
+
+    /** @inheritDoc */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Car::query()
+            ->with(['model.brand', 'color'])
+            ->paginate($perPage);
+    }
 }

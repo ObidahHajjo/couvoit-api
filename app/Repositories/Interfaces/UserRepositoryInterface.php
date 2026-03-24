@@ -64,4 +64,36 @@ interface UserRepositoryInterface
      * @return void
      */
     public function restore(User $user): void;
+
+    /**
+     * Count all users.
+     *
+     * @return int
+     */
+    public function count(): int;
+
+    /**
+     * Get paginated users with relations.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginateWithRelations(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Find a user by person id.
+     *
+     * @param int $personId
+     * @return User
+     */
+    public function findByPersonId(int $personId): User;
+
+    /**
+     * Update a user.
+     *
+     * @param User $user
+     * @param array<string, mixed> $attributes
+     * @return void
+     */
+    public function update(User $user, array $attributes): void;
 }
