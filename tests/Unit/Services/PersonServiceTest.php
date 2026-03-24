@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use App\Support\Cache\RepositoryCacheManager;
 
 final class PersonServiceTest extends TestCase
 {
@@ -22,6 +23,7 @@ final class PersonServiceTest extends TestCase
     private UserRepositoryInterface $users;
     private PersonService $service;
 
+    private RepositoryCacheManager $cache;
     protected function setUp(): void
     {
         parent::setUp();
@@ -29,8 +31,9 @@ final class PersonServiceTest extends TestCase
         $this->persons = Mockery::mock(PersonRepositoryInterface::class);
         $this->trips = Mockery::mock(TripRepositoryInterface::class);
         $this->users = Mockery::mock(UserRepositoryInterface::class);
+        $this->cache = Mockery::mock(RepositoryCacheManager::class);
 
-        $this->service = new PersonService($this->persons, $this->trips, $this->users);
+        $this->service = new PersonService($this->persons, $this->trips, $this->users, $this->cache);
     }
 
     protected function tearDown(): void
@@ -178,6 +181,14 @@ final class PersonServiceTest extends TestCase
             ->with(1);
 
         $this->persons->shouldReceive('delete')
+            ->once()
+            ->with(9);
+
+        $this->cache->shouldReceive('invalidatePersonListAndItem')
+            ->once()
+            ->with(9);
+
+        $this->cache->shouldReceive('forgetPerson')
             ->once()
             ->with(9);
 
