@@ -8,6 +8,10 @@ use App\Models\Car;
 
 /**
  * Contract for resolving car reference identifiers from payload data.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Interface for car reference resolution services.
  */
 interface CarReferenceResolverInterface
 {

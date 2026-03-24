@@ -6,6 +6,10 @@ use InvalidArgumentException;
 
 /**
  * Immutable data transfer object for partial car updates.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Represents validated car data for partial updates. All fields are optional.
  */
 final readonly class CarUpdateData
 {
@@ -27,9 +31,10 @@ final readonly class CarUpdateData
      *
      * Only provided fields will be mapped.
      *
-     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $data  Raw request data
+     * @return static New CarUpdateData instance
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException When seats is provided but not a positive integer
      */
     public static function fromArray(array $data): self
     {
@@ -87,6 +92,8 @@ final readonly class CarUpdateData
 
     /**
      * Determine whether no updatable field was provided.
+     *
+     * @return bool True if all fields are null, false otherwise
      */
     public function isEmpty(): bool
     {

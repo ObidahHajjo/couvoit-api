@@ -6,6 +6,10 @@ use InvalidArgumentException;
 
 /**
  * Immutable data transfer object for car creation input.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Represents validated car data required to create a new car entity.
  */
 final readonly class CarCreateData
 {
@@ -27,9 +31,10 @@ final readonly class CarCreateData
      *
      * Supports both normalized keys and legacy payload structure.
      *
-     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $data  Raw request data
+     * @return static New CarCreateData instance
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException When required fields are missing or invalid
      */
     public static function fromArray(array $data): self
     {

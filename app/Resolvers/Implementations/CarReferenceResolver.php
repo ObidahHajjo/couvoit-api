@@ -14,6 +14,10 @@ use App\Resolvers\Interfaces\CarReferenceResolverInterface;
 /**
  * Resolves and/or creates reference entities needed to create or update a Car.
  *
+ * @author Covoiturage API Team
+ *
+ * @description Resolves foreign key references for car-related entities.
+ *
  * Responsibilities:
  * - Create or reuse Brand, Type, CarModel, Color based on incoming payload data
  * - Return resolved foreign keys to be used when persisting a Car
@@ -30,7 +34,14 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         private ColorRepositoryInterface $colors,
     ) {}
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritdoc}
+     *
+     * @param  array<string, mixed>  $data  Car reference data containing brand.name, type.name, model.name, color.name, color.hex_code
+     * @return ResolvedCarRefs Resolved entity IDs
+     *
+     * @throws ValidationLogicException When required fields are missing
+     */
     public function resolveForCreate(array $data): ResolvedCarRefs
     {
         $brandName = data_get($data, 'brand.name');
@@ -82,7 +93,13 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         );
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritdoc}
+     *
+     * @param  Car  $car  The car being updated
+     * @param  array<string, mixed>  $data  Update data containing optional model fields
+     * @return int|null The resolved model ID or null if no model change requested
+     */
     public function resolveModelForUpdate(Car $car, array $data): ?int
     {
         $modelName = data_get($data, 'model.name');
@@ -120,7 +137,14 @@ final readonly class CarReferenceResolver implements CarReferenceResolverInterfa
         return $model->id;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritdoc}
+     *
+     * @param  array<string, mixed>  $data  Update data containing optional color fields
+     * @return int|null The resolved color ID or null if no color change requested
+     *
+     * @throws ValidationLogicException When color.name is provided but color.hex_code is missing
+     */
     public function resolveColorForUpdate(array $data): ?int
     {
         $colorName = data_get($data, 'color.name');

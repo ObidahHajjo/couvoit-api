@@ -9,6 +9,10 @@ use RuntimeException;
 
 /**
  * Firebase JWT-backed access token issuer and verifier.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Handles JWT token issuance and verification using Firebase JWT library.
  */
 final class JwtIssuer implements JwtIssuerInterface
 {
@@ -31,13 +35,19 @@ final class JwtIssuer implements JwtIssuerInterface
             if ($decoded === false) {
                 throw new RuntimeException('JWT_SECRET base64 decoding failed');
             }
+
             return $decoded;
         }
 
         return $secret;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritdoc}
+     *
+     * @param  User  $user  The user to generate the token for
+     * @return string The encoded JWT token
+     */
     public function issueAccessToken(User $user): string
     {
         $now = time();
@@ -61,7 +71,14 @@ final class JwtIssuer implements JwtIssuerInterface
         return JWT::encode($payload, $this->secret(), self::ALG);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritdoc}
+     *
+     * @param  string  $jwt  The JWT token to verify
+     * @return object The decoded token payload
+     *
+     * @throws RuntimeException If the token is invalid, expired, or has wrong issuer/audience
+     */
     public function verify(string $jwt): object
     {
         $decoded = JWT::decode($jwt, new Key($this->secret(), self::ALG));
@@ -78,7 +95,7 @@ final class JwtIssuer implements JwtIssuerInterface
         }
 
         $sub = $decoded->sub ?? null;
-        if (!is_string($sub) || $sub === '') {
+        if (! is_string($sub) || $sub === '') {
             throw new RuntimeException('Missing sub');
         }
 

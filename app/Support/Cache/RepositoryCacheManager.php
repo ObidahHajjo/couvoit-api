@@ -13,10 +13,15 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Coordinates cache invalidation for repository-level cache entries.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Manages caching and cache invalidation for various entity types using cache tags.
  */
 class RepositoryCacheManager
 {
     public const TTL_LONG = 360;
+
     public const TTL_LIST = 60;
 
     /**
@@ -159,8 +164,8 @@ class RepositoryCacheManager
             ->where('car_id', $carId)
             ->pluck('id');
         foreach ($personIds as $personId) {
-            $this->forgetPerson((int)$personId);
-            Cache::tags($this->personTags((int)$personId))->flush();
+            $this->forgetPerson((int) $personId);
+            Cache::tags($this->personTags((int) $personId))->flush();
         }
         $this->forgetPersonsAll();
     }
@@ -319,7 +324,7 @@ class RepositoryCacheManager
     }
 
     /**
-     * @param array<int,int|string> $carIds
+     * @param  array<int,int|string>  $carIds
      */
     public function invalidateCarsAndPersonsByCarIds(array $carIds): void
     {
@@ -491,7 +496,7 @@ class RepositoryCacheManager
      */
     public function modelByNameTags(string $name): array
     {
-        return ['models', 'name:' . $this->normalize($name)];
+        return ['models', 'name:'.$this->normalize($name)];
     }
 
     /**
@@ -523,7 +528,7 @@ class RepositoryCacheManager
      */
     public function modelByNameKey(string $name): string
     {
-        return 'models:name:' . $this->normalize($name);
+        return 'models:name:'.$this->normalize($name);
     }
 
     /**
@@ -636,7 +641,7 @@ class RepositoryCacheManager
      */
     public function cityTags(string $name, string $postalCode): array
     {
-        return ['cities', 'city:' . $this->normalize($name) . ':' . trim($postalCode)];
+        return ['cities', 'city:'.$this->normalize($name).':'.trim($postalCode)];
     }
 
     /**
@@ -644,7 +649,7 @@ class RepositoryCacheManager
      */
     public function cityKey(string $name, string $postalCode): string
     {
-        return 'cities:' . $this->normalize($name) . ':' . trim($postalCode);
+        return 'cities:'.$this->normalize($name).':'.trim($postalCode);
     }
 
     /**
@@ -742,7 +747,7 @@ class RepositoryCacheManager
      */
     public function colorByHexTags(string $hex): array
     {
-        return ['colors', 'hex:' . $this->normalize($hex)];
+        return ['colors', 'hex:'.$this->normalize($hex)];
     }
 
     /**
@@ -750,7 +755,7 @@ class RepositoryCacheManager
      */
     public function colorByNameTags(string $name): array
     {
-        return ['colors', 'name:' . $this->normalize($name)];
+        return ['colors', 'name:'.$this->normalize($name)];
     }
 
     /**
@@ -774,7 +779,7 @@ class RepositoryCacheManager
      */
     public function colorByHexKey(string $hex): string
     {
-        return 'colors:hex:' . $this->normalize($hex);
+        return 'colors:hex:'.$this->normalize($hex);
     }
 
     /**
@@ -782,7 +787,7 @@ class RepositoryCacheManager
      */
     public function colorByNameKey(string $name): string
     {
-        return 'colors:name:' . $this->normalize($name);
+        return 'colors:name:'.$this->normalize($name);
     }
 
     /**
@@ -1138,7 +1143,7 @@ class RepositoryCacheManager
      */
     public function typeByValueTags(string $type): array
     {
-        return ['types', 'type:' . $this->normalize($type)];
+        return ['types', 'type:'.$this->normalize($type)];
     }
 
     /**
@@ -1162,7 +1167,7 @@ class RepositoryCacheManager
      */
     public function typeByValueKey(string $type): string
     {
-        return 'types:type:' . $this->normalize($type);
+        return 'types:type:'.$this->normalize($type);
     }
 
     /**
