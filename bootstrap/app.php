@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApiExceptionConfigurator;
 use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\EnsureIsAdmin;
 use App\Http\Middleware\LocalJwtAuth;
 use App\Http\Middleware\SetRequestLocale;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
             'jwt' => LocalJwtAuth::class,
+            'admin' => EnsureIsAdmin::class,
         ]);
 
     })

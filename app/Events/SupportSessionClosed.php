@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Events;
+
+use App\Models\SupportChatSession;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class SupportSessionClosed implements ShouldBroadcastNow
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public SupportChatSession $session,
+    ) {}
+
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('support.session.'.$this->session->id),
+            new PrivateChannel('support.admins'),
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'support.session.closed';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'session_id' => (int) $this->session->id,
+            'status' => (string) $this->session->status,
+            'closed_at' => optional($this->session->closed_at)?->toISOString(),
+        ];
+    }
+}

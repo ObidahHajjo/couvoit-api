@@ -12,6 +12,15 @@ return [
         'message_cleared' => 'Le message a ete efface pour votre compte.',
         'messages_cleared' => 'Les messages selectionnes ont ete effaces pour votre compte.',
     ],
+    'support_chat' => [
+        'session_created' => 'Session de support creee avec succes.',
+        'session_joined' => 'Admin a rejoint la session.',
+        'session_closed' => 'Session de support fermee.',
+        'message_sent' => 'Message envoye avec succes.',
+        'messages_marked_read' => 'Messages marques comme lus.',
+        'typing_updated' => 'Statut de saisie mis a jour.',
+        'presence_updated' => 'Presence mise a jour.',
+    ],
     'errors' => [
         'validation' => 'Les donnees fournies sont invalides.',
         'forbidden' => 'Acces interdit.',

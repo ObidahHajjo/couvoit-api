@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\SupportChatSession;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -20,4 +21,34 @@ Broadcast::channel('chat.conversation.{conversationId}', function (User $user, i
     }
 
     return $conversation->involvesPerson((int) $user->person_id);
+});
+
+Broadcast::channel('support.session.{sessionId}', function (User $user, int $sessionId) {
+    $session = SupportChatSession::query()->find($sessionId);
+
+    if ($session === null) {
+        return false;
+    }
+
+    if ($user->isAdmin()) {
+        return true;
+    }
+
+    return $session->involvesUser((int) $user->id);
+});
+
+Broadcast::channel('support.user.{userId}', function (User $user, int $userId) {
+    return (int) $user->id === $userId;
+});
+
+Broadcast::channel('support.admin.{adminId}', function (User $user, int $adminId) {
+    return (int) $user->id === $adminId && $user->isAdmin();
+});
+
+Broadcast::channel('support.admins', function (User $user) {
+    return $user->isAdmin();
+});
+
+Broadcast::channel('support.presence.{userId}', function (User $user, int $userId) {
+    return (int) $user->id === $userId;
 });
