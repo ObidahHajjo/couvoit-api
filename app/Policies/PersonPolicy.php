@@ -124,7 +124,9 @@ class PersonPolicy
     {
         return $user->isAdmin()
             ? Response::allow()
-            : Response::deny('Suppression interdite : réservée à un administrateur.');
+            : $user->person_id === $person->id
+                ? Response::allow()
+                : Response::deny('Suppression interdite : réservée à un administrateur.');
     }
 
     /**

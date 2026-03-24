@@ -124,9 +124,7 @@ readonly class PersonService implements PersonServiceInterface
         DB::transaction(function () use ($person): void {
             $user = $person->user;
             $this->users->softDelete($user->id);
-            Log::info('user', ['user' => $user]);
             $this->persons->delete($person->id);
-
         });
     }
 
