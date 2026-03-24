@@ -5,8 +5,16 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\SupportChatController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\Admin\AdminBrandController;
+use App\Http\Controllers\Admin\AdminCarController;
+use App\Http\Controllers\Admin\AdminCarModelController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminTripController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\TypeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +46,22 @@ Route::middleware('jwt')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/change-password', [AuthController::class, 'changePassword']);
     });
+    
+    /* ===== ADMIN ===== */
+    Route::group(['prefix' => 'admin', 'middleware' => ['admin']], function () {
+        Route::get('/stats', [AdminDashboardController::class, 'stats']);
+        Route::get('/users', [AdminUserController::class, 'index']);
+        Route::put('/users/{user}', [AdminUserController::class, 'update']);
+        Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
+        Route::get('/trips', [AdminTripController::class, 'index']);
+        Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy']);
+
+        Route::apiResource('brands', AdminBrandController::class)->except(['create', 'show', 'edit']);
+        Route::apiResource('models', AdminCarModelController::class)->except(['create', 'show', 'edit']);
+        Route::get('/cars', [AdminCarController::class, 'index']);
+        Route::delete('/cars/{car}', [AdminCarController::class, 'destroy']);
+    });
+
     /* ===== USERS / PERSONS ===== */
     Route::get('/persons', [PersonController::class, 'index']);
     Route::get('/persons/{person}', [PersonController::class, 'show']);
@@ -79,9 +103,31 @@ Route::middleware('jwt')->group(function () {
     Route::post('/support/contact-email', [SupportController::class, 'sendSupportEmail']);
     Route::post('/broadcasting/auth-proxy', [ChatController::class, 'proxy']);
 
+    /* ===== SUPPORT CHAT ===== */
+    Route::prefix('support-chat')->group(function () {
+        Route::post('/sessions', [SupportChatController::class, 'createSession']);
+        Route::get('/sessions', [SupportChatController::class, 'getSessions']);
+        Route::get('/sessions/waiting', [SupportChatController::class, 'getWaitingSessions']);
+        Route::get('/sessions/{sessionId}', [SupportChatController::class, 'getSession']);
+        Route::post('/sessions/{sessionId}/join', [SupportChatController::class, 'joinSession']);
+        Route::post('/sessions/{sessionId}/close', [SupportChatController::class, 'closeSession']);
+        Route::get('/sessions/{sessionId}/messages', [SupportChatController::class, 'getMessages']);
+        Route::post('/sessions/{sessionId}/messages', [SupportChatController::class, 'sendMessage']);
+        Route::post('/sessions/{sessionId}/read', [SupportChatController::class, 'markAsRead']);
+        Route::post('/sessions/{sessionId}/typing', [SupportChatController::class, 'setTyping']);
+        Route::get('/sessions/{sessionId}/unread', [SupportChatController::class, 'getUnreadCount']);
+        Route::get('/sessions/{sessionId}/attachments/{attachmentId}', [SupportChatController::class, 'downloadAttachment'])
+            ->name('support.attachment.download');
+        Route::post('/presence', [SupportChatController::class, 'setPresence']);
+        Route::get('/presence', [SupportChatController::class, 'getPresence']);
+    });
+
     /* ===== BRANDS ===== */
     Route::get('/brands', [BrandController::class, 'index']);
     Route::get('/brand/{brand}', [BrandController::class, 'show']);
+
+    /* ===== TYPES ===== */
+    Route::get('/types', [TypeController::class, 'index']);
 
     /* ===== CARS ===== */
     Route::get('/cars/search', [CarController::class, 'search']);
