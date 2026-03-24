@@ -12,6 +12,9 @@ namespace App\Services\Implementations;
 
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Car;
+use App\Models\Brand;
+use App\Models\CarModel;
 use App\Services\Interfaces\DashboardServiceInterface;
 
 /**
@@ -27,6 +30,9 @@ readonly class DashboardService implements DashboardServiceInterface
         return [
             'total_users' => User::query()->count(),
             'total_trips' => Trip::query()->count(),
+            'total_cars' => Car::query()->count(),
+            'total_brands' => Brand::query()->count(),
+            'total_models' => CarModel::query()->count(),
         ];
     }
 }

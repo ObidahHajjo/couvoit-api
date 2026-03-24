@@ -34,9 +34,12 @@ class AdminBrandController extends Controller
     /**
      * List all brands.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $brands = $this->brands->listBrands();
+        $perPage = (int) $request->query('per_page', 15);
+        $page = (int) $request->query('page', 1);
+
+        $brands = $this->brands->listBrands($perPage);
 
         return response()->json($brands);
     }

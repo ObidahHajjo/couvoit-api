@@ -34,9 +34,12 @@ class AdminCarModelController extends Controller
     /**
      * List all car models.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $models = $this->models->listModels();
+        $perPage = (int) $request->query('per_page', 15);
+        $page = (int) $request->query('page', 1);
+
+        $models = $this->models->listModels($perPage);
 
         return response()->json($models);
     }

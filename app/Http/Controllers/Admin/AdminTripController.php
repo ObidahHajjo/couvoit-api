@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Trip;
 use App\Services\Interfaces\AdminTripServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Admin - Trips', description: 'Trip management operations for administrators.')]
@@ -33,9 +34,12 @@ class AdminTripController extends Controller
     /**
      * List all trips.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $trips = $this->trips->listTrips();
+        $perPage = (int) $request->query('per_page', 15);
+        $page = (int) $request->query('page', 1);
+
+        $trips = $this->trips->listTrips($perPage);
 
         return response()->json($trips);
     }

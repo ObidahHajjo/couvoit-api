@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Car;
 use App\Services\Interfaces\AdminCarServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Admin - Cars', description: 'Car management operations for administrators.')]
@@ -33,9 +34,12 @@ class AdminCarController extends Controller
     /**
      * List all cars.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $cars = $this->cars->listCars();
+        $perPage = (int) $request->query('per_page', 15);
+        $page = (int) $request->query('page', 1);
+
+        $cars = $this->cars->listCars($perPage);
 
         return response()->json($cars);
     }
