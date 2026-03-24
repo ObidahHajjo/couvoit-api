@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace App\Services\Implementations;
 
+use App\Models\SupportChatMessage;
+use App\Models\SupportChatSession;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Car;
@@ -33,6 +35,11 @@ readonly class DashboardService implements DashboardServiceInterface
             'total_cars' => Car::query()->count(),
             'total_brands' => Brand::query()->count(),
             'total_models' => CarModel::query()->count(),
+            'waitingSessions' => SupportChatSession::where('status', 'waiting')->count(),
+            'activeSessions' => SupportChatSession::where('status', 'active')->count(),
+            'unreadMessages' => SupportChatMessage::where('is_from_admin', false)
+                ->where('is_read', false)
+                ->count(),
         ];
     }
 }
