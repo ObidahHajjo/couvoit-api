@@ -1,5 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * @author Covoiturage Team
+ *
+ * @description Default implementation of authentication and session workflows including registration, login, password management, and token refresh.
+ */
+
 namespace App\Services\Implementations;
 
 use App\Exceptions\ConflictException;
@@ -17,7 +25,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
 /**
- * Default implementation of authentication and session workflows.
+ * @description Handles user authentication, session management, and password reset operations.
  */
 final readonly class AuthService implements AuthServiceInterface
 {
@@ -31,7 +39,13 @@ final readonly class AuthService implements AuthServiceInterface
         private PersonRepositoryInterface $personRepository,
     ) {}
 
-    /** {@inheritDoc} */
+    /**
+     * @param  string  $email  User's email address
+     * @param  string  $password  User's plaintext password
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, role_id: int, person_id: int}
+     *
+     * @throws ConflictException If a user with the given email already exists
+     */
     public function register(string $email, string $password): array
     {
         return DB::transaction(function () use ($email, $password) {
@@ -57,7 +71,13 @@ final readonly class AuthService implements AuthServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  string  $email  User's email address
+     * @param  string  $password  User's plaintext password
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, role_id: int, person_id: int}
+     *
+     * @throws UnauthorizedException If credentials are invalid, account is purged, or account state is invalid
+     */
     public function login(string $email, string $password): array
     {
         $email = strtolower(trim($email));
@@ -86,7 +106,12 @@ final readonly class AuthService implements AuthServiceInterface
         return $this->issueSession($user, $person->id);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  string  $refreshToken  The current valid refresh token
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int}
+     *
+     * @throws UnauthorizedException If the refresh token is invalid or user is inactive
+     */
     public function refresh(string $refreshToken): array
     {
         $newRefresh = bin2hex(random_bytes(32));
@@ -109,13 +134,15 @@ final readonly class AuthService implements AuthServiceInterface
         ];
     }
 
-    /** {@inheritDoc} */
     public function logout(): void
     {
         $this->refreshTokens->deleteAllByUserId(auth()->id());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  string  $email  User's email address to send password reset link
+     * @return string Password reset status string
+     */
     public function forgetPassword(string $email): string
     {
         return Password::sendResetLink([
@@ -123,7 +150,10 @@ final readonly class AuthService implements AuthServiceInterface
         ]);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  array{email: string, password: string, password_confirmation: string, token: string}  $data  Password reset data
+     * @return string Password reset status string
+     */
     public function resetPassword(array $data): string
     {
         return Password::broker('users')->reset(
@@ -143,7 +173,10 @@ final readonly class AuthService implements AuthServiceInterface
         );
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  User  $user  The user whose password is being changed
+     * @param  string  $password  The new plaintext password
+     */
     public function changePassword(User $user, string $password): void
     {
         $user->forceFill([

@@ -1,5 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * @author Covoiturage Team
+ *
+ * @description Default chat service implementation for conversation and messaging functionality.
+ */
+
 namespace App\Services\Implementations;
 
 use App\Events\ChatMessageSent;
@@ -19,11 +27,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Default chat service implementation.
+ * @description Handles chat conversations, messaging, and attachment management between users.
  */
 class ChatService implements ChatServiceInterface
 {
-    /** @inheritDoc */
+    /**
+     * @param  Person  $authPerson  The authenticated person
+     * @return Collection<int, Conversation>
+     */
     public function listConversations(Person $authPerson): Collection
     {
         return Conversation::query()
@@ -46,7 +57,13 @@ class ChatService implements ChatServiceInterface
             ->get();
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  int  $conversationId  The conversation ID
+     * @param  Person  $authPerson  The authenticated person
+     *
+     * @throws NotFoundException If the conversation does not exist
+     * @throws ForbiddenException If the person is not part of the conversation
+     */
     public function getConversationForPerson(int $conversationId, Person $authPerson): Conversation
     {
         $conversation = Conversation::query()
@@ -74,7 +91,14 @@ class ChatService implements ChatServiceInterface
         return $conversation;
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  int  $conversationId  The conversation ID
+     * @param  Person  $authPerson  The authenticated person sending the message
+     * @param  string  $message  The message body
+     * @param  array<int, UploadedFile>  $attachments  Optional file attachments
+     *
+     * @throws ForbiddenException If the person is not part of the conversation
+     */
     public function sendMessageInConversation(int $conversationId, Person $authPerson, string $message, array $attachments = []): ConversationMessage
     {
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
@@ -82,7 +106,12 @@ class ChatService implements ChatServiceInterface
         return $this->appendMessage($conversation, $authPerson, $message, $attachments);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  int  $conversationId  The conversation ID
+     * @param  Person  $authPerson  The authenticated person
+     *
+     * @throws ForbiddenException If the person is not part of the conversation
+     */
     public function clearConversationForPerson(int $conversationId, Person $authPerson): Conversation
     {
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
@@ -100,13 +129,26 @@ class ChatService implements ChatServiceInterface
         return $this->getConversationForPerson($conversationId, $authPerson);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  int  $conversationId  The conversation ID
+     * @param  int  $messageId  The message ID to hide
+     * @param  Person  $authPerson  The authenticated person
+     *
+     * @throws NotFoundException If the message does not exist
+     */
     public function clearMessageForPerson(int $conversationId, int $messageId, Person $authPerson): Conversation
     {
         return $this->clearMessagesForPerson($conversationId, [$messageId], $authPerson);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  int  $conversationId  The conversation ID
+     * @param  array<int, int>  $messageIds  Array of message IDs to hide
+     * @param  Person  $authPerson  The authenticated person
+     *
+     * @throws ForbiddenException If no messages are selected
+     * @throws NotFoundException If any message does not exist
+     */
     public function clearMessagesForPerson(int $conversationId, array $messageIds, Person $authPerson): Conversation
     {
         $conversation = $this->getConversationForPerson($conversationId, $authPerson);
@@ -136,7 +178,12 @@ class ChatService implements ChatServiceInterface
         return $this->getConversationForPerson($conversationId, $authPerson);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  Trip  $trip  The trip to create conversation for
+     * @param  Person  $authPerson  The authenticated person
+     *
+     * @throws ForbiddenException If the person is the driver of the trip
+     */
     public function openOrCreateDriverConversation(Trip $trip, Person $authPerson): Conversation
     {
         if ((int) $trip->person_id === (int) $authPerson->id) {
@@ -146,7 +193,15 @@ class ChatService implements ChatServiceInterface
         return $this->findOrCreateConversation($authPerson, $trip->driver, $trip);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  Trip  $trip  The trip to contact driver about
+     * @param  Person  $authPerson  The authenticated person
+     * @param  string|null  $message  Optional message body
+     * @param  array<int, UploadedFile>  $attachments  Optional file attachments
+     * @return ConversationMessage|null The sent message or null if no content provided
+     *
+     * @throws ForbiddenException If the person is the driver of the trip
+     */
     public function contactDriver(Trip $trip, Person $authPerson, ?string $message, array $attachments = []): ?ConversationMessage
     {
         $conversation = $this->openOrCreateDriverConversation($trip, $authPerson);
@@ -158,7 +213,14 @@ class ChatService implements ChatServiceInterface
         return $this->appendMessage($conversation, $authPerson, (string) $message, $attachments);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  Trip  $trip  The trip to create conversation for
+     * @param  Person  $passenger  The passenger to create conversation with
+     * @param  Person  $authPerson  The authenticated person (must be the driver)
+     *
+     * @throws ForbiddenException If the person is not the driver of the trip
+     * @throws NotFoundException If the passenger is not on the trip
+     */
     public function openOrCreatePassengerConversation(Trip $trip, Person $passenger, Person $authPerson): Conversation
     {
         if ((int) $trip->person_id !== (int) $authPerson->id) {
@@ -176,7 +238,17 @@ class ChatService implements ChatServiceInterface
         return $this->findOrCreateConversation($authPerson, $passenger, $trip);
     }
 
-    /** @inheritDoc */
+    /**
+     * @param  Trip  $trip  The trip to contact passenger about
+     * @param  Person  $passenger  The passenger to contact
+     * @param  Person  $authPerson  The authenticated person (must be the driver)
+     * @param  string|null  $message  Optional message body
+     * @param  array<int, UploadedFile>  $attachments  Optional file attachments
+     * @return ConversationMessage|null The sent message or null if no content provided
+     *
+     * @throws ForbiddenException If the person is not the driver of the trip
+     * @throws NotFoundException If the passenger is not on the trip
+     */
     public function contactPassenger(Trip $trip, Person $passenger, Person $authPerson, ?string $message, array $attachments = []): ?ConversationMessage
     {
         $conversation = $this->openOrCreatePassengerConversation($trip, $passenger, $authPerson);
@@ -241,7 +313,7 @@ class ChatService implements ChatServiceInterface
 
                 $storedPath = $attachment->storeAs(
                     sprintf('chat-attachments/%d', $conversation->id),
-                    Str::uuid()->toString() . '-' . $attachment->getClientOriginalName(),
+                    Str::uuid()->toString().'-'.$attachment->getClientOriginalName(),
                     'local'
                 );
 
@@ -293,7 +365,11 @@ class ChatService implements ChatServiceInterface
     }
 
     /**
-     * Find an attachment by id and verify the person has access to its conversation.
+     * @param  int  $attachmentId  The attachment ID
+     * @param  Person  $authPerson  The authenticated person
+     * @return ConversationMessageAttachment|null The attachment if found and accessible
+     *
+     * @throws ForbiddenException If the person does not have access to the conversation
      */
     public function findAttachmentForPerson(int $attachmentId, Person $authPerson): ?ConversationMessageAttachment
     {

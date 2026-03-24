@@ -34,11 +34,23 @@ use Throwable;
  *
  * Business rules are enforced by policies in controllers,
  * but the service keeps defensive checks to avoid misuse.
+ *
+ * @author Application Service
+ *
+ * @description Manages trip operations including search, creation, updates, reservations, and cancellations.
  */
 readonly class TripService implements TripServiceInterface
 {
     /**
      * Create a new trip service instance.
+     *
+     * @param  TripRepositoryInterface  $trips  The trip repository
+     * @param  PersonRepositoryInterface  $persons  The person repository
+     * @param  AddressResolverInterface  $addressResolver  The address resolver
+     * @param  AddressRepositoryInterface  $addresses  The address repository
+     * @param  OrsRoutingClientInterface  $orsRoutingClient  The ORS routing client
+     * @param  RepositoryCacheManager  $cache  The cache manager
+     * @param  TripEmailServiceInterface  $tripEmails  The trip email service
      */
     public function __construct(
         private TripRepositoryInterface $trips,
@@ -51,7 +63,13 @@ readonly class TripService implements TripServiceInterface
     ) {}
 
     /**
-     * {@inheritDoc}
+     * Search for trips based on criteria.
+     *
+     * @param  string|null  $startingCity  The starting city
+     * @param  string|null  $arrivalCity  The arrival city
+     * @param  string|null  $tripDate  The trip date
+     * @param  int  $perPage  Number of results per page
+     * @return LengthAwarePaginator<Trip> Paginated search results
      */
     public function searchTrips(
         ?string $startingCity,
@@ -62,13 +80,27 @@ readonly class TripService implements TripServiceInterface
         return $this->trips->search($startingCity, $arrivalCity, $tripDate, $perPage);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Get passengers for a trip.
+     *
+     * @param  Trip  $trip  The trip
+     * @return Collection<int, Person> Collection of passengers
+     */
     public function getTripPassengers(Trip $trip): Collection
     {
         return $this->trips->passengers($trip);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Create a new trip.
+     *
+     * @param  array  $payload  Trip data
+     * @param  Person  $authPerson  The authenticated person
+     * @return Trip The created trip
+     *
+     * @throws ValidationLogicException When validation fails
+     * @throws ForbiddenException When user cannot create trip
+     */
     public function createTrip(array $payload, Person $authPerson): Trip
     {
         $driverId = (int) ($payload['person_id'] ?? $authPerson->id);
@@ -144,7 +176,16 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Update a trip.
+     *
+     * @param  Trip  $trip  The trip to update
+     * @param  array  $payload  Update data
+     * @param  Person  $authPerson  The authenticated person
+     * @return Trip The updated trip
+     *
+     * @throws ValidationLogicException When nothing to update
+     */
     public function updateTrip(Trip $trip, array $payload, Person $authPerson): Trip
     {
         return DB::transaction(function () use ($trip, $payload) {
@@ -181,7 +222,14 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Cancel a trip.
+     *
+     * @param  Trip  $trip  The trip to cancel
+     * @param  Person  $authPerson  The authenticated person
+     *
+     * @throws ForbiddenException When trip has already started
+     */
     public function cancelTrip(Trip $trip, Person $authPerson): void
     {
         $this->assertTripNotStarted($trip);
@@ -204,7 +252,12 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Permanently delete a trip.
+     *
+     * @param  Trip  $trip  The trip to delete
+     * @param  Person  $authPerson  The authenticated person
+     */
     public function deleteTripPermanently(Trip $trip, Person $authPerson): void
     {
         DB::transaction(function () use ($trip) {
@@ -212,7 +265,18 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Reserve a seat on a trip.
+     *
+     * @param  Trip  $trip  The trip
+     * @param  int  $personId  The person ID reserving
+     * @param  Person  $authPerson  The authenticated person
+     * @return bool True if reservation successful
+     *
+     * @throws ForbiddenException When user cannot reserve or trip started
+     * @throws ValidationLogicException When driver tries to reserve own trip
+     * @throws ConflictException When already reserved or no seats available
+     */
     public function reserveSeat(Trip $trip, int $personId, Person $authPerson): bool
     {
         $user = $authPerson->user;
@@ -268,7 +332,17 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Cancel a reservation on a trip.
+     *
+     * @param  Trip  $trip  The trip
+     * @param  int  $personId  The person ID canceling reservation
+     * @param  Person  $authPerson  The authenticated person
+     * @return bool True if cancellation successful
+     *
+     * @throws ForbiddenException When user cannot cancel or trip started
+     * @throws NotFoundException When reservation not found
+     */
     public function cancelReservation(Trip $trip, int $personId, Person $authPerson): bool
     {
         $user = $authPerson->user;
@@ -311,14 +385,23 @@ readonly class TripService implements TripServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Get a person by ID.
+     *
+     * @param  int  $personId  The person ID
+     * @return Person The person
+     */
     public function getPersonById(int $personId): Person
     {
         return $this->persons->findById($personId);
     }
 
     /**
-     * @throws ForbiddenException
+     * Assert that a trip has not started.
+     *
+     * @param  Trip  $trip  The trip to check
+     *
+     * @throws ForbiddenException When trip has already started
      */
     private function assertTripNotStarted(Trip $trip): void
     {

@@ -1,5 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * @author Covoiturage Team
+ *
+ * @description Default implementation of car application workflows including CRUD operations and external car catalog search.
+ */
+
 namespace App\Services\Implementations;
 
 use App\DTOS\Car\CarCreateData;
@@ -24,7 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Default implementation of car application workflows.
+ * @description Handles car management operations including creation, update, deletion, and external catalog search.
  */
 readonly class CarService implements CarServiceInterface
 {
@@ -40,19 +48,28 @@ readonly class CarService implements CarServiceInterface
         private RepositoryCacheManager $cache,
     ) {}
 
-    /** {@inheritDoc} */
+    /**
+     * @return Collection<int, Car>
+     */
     public function getCars(): Collection
     {
         return $this->carRepository->all();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  Car  $car  The car instance to retrieve
+     */
     public function findCar(Car $car): Car
     {
         return $car;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  CarCreateData  $dto  The car creation data transfer object
+     * @param  Person  $person  The person who owns the car
+     *
+     * @throws ConflictException If the person already has a car
+     */
     public function createCar(CarCreateData $dto, Person $person): Car
     {
         if ($person->car_id !== null) {
@@ -82,7 +99,12 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  Car  $car  The car to update
+     * @param  CarUpdateData  $dto  The car update data transfer object
+     *
+     * @throws ValidationLogicException If there is nothing to update
+     */
     public function updateCar(Car $car, CarUpdateData $dto): Car
     {
         if ($dto->isEmpty()) {
@@ -138,7 +160,11 @@ readonly class CarService implements CarServiceInterface
         });
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  Car  $car  The car to delete
+     *
+     * @throws ConflictException If the car is in use by upcoming trips
+     */
     public function deleteCar(Car $car): void
     {
         $person = auth()->user()->person;
@@ -154,7 +180,11 @@ readonly class CarService implements CarServiceInterface
         $this->cache->invalidatePersonListAndItem($person->id);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  string  $q  The search query for car models
+     * @param  string  $brand  The brand name to search within
+     * @return array<int, array<string, mixed>>
+     */
     public function search(string $q, string $brand): array
     {
         $q = trim($q);

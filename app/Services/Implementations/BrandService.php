@@ -1,5 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * @author Covoiturage Team
+ *
+ * @description Default implementation of brand application workflows.
+ */
+
 namespace App\Services\Implementations;
 
 use App\Models\Brand;
@@ -8,7 +16,7 @@ use App\Services\Interfaces\BrandServiceInterface;
 use Illuminate\Support\Collection;
 
 /**
- * Default implementation of brand application workflows.
+ * @description Handles brand retrieval and listing operations.
  */
 readonly class BrandService implements BrandServiceInterface
 {
@@ -19,13 +27,17 @@ readonly class BrandService implements BrandServiceInterface
         private BrandRepositoryInterface $brands
     ) {}
 
-    /** {@inheritDoc} */
+    /**
+     * @return Collection<int, Brand>
+     */
     public function getBrands(): Collection
     {
         return $this->brands->all();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param  Brand  $brand  The brand instance to retrieve
+     */
     public function getBrand(Brand $brand): Brand
     {
         return $brand;

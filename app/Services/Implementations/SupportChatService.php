@@ -24,8 +24,22 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Handles support chat functionality including sessions, messages, and presence.
+ *
+ * @author Application Service
+ *
+ * @description Manages support chat sessions, messages, attachments, typing indicators, and user presence.
+ */
 class SupportChatService implements SupportChatServiceInterface
 {
+    /**
+     * Create a new support chat session.
+     *
+     * @param  User  $user  The user creating the session
+     * @param  string|null  $subject  Optional subject for the session
+     * @return SupportChatSession The created or existing session
+     */
     public function createSession(User $user, ?string $subject = null): SupportChatSession
     {
         $existingSession = SupportChatSession::query()
@@ -51,6 +65,16 @@ class SupportChatService implements SupportChatServiceInterface
         return $session;
     }
 
+    /**
+     * Get a support chat session by ID with authorization check.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $user  The user requesting the session
+     * @return SupportChatSession The session
+     *
+     * @throws NotFoundException When session not found
+     * @throws ForbiddenException When user doesn't have access
+     */
     public function getSession(int $sessionId, User $user): SupportChatSession
     {
         $session = SupportChatSession::query()
@@ -68,6 +92,11 @@ class SupportChatService implements SupportChatServiceInterface
         return $session;
     }
 
+    /**
+     * Get all waiting support chat sessions.
+     *
+     * @return Collection<int, SupportChatSession> Collection of waiting sessions
+     */
     public function getWaitingSessions(): Collection
     {
         return SupportChatSession::query()
@@ -77,6 +106,12 @@ class SupportChatService implements SupportChatServiceInterface
             ->get();
     }
 
+    /**
+     * Get active sessions for an admin user.
+     *
+     * @param  User  $admin  The admin user
+     * @return Collection<int, SupportChatSession> Collection of active sessions
+     */
     public function getActiveSessionsForAdmin(User $admin): Collection
     {
         return SupportChatSession::query()
@@ -87,6 +122,12 @@ class SupportChatService implements SupportChatServiceInterface
             ->get();
     }
 
+    /**
+     * Get all sessions for a user.
+     *
+     * @param  User  $user  The user
+     * @return Collection<int, SupportChatSession> Collection of user sessions
+     */
     public function getUserSessions(User $user): Collection
     {
         return SupportChatSession::query()
@@ -97,6 +138,16 @@ class SupportChatService implements SupportChatServiceInterface
             ->get();
     }
 
+    /**
+     * Join a support session as an admin.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $admin  The admin joining the session
+     * @return SupportChatSession The updated session
+     *
+     * @throws ForbiddenException When user is not admin or session is closed
+     * @throws NotFoundException When session not found
+     */
     public function joinSession(int $sessionId, User $admin): SupportChatSession
     {
         if (! $admin->isAdmin()) {
@@ -125,6 +176,15 @@ class SupportChatService implements SupportChatServiceInterface
         return $session;
     }
 
+    /**
+     * Close a support chat session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $user  The user closing the session
+     * @return SupportChatSession The closed session
+     *
+     * @throws ForbiddenException When session is already closed
+     */
     public function closeSession(int $sessionId, User $user): SupportChatSession
     {
         $session = $this->getSession($sessionId, $user);
@@ -145,6 +205,17 @@ class SupportChatService implements SupportChatServiceInterface
         return $session;
     }
 
+    /**
+     * Send a message in a support chat session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $sender  The message sender
+     * @param  string  $body  The message body
+     * @param  array<int, UploadedFile>  $attachments  Optional array of attachments
+     * @return SupportChatMessage The created message
+     *
+     * @throws ForbiddenException When session is closed
+     */
     public function sendMessage(int $sessionId, User $sender, string $body, array $attachments = []): SupportChatMessage
     {
         $session = $this->getSession($sessionId, $sender);
@@ -197,6 +268,14 @@ class SupportChatService implements SupportChatServiceInterface
         return $message;
     }
 
+    /**
+     * Get messages for a support chat session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $user  The user requesting messages
+     * @param  int  $limit  Number of messages per page
+     * @return LengthAwarePaginator<SupportChatMessage> Paginated messages
+     */
     public function getMessages(int $sessionId, User $user, int $limit = 50): LengthAwarePaginator
     {
         $this->getSession($sessionId, $user);
@@ -209,6 +288,13 @@ class SupportChatService implements SupportChatServiceInterface
             ->paginate($limit);
     }
 
+    /**
+     * Mark unread messages as read in a session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $user  The user marking messages as read
+     * @return int Number of messages marked as read
+     */
     public function markAsRead(int $sessionId, User $user): int
     {
         $session = $this->getSession($sessionId, $user);
@@ -229,6 +315,13 @@ class SupportChatService implements SupportChatServiceInterface
         return $updated;
     }
 
+    /**
+     * Set typing indicator for a user in a session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $user  The user typing
+     * @param  bool  $isTyping  Whether the user is typing
+     */
     public function setTyping(int $sessionId, User $user, bool $isTyping): void
     {
         $session = $this->getSession($sessionId, $user);
@@ -259,6 +352,13 @@ class SupportChatService implements SupportChatServiceInterface
         event(new SupportTyping($session, (int) $user->id, $userName, $isTyping));
     }
 
+    /**
+     * Set presence status for a user.
+     *
+     * @param  User  $user  The user
+     * @param  string  $status  The presence status
+     * @return SupportChatPresence The presence record
+     */
     public function setPresence(User $user, string $status): SupportChatPresence
     {
         $presence = SupportChatPresence::query()->updateOrCreate(
@@ -276,6 +376,12 @@ class SupportChatService implements SupportChatServiceInterface
         return $presence;
     }
 
+    /**
+     * Get presence status for a user.
+     *
+     * @param  User  $user  The user
+     * @return SupportChatPresence|null The presence record or null
+     */
     public function getPresence(User $user): ?SupportChatPresence
     {
         return SupportChatPresence::query()
@@ -283,6 +389,13 @@ class SupportChatService implements SupportChatServiceInterface
             ->first();
     }
 
+    /**
+     * Get unread message count for a session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  User  $user  The user
+     * @return int Number of unread messages
+     */
     public function getUnreadCount(int $sessionId, User $user): int
     {
         $this->getSession($sessionId, $user);
@@ -294,6 +407,14 @@ class SupportChatService implements SupportChatServiceInterface
             ->count();
     }
 
+    /**
+     * Find an attachment for a user in a session.
+     *
+     * @param  int  $sessionId  The session ID
+     * @param  int  $attachmentId  The attachment ID
+     * @param  User  $user  The user requesting the attachment
+     * @return SupportChatMessageAttachment|null The attachment or null
+     */
     public function findAttachmentForUser(int $sessionId, int $attachmentId, User $user): ?SupportChatMessageAttachment
     {
         $this->getSession($sessionId, $user);

@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @author Admin
+ * @description Service implementation for managing trip operations in the admin panel.
+ */
+
 namespace App\Services\Implementations;
 
 use App\Models\Trip;
@@ -10,6 +15,9 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Resend\Laravel\Facades\Resend;
 
+/**
+ * Service implementation for admin trip management operations.
+ */
 readonly class AdminTripService implements AdminTripServiceInterface
 {
     public function __construct(
@@ -17,11 +25,24 @@ readonly class AdminTripService implements AdminTripServiceInterface
         private TripEmailServiceInterface $tripEmails,
     ) {}
 
+    /**
+     * List all trips with pagination.
+     *
+     * @param int $perPage Number of items per page (default: 15)
+     * @return LengthAwarePaginator Paginated list of trips
+     */
     public function listTrips(int $perPage = 15): LengthAwarePaginator
     {
         return $this->trips->paginateForAdmin($perPage);
     }
 
+    /**
+     * Delete a trip and notify relevant parties.
+     *
+     * @param Trip $trip The trip to delete
+     * @throws \Exception When email sending fails
+     * @return void
+     */
     public function deleteTrip(Trip $trip): void
     {
         $trip->loadMissing([
