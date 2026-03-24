@@ -10,6 +10,7 @@ use App\Services\Implementations\AdminBrandService;
 use App\Services\Implementations\AdminCarModelService;
 use App\Services\Implementations\AdminCarService;
 use App\Services\Implementations\AdminTripService;
+use App\Services\Implementations\AdminTypeService;
 use App\Services\Implementations\AuthService;
 use App\Services\Implementations\BrandService;
 use App\Services\Implementations\CarService;
@@ -27,6 +28,7 @@ use App\Services\Interfaces\AdminBrandServiceInterface;
 use App\Services\Interfaces\AdminCarModelServiceInterface;
 use App\Services\Interfaces\AdminCarServiceInterface;
 use App\Services\Interfaces\AdminTripServiceInterface;
+use App\Services\Interfaces\AdminTypeServiceInterface;
 use App\Services\Interfaces\AuthServiceInterface;
 use App\Services\Interfaces\BrandServiceInterface;
 use App\Services\Interfaces\CarServiceInterface;
@@ -91,6 +93,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AdminBrandServiceInterface::class, AdminBrandService::class);
 
         $this->app->bind(AdminCarModelServiceInterface::class, AdminCarModelService::class);
+
+        $this->app->bind(AdminTypeServiceInterface::class, AdminTypeService::class);
 
     }
 

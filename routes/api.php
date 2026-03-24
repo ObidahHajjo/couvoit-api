@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AdminCarController;
 use App\Http\Controllers\Admin\AdminCarModelController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminTripController;
+use App\Http\Controllers\Admin\AdminTypeController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\TypeController;
 use Illuminate\Support\Facades\Route;
@@ -56,9 +57,10 @@ Route::middleware('jwt')->group(function () {
         Route::get('/trips', [AdminTripController::class, 'index']);
         Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy']);
 
-        Route::apiResource('brands', AdminBrandController::class)->except(['create', 'show', 'edit']);
-        Route::apiResource('models', AdminCarModelController::class)->except(['create', 'show', 'edit']);
-        Route::get('/cars', [AdminCarController::class, 'index']);
+    Route::apiResource('brands', AdminBrandController::class)->except(['create', 'show', 'edit']);
+    Route::apiResource('models', AdminCarModelController::class)->except(['create', 'show', 'edit']);
+    Route::apiResource('types', AdminTypeController::class)->except(['create', 'show', 'edit']);
+    Route::get('/cars', [AdminCarController::class, 'index']);
         Route::delete('/cars/{car}', [AdminCarController::class, 'destroy']);
     });
 
