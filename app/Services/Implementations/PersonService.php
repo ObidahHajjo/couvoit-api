@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\Cache\RepositoryCacheManager;
 
 /**
  * Default implementation of person application workflows.
@@ -35,6 +36,7 @@ readonly class PersonService implements PersonServiceInterface
         private PersonRepositoryInterface $persons,
         private TripRepositoryInterface $trips,
         private UserRepositoryInterface $users,
+        private RepositoryCacheManager $cacheManager
     ) {}
 
     /**
@@ -125,6 +127,8 @@ readonly class PersonService implements PersonServiceInterface
             $user = $person->user;
             $this->users->softDelete($user->id);
             $this->persons->delete($person->id);
+            $this->cacheManager->invalidatePersonListAndItem($person->id);
+            $this->cacheManager->forgetPerson($person->id);
         });
     }
 
