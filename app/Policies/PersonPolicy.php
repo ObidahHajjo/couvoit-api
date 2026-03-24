@@ -124,11 +124,12 @@ class PersonPolicy
     {
         return $user->isAdmin()
             ? Response::allow()
-            : $user->person_id === $person->id
-                ? Response::allow()
-                : Response::deny('Suppression interdite : réservée à un administrateur.');
+            : (
+                $user->person_id === $person->id
+                    ? Response::allow()
+                    : Response::deny('Suppression interdite : réservée à un administrateur.')
+            );
     }
-
     /**
      * Determine whether the user can update roles.
      *
