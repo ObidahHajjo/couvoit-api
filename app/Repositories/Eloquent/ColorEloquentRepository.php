@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Color;
 use App\Repositories\Interfaces\ColorRepositoryInterface;
 use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
 /**
@@ -17,6 +18,10 @@ use Illuminate\Support\Collection;
  * - By id:       colors:{id} (tags: colors, color:{id})
  * - By hex:      colors:hex:{normalizedHex} (tags: colors, hex:{normalizedHex})
  * - By name:     colors:name:{normalizedName} (tags: colors, name:{normalizedName})
+ *
+ * @author Covoiturage API
+ *
+ * @description Repository for managing Color entities with caching support.
  */
 readonly class ColorEloquentRepository implements ColorRepositoryInterface
 {
@@ -25,8 +30,7 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
      */
     public function __construct(
         private RepositoryCacheManager $cache
-    ) {
-    }
+    ) {}
 
     /**
      * Normalize a color hex value for cache lookups.
@@ -44,7 +48,11 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return mb_strtolower(trim($name));
     }
 
-    /** @inheritDoc */
+    /**
+     * Get all colors ordered by name.
+     *
+     * @return Collection<int, Color> Collection of all Color instances
+     */
     public function all(): Collection
     {
         /** @var Collection<int,Color> $colors */
@@ -61,7 +69,12 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return $colors;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a color by its ID.
+     *
+     * @param  int  $id  The color ID to find
+     * @return Color|null The Color instance if found
+     */
     public function findById(int $id): ?Color
     {
         /** @var Color|null $color */
@@ -70,7 +83,14 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return $color;
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new color or return existing one by hex code.
+     *
+     * @param  array<string, mixed>  $data  Color data containing name and hex_code
+     * @return Color The created or existing Color instance
+     *
+     * @throws QueryException When creation fails
+     */
     public function createOrFirst(array $data): Color
     {
         if (isset($data['hex_code'])) {
@@ -95,7 +115,13 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return $color;
     }
 
-    /** @inheritDoc */
+    /**
+     * Update a color by ID.
+     *
+     * @param  int  $id  The color ID to update
+     * @param  array<string, mixed>  $data  New data to apply
+     * @return bool True if update was successful, false if color not found
+     */
     public function update(int $id, array $data): bool
     {
         $color = Color::query()->find($id);
@@ -133,7 +159,14 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a color by ID.
+     *
+     * @param  int  $id  The color ID to delete
+     * @return bool True if deletion was successful, false if color not found
+     *
+     * @throws \Exception When database deletion fails
+     */
     public function delete(int $id): bool
     {
         $color = Color::query()->find($id);
@@ -155,7 +188,12 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a color by its name.
+     *
+     * @param  string  $name  The color name to search for (case-insensitive)
+     * @return Color|null The Color instance if found
+     */
     public function findByName(string $name): ?Color
     {
         /** @var Color|null $color */
@@ -174,7 +212,12 @@ readonly class ColorEloquentRepository implements ColorRepositoryInterface
         return $color;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a color by its hex code.
+     *
+     * @param  string  $hexCode  The hex code to search for (case-insensitive)
+     * @return Color|null The Color instance if found
+     */
     public function findByHexCode(string $hexCode): ?Color
     {
         /** @var Color|null $color */

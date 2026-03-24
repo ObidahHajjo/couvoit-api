@@ -1,10 +1,17 @@
 <?php
 
+/**
+ * @author    [Developer Name]
+ *
+ * @description Eloquent implementation of PersonRepositoryInterface for managing Person entities.
+ */
+
 namespace App\Repositories\Eloquent;
 
 use App\Models\Person;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
 use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 
 /**
@@ -13,18 +20,25 @@ use Illuminate\Support\Collection;
  * Cache:
  * - persons:all (tag: persons)
  * - persons:{id} (tags: persons, person:{id})
+ *
+ * @implements PersonRepositoryInterface
  */
 readonly class PersonEloquentRepository implements PersonRepositoryInterface
 {
     /**
      * Create a new person repository instance.
+     *
+     * @param  RepositoryCacheManager  $cache  The cache manager for caching person data.
      */
     public function __construct(
         private RepositoryCacheManager $cache
-    ) {
-    }
+    ) {}
 
-    /** @inheritDoc */
+    /**
+     * Retrieve all persons with their related data.
+     *
+     * @return Collection<int, Person> Collection of all Person entities with relations.
+     */
     public function all(): Collection
     {
         $people = $this->cache->rememberPersonsAll(function () {
@@ -40,7 +54,14 @@ readonly class PersonEloquentRepository implements PersonRepositoryInterface
         return $people;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a person by their ID.
+     *
+     * @param  int  $id  The ID of the person to retrieve.
+     * @return Person The Person entity with loaded relations.
+     *
+     * @throws ModelNotFoundException If person is not found.
+     */
     public function findById(int $id): Person
     {
         return $this->cache->rememberPersonById($id, function () use ($id) {
@@ -50,7 +71,12 @@ readonly class PersonEloquentRepository implements PersonRepositoryInterface
         });
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new person record.
+     *
+     * @param  array  $data  The data to create the person with.
+     * @return Person The newly created Person entity.
+     */
     public function create(array $data): Person
     {
         $person = Person::query()
@@ -63,7 +89,14 @@ readonly class PersonEloquentRepository implements PersonRepositoryInterface
         return $person;
     }
 
-    /** @inheritDoc */
+    /**
+     * Update an existing person record.
+     *
+     * @param  int  $id  The ID of the person to update.
+     * @param  array  $data  The data to update the person with.
+     *
+     * @throws ModelNotFoundException If person is not found.
+     */
     public function update(int $id, array $data): void
     {
         $person = Person::query()->findOrFail($id);
@@ -84,7 +117,13 @@ readonly class PersonEloquentRepository implements PersonRepositoryInterface
         }
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a person record.
+     *
+     * @param  int  $id  The ID of the person to delete.
+     *
+     * @throws ModelNotFoundException If person is not found.
+     */
     public function delete(int $id): void
     {
         $person = Person::query()->findOrFail($id);
@@ -100,7 +139,13 @@ readonly class PersonEloquentRepository implements PersonRepositoryInterface
         }
     }
 
-    /** @inheritDoc */
+    /**
+     * Attach a car to a person.
+     *
+     * @param  Person  $person  The person to attach the car to.
+     * @param  int  $carId  The ID of the car to attach.
+     * @return bool True if the operation was successful, false otherwise.
+     */
     public function attachCar(Person $person, int $carId): bool
     {
         $oldCarId = $person->car_id ? (int) $person->car_id : null;
@@ -122,7 +167,11 @@ readonly class PersonEloquentRepository implements PersonRepositoryInterface
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Restore a soft-deleted person.
+     *
+     * @param  int  $personId  The ID of the person to restore.
+     */
     public function restore(int $personId): void
     {
         /** @var Person $person */

@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\City;
 use App\Repositories\Interfaces\CityRepositoryInterface;
 use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\DB;
  * Cache strategy:
  * - City by (name, postal_code): cities:{normalizedName}:{postal_code}
  * - Distinct postcodes list:     cities:postcodes
+ *
+ * @author Covoiturage API
+ *
+ * @description Repository for managing City entities with caching support.
  */
 readonly class CityEloquentRepository implements CityRepositoryInterface
 {
@@ -24,8 +29,7 @@ readonly class CityEloquentRepository implements CityRepositoryInterface
      */
     public function __construct(
         private RepositoryCacheManager $cache
-    ) {
-    }
+    ) {}
 
     /**
      * Normalize a city name for cache lookups.
@@ -35,7 +39,14 @@ readonly class CityEloquentRepository implements CityRepositoryInterface
         return mb_strtolower(trim($name));
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new city.
+     *
+     * @param  array<string, mixed>  $data  City data containing name and postal_code
+     * @return City The newly created City instance
+     *
+     * @throws QueryException When creation fails
+     */
     public function create(array $data): City
     {
         $city = City::query()->create($data);
@@ -46,7 +57,13 @@ readonly class CityEloquentRepository implements CityRepositoryInterface
         return $city;
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a city.
+     *
+     * @param  City  $city  The City instance to delete
+     *
+     * @throws \Exception When database deletion fails
+     */
     public function delete(City $city): void
     {
         $name = $city->name;
@@ -58,7 +75,11 @@ readonly class CityEloquentRepository implements CityRepositoryInterface
         $this->cache->forgetCityPostcodes();
     }
 
-    /** @inheritDoc */
+    /**
+     * Get all distinct postal codes ordered ascending.
+     *
+     * @return Collection<int, City> Collection of distinct postal codes
+     */
     public function getPostcodes(): Collection
     {
         return $this->cache->rememberCityPostcodes(function () {
@@ -70,7 +91,15 @@ readonly class CityEloquentRepository implements CityRepositoryInterface
         });
     }
 
-    /** @inheritDoc */
+    /**
+     * Find existing city or create a new one.
+     *
+     * @param  string  $cityName  The city name (will be normalized to lowercase)
+     * @param  string  $postalCode  The postal code
+     * @return City The existing or newly created City instance
+     *
+     * @throws QueryException When creation fails
+     */
     public function firstOrCreate(string $cityName, string $postalCode): City
     {
         $cityName = $this->normalizeName($cityName);
@@ -99,6 +128,7 @@ readonly class CityEloquentRepository implements CityRepositoryInterface
 
         if ($existing) {
             $this->cache->putCity($existing, $cityName, $postalCode);
+
             return $existing;
         }
 

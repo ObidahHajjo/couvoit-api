@@ -5,6 +5,9 @@ namespace App\Repositories\Eloquent;
 use App\Models\Car;
 use App\Repositories\Interfaces\CarRepositoryInterface;
 use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
 /**
@@ -16,6 +19,10 @@ use Illuminate\Support\Collection;
  * - model.brand
  * - model.type
  * - color
+ *
+ * @author Covoiturage API
+ *
+ * @description Repository for managing Car entities with caching support.
  */
 readonly class CarRepositoryEloquent implements CarRepositoryInterface
 {
@@ -24,10 +31,13 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
      */
     public function __construct(
         private RepositoryCacheManager $cache
-    ) {
-    }
+    ) {}
 
-    /** @inheritDoc */
+    /**
+     * Get all cars with model, brand, type, and color relations.
+     *
+     * @return Collection<int, Car> Collection of all Car instances
+     */
     public function all(): Collection
     {
         /** @var Collection<int,Car> $cars */
@@ -44,7 +54,12 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         return $cars;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a car by its ID.
+     *
+     * @param  int  $id  The car ID to find
+     * @return Car|null The Car instance with relations if found
+     */
     public function find(int $id): ?Car
     {
         /** @var Car|null $car */
@@ -57,7 +72,14 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         return $car;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a car by ID or throw an exception.
+     *
+     * @param  int  $id  The car ID to find
+     * @return Car The Car instance with relations
+     *
+     * @throws ModelNotFoundException When car not found
+     */
     public function findOrFail(int $id): Car
     {
         /** @var Car $car */
@@ -70,7 +92,14 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         return $car;
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new car.
+     *
+     * @param  array<string, mixed>  $data  Car data to create
+     * @return Car The newly created Car instance with relations
+     *
+     * @throws QueryException When creation fails
+     */
     public function create(array $data): Car
     {
         $car = Car::query()
@@ -84,7 +113,13 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         return $car;
     }
 
-    /** @inheritDoc */
+    /**
+     * Update a car with new data.
+     *
+     * @param  Car  $car  The Car instance to update
+     * @param  array<string, mixed>  $data  New data to apply
+     * @return bool True if update was successful
+     */
     public function update(Car $car, array $data): bool
     {
         $ok = $car->update($data);
@@ -97,7 +132,13 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a car.
+     *
+     * @param  Car  $car  The Car instance to delete
+     *
+     * @throws \Exception When database deletion fails
+     */
     public function delete(Car $car): void
     {
         $id = $car->id;
@@ -109,8 +150,13 @@ readonly class CarRepositoryEloquent implements CarRepositoryInterface
         $this->cache->invalidatePersonsByCarId($id);
     }
 
-    /** @inheritDoc */
-    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    /**
+     * Paginate all cars for admin panel.
+     *
+     * @param  int  $perPage  Number of items per page (default: 15)
+     * @return LengthAwarePaginator Paginated list of Car instances
+     */
+    public function paginateForAdmin(int $perPage = 15): LengthAwarePaginator
     {
         return Car::query()
             ->with(['model.brand', 'color'])

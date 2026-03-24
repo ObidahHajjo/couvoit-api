@@ -5,12 +5,18 @@ namespace App\Repositories\Eloquent;
 use App\Models\Brand;
 use App\Repositories\Interfaces\BrandRepositoryInterface;
 use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
 /**
  * Eloquent implementation of BrandRepositoryInterface.
  *
  * Provides read-through and write-through caching using tagged cache.
+ *
+ * @author Covoiturage API
+ *
+ * @description Repository for managing Brand entities with caching support.
  */
 readonly class BrandEloquentRepository implements BrandRepositoryInterface
 {
@@ -19,10 +25,13 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
      */
     public function __construct(
         private RepositoryCacheManager $cache
-    ) {
-    }
+    ) {}
 
-    /** @inheritDoc */
+    /**
+     * Get all brands ordered by name.
+     *
+     * @return Collection<int, Brand> Collection of all Brand instances
+     */
     public function all(): Collection
     {
         /** @var Collection<int,Brand> $brands */
@@ -39,7 +48,12 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         return $brands;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a brand by its ID.
+     *
+     * @param  int  $id  The brand ID to find
+     * @return Brand|null The Brand instance if found, null otherwise
+     */
     public function findById(int $id): ?Brand
     {
         /** @var Brand|null $brand */
@@ -48,7 +62,12 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         return $brand;
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new brand or return existing one by name.
+     *
+     * @param  string  $name  The brand name (will be normalized to lowercase)
+     * @return Brand The created or existing Brand instance
+     */
     public function createOrFirst(string $name): Brand
     {
         $name = mb_strtolower(trim($name));
@@ -64,7 +83,13 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         return $brand;
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a brand.
+     *
+     * @param  Brand  $brand  The Brand instance to delete
+     *
+     * @throws \Exception When database deletion fails
+     */
     public function delete(Brand $brand): void
     {
         $id = $brand->id;
@@ -77,7 +102,14 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         $this->cache->invalidateCarsAndPersonsByBrandId($id);
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new brand.
+     *
+     * @param  array<string, mixed>  $attributes  Brand attributes to create
+     * @return Brand The newly created Brand instance
+     *
+     * @throws QueryException When creation fails
+     */
     public function create(array $attributes): Brand
     {
         $brand = Brand::query()->create($attributes);
@@ -88,7 +120,13 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         return $brand;
     }
 
-    /** @inheritDoc */
+    /**
+     * Update a brand with new attributes.
+     *
+     * @param  Brand  $brand  The Brand instance to update
+     * @param  array<string, mixed>  $attributes  New attributes to apply
+     * @return Brand The updated Brand instance
+     */
     public function update(Brand $brand, array $attributes): Brand
     {
         $brand->update($attributes);
@@ -100,13 +138,23 @@ readonly class BrandEloquentRepository implements BrandRepositoryInterface
         return $brand;
     }
 
-    /** @inheritDoc */
-    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    /**
+     * Paginate all brands for admin panel.
+     *
+     * @param  int  $perPage  Number of items per page (default: 15)
+     * @return LengthAwarePaginator Paginated list of Brand instances
+     */
+    public function paginateForAdmin(int $perPage = 15): LengthAwarePaginator
     {
         return Brand::query()->paginate($perPage);
     }
 
-    /** @inheritDoc */
+    /**
+     * Check if a brand has associated models.
+     *
+     * @param  Brand  $brand  The Brand instance to check
+     * @return bool True if brand has models, false otherwise
+     */
     public function hasModels(Brand $brand): bool
     {
         return $brand->models()->exists();

@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @author    [Developer Name]
+ *
+ * @description Eloquent implementation of TypeRepositoryInterface for managing Type entities.
+ */
+
 namespace App\Repositories\Eloquent;
 
 use App\Models\Type;
@@ -16,29 +22,36 @@ use Illuminate\Support\Collection;
  * - Global list: types:all (tag: types)
  * - By id:       types:{id} (tags: types, type_id:{id})
  * - By value:    types:type:{normalizedType} (tags: types, type:{normalizedType})
+ *
+ * @implements TypeRepositoryInterface
  */
 readonly class TypeEloquentRepository implements TypeRepositoryInterface
 {
     /**
      * Create a new type repository instance.
+     *
+     * @param  RepositoryCacheManager  $cache  The cache manager for caching type data.
      */
     public function __construct(
         private RepositoryCacheManager $cache
-    ) {
-    }
+    ) {}
 
     /**
      * Normalize type value for consistent caching and lookup.
      *
-     * @param string $type
-     * @return string
+     * @param  string  $type  The type value to normalize.
+     * @return string The normalized type value (lowercase, trimmed).
      */
     private function normalizeType(string $type): string
     {
         return mb_strtolower(trim($type));
     }
 
-    /** @inheritDoc */
+    /**
+     * Retrieve all types.
+     *
+     * @return Collection<int, Type> Collection of all Type entities.
+     */
     public function all(): Collection
     {
         /** @var Collection<int,Type> $types */
@@ -55,7 +68,12 @@ readonly class TypeEloquentRepository implements TypeRepositoryInterface
         return $types;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a type by its ID.
+     *
+     * @param  int  $id  The ID of the type to retrieve.
+     * @return Type|null The Type entity if found, null otherwise.
+     */
     public function findById(int $id): ?Type
     {
         /** @var Type|null $type */
@@ -64,7 +82,12 @@ readonly class TypeEloquentRepository implements TypeRepositoryInterface
         return $type;
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new type or find an existing one by name.
+     *
+     * @param  string  $name  The name of the type to create or find.
+     * @return Type The created or existing Type entity.
+     */
     public function createOrFirst(string $name): Type
     {
         $name = $this->normalizeType($name);
@@ -81,7 +104,13 @@ readonly class TypeEloquentRepository implements TypeRepositoryInterface
         return $type;
     }
 
-    /** @inheritDoc */
+    /**
+     * Update an existing type record.
+     *
+     * @param  int  $id  The ID of the type to update.
+     * @param  array  $data  The data to update the type with.
+     * @return bool True if the update was successful, false if type not found.
+     */
     public function update(int $id, array $data): bool
     {
         $type = Type::query()->find($id);
@@ -110,7 +139,12 @@ readonly class TypeEloquentRepository implements TypeRepositoryInterface
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a type record.
+     *
+     * @param  int  $id  The ID of the type to delete.
+     * @return bool True if the deletion was successful, false if type not found.
+     */
     public function delete(int $id): bool
     {
         $type = Type::query()->find($id);
@@ -130,7 +164,12 @@ readonly class TypeEloquentRepository implements TypeRepositoryInterface
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a type by its type value.
+     *
+     * @param  string  $type  The type value to search for.
+     * @return Type|null The Type entity if found, null otherwise.
+     */
     public function findByType(string $type): ?Type
     {
         /** @var Type|null $found */
