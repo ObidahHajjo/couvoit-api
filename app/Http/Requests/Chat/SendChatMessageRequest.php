@@ -29,6 +29,23 @@ class SendChatMessageRequest extends FormRequest
         return [
             'subject' => ['sometimes', 'nullable', 'string', 'max:255'],
             'message' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'attachments' => ['sometimes', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240'],
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $message = trim((string) $this->input('message', ''));
+            $attachments = $this->file('attachments', []);
+
+            if ($message === '' && $attachments === []) {
+                $validator->errors()->add('message', 'A message or at least one attachment is required.');
+            }
+        });
     }
 }

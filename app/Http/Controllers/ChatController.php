@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Chat\SendChatMessageRequest;
+use App\Http\Requests\Contact\SendContactEmailRequest;
 use App\Http\Resources\ConversationMessageResource;
 use App\Http\Resources\ConversationResource;
 use App\Models\Person;
 use App\Models\Trip;
 use App\Models\User;
 use App\Services\Interfaces\ChatServiceInterface;
+use App\Services\Interfaces\ContactEmailServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Broadcast;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -24,6 +27,7 @@ class ChatController extends Controller
      */
     public function __construct(
         private readonly ChatServiceInterface $chat,
+        private readonly ContactEmailServiceInterface $contactEmail,
     ) {}
 
     /**
@@ -71,7 +75,8 @@ class ChatController extends Controller
         $message = $this->chat->sendMessageInConversation(
             $conversation,
             $authUser->person,
-            (string) $request->validated('message')
+            (string) $request->validated('message', ''),
+            $request->file('attachments', [])
         );
 
         return (new ConversationMessageResource($message))
@@ -160,7 +165,8 @@ class ChatController extends Controller
         $message = $this->chat->contactDriver(
             $trip,
             $authUser->person,
-            $request->validated('message')
+            $request->validated('message'),
+            $request->file('attachments', [])
         );
 
         $conversation = $message?->conversation ?? $this->chat->openOrCreateDriverConversation($trip, $authUser->person);
@@ -190,7 +196,8 @@ class ChatController extends Controller
             $trip,
             $person,
             $authUser->person,
-            $request->validated('message')
+            $request->validated('message'),
+            $request->file('attachments', [])
         );
 
         $conversation = $message?->conversation ?? $this->chat->openOrCreatePassengerConversation($trip, $person, $authUser->person);
@@ -205,6 +212,51 @@ class ChatController extends Controller
     }
 
     /**
+     * Email a trip driver instead of opening chat.
+     */
+    public function contactDriverByEmail(SendContactEmailRequest $request, Trip $trip): JsonResponse
+    {
+        /** @var User $authUser */
+        $authUser = $request->user();
+        $validated = $request->validated();
+
+        $this->contactEmail->sendDriverContactEmail(
+            $trip,
+            $authUser->person,
+            (string) $validated['subject'],
+            $validated['message'] ?? null,
+            $request->file('attachments', [])
+        );
+
+        return response()->json([
+            'message' => 'Your email has been sent to the driver.',
+        ], Response::HTTP_CREATED);
+    }
+
+    /**
+     * Email a passenger on the current driver trip.
+     */
+    public function contactPassengerByEmail(SendContactEmailRequest $request, Trip $trip, Person $person): JsonResponse
+    {
+        /** @var User $authUser */
+        $authUser = $request->user();
+        $validated = $request->validated();
+
+        $this->contactEmail->sendPassengerContactEmail(
+            $trip,
+            $person,
+            $authUser->person,
+            (string) $validated['subject'],
+            $validated['message'] ?? null,
+            $request->file('attachments', [])
+        );
+
+        return response()->json([
+            'message' => 'Your email has been sent to the passenger.',
+        ], Response::HTTP_CREATED);
+    }
+
+    /**
      * Proxy broadcaster authentication requests.
      *
      * @param Request $request Current HTTP request.
@@ -215,6 +267,29 @@ class ChatController extends Controller
         // Just forward to Laravel's broadcaster
         return response()->json(
             Broadcast::auth($request)
+        );
+    }
+
+    /**
+     * Download a chat attachment visible to the authenticated person.
+     */
+    public function downloadAttachment(Request $request, int $attachment)
+    {
+        /** @var User $authUser */
+        $authUser = $request->user();
+
+        $messageAttachment = \App\Models\ConversationMessageAttachment::query()
+            ->with('message')
+            ->find($attachment);
+
+        abort_if($messageAttachment === null, Response::HTTP_NOT_FOUND, 'Attachment not found.');
+
+        $this->chat->getConversationForPerson((int) $messageAttachment->message->conversation_id, $authUser->person);
+
+        return Storage::disk((string) $messageAttachment->disk)->download(
+            (string) $messageAttachment->path,
+            (string) $messageAttachment->original_name,
+            ['Content-Type' => (string) $messageAttachment->mime_type]
         );
     }
 }

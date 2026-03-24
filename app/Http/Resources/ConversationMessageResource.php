@@ -27,6 +27,7 @@ class ConversationMessageResource extends JsonResource
             'sender' => $authPerson !== null && (int) $this->sender_person_id === (int) $authPerson->id ? 'me' : 'other',
             'sender_person_id' => (int) $this->sender_person_id,
             'created_at' => optional($this->created_at)?->toISOString(),
+            'attachments' => ConversationMessageAttachmentResource::collection($this->whenLoaded('attachments')),
         ];
     }
 }

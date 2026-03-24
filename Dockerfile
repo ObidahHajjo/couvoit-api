@@ -25,4 +25,15 @@ RUN apt-get update && apt-get install -y \
  && a2enconf laravel-public \
  && rm -rf /var/lib/apt/lists/*
 
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
+
+COPY composer.json composer.lock ./
+COPY . .
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 80

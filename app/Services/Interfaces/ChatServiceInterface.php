@@ -41,7 +41,7 @@ interface ChatServiceInterface
      *
      * @return ConversationMessage
      */
-    public function sendMessageInConversation(int $conversationId, Person $authPerson, string $message): ConversationMessage;
+    public function sendMessageInConversation(int $conversationId, Person $authPerson, string $message, array $attachments = []): ConversationMessage;
 
     /**
      * Clear the visible history of a conversation for the authenticated person only.
@@ -94,7 +94,7 @@ interface ChatServiceInterface
      *
      * @return ConversationMessage|null
      */
-    public function contactDriver(Trip $trip, Person $authPerson, ?string $message): ?ConversationMessage;
+    public function contactDriver(Trip $trip, Person $authPerson, ?string $message, array $attachments = []): ?ConversationMessage;
 
     /**
      * Open the conversation between a trip driver and one of the trip passengers.
@@ -117,5 +117,5 @@ interface ChatServiceInterface
      *
      * @return ConversationMessage|null
      */
-    public function contactPassenger(Trip $trip, Person $passenger, Person $authPerson, ?string $message): ?ConversationMessage;
+    public function contactPassenger(Trip $trip, Person $passenger, Person $authPerson, ?string $message, array $attachments = []): ?ConversationMessage;
 }
