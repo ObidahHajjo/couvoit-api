@@ -46,4 +46,8 @@ return [
         'geocode_url' => 'https://api.openrouteservice.org/geocode/search',
         'directions_url' => 'https://api.openrouteservice.org/v2/directions/driving-car',
     ],
+
+    'support' => [
+        'email' => env('SUPPORT_EMAIL', env('MAIL_FROM_ADDRESS')),
+    ],
 ];

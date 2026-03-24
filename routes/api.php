@@ -5,6 +5,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TripController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,7 @@ Route::middleware('jwt')->group(function () {
     Route::get('/trips/{trip}', [TripController::class, 'show']);
     Route::get('/trips/{trip}/person', [TripController::class, 'passengers']);
     Route::post('/trips/{trip}/contact-driver', [ChatController::class, 'contactDriver']);
+    Route::post('/trips/{trip}/contact-driver-email', [ChatController::class, 'contactDriverByEmail']);
     Route::post('/trips', [TripController::class, 'store']);
     Route::patch('/trips/{trip}', [TripController::class, 'update']);
     Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
@@ -62,6 +64,7 @@ Route::middleware('jwt')->group(function () {
     Route::get('/conversations', [ChatController::class, 'index']);
     Route::get('/conversations/{conversation}', [ChatController::class, 'show']);
     Route::post('/conversations/{conversation}/messages', [ChatController::class, 'send']);
+    Route::get('/conversations/attachments/{attachment}', [ChatController::class, 'downloadAttachment'])->name('chat.attachments.download');
     Route::post('/conversations/{conversation}/messages/clear', [ChatController::class, 'clearMessages']);
     Route::post('/conversations/{conversation}/messages/{message}/clear', [ChatController::class, 'clearMessage']);
     Route::post('/conversations/{conversation}/clear', [ChatController::class, 'clear']);
@@ -72,6 +75,8 @@ Route::middleware('jwt')->group(function () {
     Route::post('/chat/conversations/{conversation}/messages/{message}/clear', [ChatController::class, 'clearMessage']);
     Route::post('/chat/conversations/{conversation}/clear', [ChatController::class, 'clear']);
     Route::post('/my-trips/{trip}/contact-passenger/{person}', [ChatController::class, 'contactPassenger']);
+    Route::post('/my-trips/{trip}/contact-passenger/{person}/email', [ChatController::class, 'contactPassengerByEmail']);
+    Route::post('/support/contact-email', [SupportController::class, 'sendSupportEmail']);
     Route::post('/broadcasting/auth-proxy', [ChatController::class, 'proxy']);
 
     /* ===== BRANDS ===== */
