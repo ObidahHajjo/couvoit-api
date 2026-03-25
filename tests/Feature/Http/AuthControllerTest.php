@@ -57,7 +57,7 @@ class AuthControllerTest extends TestCase
         ]);
     }
 
-    public function test_register_returns_created_with_token_resource(): void
+    public function test_register_returns_created_with_cookie_session_response(): void
     {
         $this->mock(AuthServiceInterface::class, function ($mock) {
             $mock->shouldReceive('register')
@@ -80,13 +80,17 @@ class AuthControllerTest extends TestCase
         ]);
 
         $res->assertCreated();
-        $res->assertJsonPath('data.access_token', 'a');
-        $res->assertJsonPath('data.token_type', 'Bearer');
-        $res->assertJsonPath('data.refresh_token', 'r');
-        $res->assertJsonPath('data.expires_in', 3600);
+        $res->assertJsonPath('data.message', 'Registered successfully.');
+
+        $setCookieHeaders = $res->headers->getCookies();
+        $accessCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'access_token');
+        $refreshCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'refresh_token');
+
+        $this->assertNotNull($accessCookie);
+        $this->assertNotNull($refreshCookie);
     }
 
-    public function test_login_returns_ok_with_token_resource(): void
+    public function test_login_returns_ok_with_cookie_session_response(): void
     {
         $this->mock(AuthServiceInterface::class, function ($mock) {
             $mock->shouldReceive('login')
@@ -109,11 +113,7 @@ class AuthControllerTest extends TestCase
         ]);
 
         $res->assertOk();
-
-        $res->assertJsonPath('data.access_token', 'a');
-        $res->assertJsonPath('data.token_type', 'Bearer');
-        $res->assertJsonPath('data.refresh_token', 'r');
-        $res->assertJsonPath('data.expires_in', 3600);
+        $res->assertJsonPath('data.message', 'Authenticated successfully.');
 
         $setCookieHeaders = $res->headers->getCookies();
         $accessCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'access_token');
@@ -127,7 +127,7 @@ class AuthControllerTest extends TestCase
         $this->assertSame('lax', strtolower($refreshCookie->getSameSite() ?? ''));
     }
 
-    public function test_refresh_returns_ok_with_token_resource(): void
+    public function test_refresh_returns_ok_with_cookie_session_response(): void
     {
         $this->mock(AuthServiceInterface::class, function ($mock) {
             $mock->shouldReceive('refresh')
@@ -146,9 +146,14 @@ class AuthControllerTest extends TestCase
         ]);
 
         $res->assertOk();
+        $res->assertJsonPath('data.message', 'Session refreshed successfully.');
 
-        $res->assertJsonPath('data.access_token', 'new_access');
-        $res->assertJsonPath('data.refresh_token', 'new_refresh');
+        $setCookieHeaders = $res->headers->getCookies();
+        $accessCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'access_token');
+        $refreshCookie = collect($setCookieHeaders)->first(fn ($cookie) => $cookie->getName() === 'refresh_token');
+
+        $this->assertNotNull($accessCookie);
+        $this->assertNotNull($refreshCookie);
     }
 
     public function test_forget_password_message_is_localized_from_accept_language(): void

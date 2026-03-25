@@ -7,7 +7,7 @@ use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgetPasswordRequest;
 use App\Http\Requests\Auth\RefreshRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
-use App\Http\Resources\AuthTokenResource;
+use App\Http\Resources\AuthSessionResource;
 use App\Models\User;
 use App\Services\Interfaces\AuthServiceInterface;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
@@ -42,7 +42,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 201, description: 'Created', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 201, description: 'Created', content: new OA\JsonContent(ref: '#/components/schemas/AuthSessionResponse')),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
@@ -54,9 +54,10 @@ class AuthController extends Controller
         $data = $request->validated();
         $result = $this->authService->register($data['email'], $data['password']);
 
-        return (new AuthTokenResource($result))
+        return (new AuthSessionResource(['message' => __('api.auth.register_success')]))
             ->response()
             ->cookie($this->authCookie('access_token', $result['access_token'], 60))
+            ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
@@ -70,7 +71,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 200, description: 'OK'),
             new OA\Response(response: 401, description: 'Unauthorized'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
@@ -83,7 +84,7 @@ class AuthController extends Controller
         $data = $request->validated();
         $result = $this->authService->login($data['email'], $data['password']);
 
-        return (new AuthTokenResource($result))
+        return (new AuthSessionResource(['message' => __('api.auth.login_success')]))
             ->response()
             ->cookie($this->authCookie('access_token', $result['access_token'], 21600))
             ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
@@ -100,7 +101,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 200, description: 'OK'),
             new OA\Response(response: 401, description: 'Unauthorized'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
@@ -113,7 +114,7 @@ class AuthController extends Controller
         $data = $request->validated();
         $result = $this->authService->refresh($data['refresh_token']);
 
-        return (new AuthTokenResource($result))
+        return (new AuthSessionResource(['message' => __('api.auth.refresh_success')]))
             ->response()
             ->cookie($this->authCookie('access_token', $result['access_token'], 21600))
             ->cookie($this->authCookie('refresh_token', $result['refresh_token'], 43200))
@@ -130,7 +131,7 @@ class AuthController extends Controller
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthSessionResponse')),
             new OA\Response(response: 401, description: 'Unauthorized'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
@@ -156,7 +157,7 @@ class AuthController extends Controller
         summary: 'me',
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenResponse')),
+            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(ref: '#/components/schemas/AuthSessionResponse')),
             new OA\Response(response: 401, description: 'Unauthorized'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]

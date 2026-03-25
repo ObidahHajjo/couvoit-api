@@ -2,6 +2,9 @@
 
 return [
     'auth' => [
+        'register_success' => 'Registered successfully.',
+        'login_success' => 'Authenticated successfully.',
+        'refresh_success' => 'Session refreshed successfully.',
         'logout_success' => 'Logged out successfully',
         'forgot_password_notice' => 'If an account exists for this email, a reset link has been sent.',
         'password_reset_success' => 'Password reset successfully.',

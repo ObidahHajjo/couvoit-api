@@ -35,12 +35,9 @@ use OpenApi\Attributes as OA;
     type: 'object'
 )]
 #[OA\Schema(
-    schema: 'AuthTokenResponse',
+    schema: 'AuthSessionResponse',
     properties: [
-        new OA\Property(property: 'access_token', type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'),
-        new OA\Property(property: 'refresh_token', type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'),
-        new OA\Property(property: 'token_type', type: 'string', example: 'bearer'),
-        new OA\Property(property: 'expires_in', type: 'integer', example: 3600),
+        new OA\Property(property: 'message', type: 'string', example: 'Authenticated successfully.'),
     ],
     type: 'object'
 )]

@@ -94,7 +94,12 @@ class TripController extends Controller
      */
     public function show(Trip $trip): JsonResponse
     {
-        $trip->loadMissing(['driver', 'departureAddress.city', 'arrivalAddress.city']);
+        $trip->loadMissing([
+            'driver.car.model.brand',
+            'driver.car.color',
+            'departureAddress.city',
+            'arrivalAddress.city',
+        ]);
 
         return (new TripResource($trip))
             ->response()

@@ -2,6 +2,9 @@
 
 return [
     'auth' => [
+        'register_success' => 'Inscription reussie.',
+        'login_success' => 'Authentification reussie.',
+        'refresh_success' => 'Session rafraichie avec succes.',
         'logout_success' => 'Deconnexion reussie',
         'forgot_password_notice' => 'Si un compte existe pour cet e-mail, un lien de reinitialisation a ete envoye.',
         'password_reset_success' => 'Mot de passe reinitialise avec succes.',
