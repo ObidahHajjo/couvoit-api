@@ -19,8 +19,7 @@
 
 </div>
 
-
-API REST de covoiturage **orientée production**, développée avec **Laravel 12**, **PHP 8.2+**, **PostgreSQL** et un système **JWT local personnalisé**.
+API REST de covoiturage **orientée production**, développée avec **Laravel 12**, **PHP 8.2+**, **PostgreSQL** et un système **JWT local personnalisé** basé sur des **cookies httpOnly**.
 
 Le projet applique une **architecture en couches propre** avec séparation stricte des responsabilités, Policies d'autorisation, messagerie temps réel via Reverb, cache structuré, emails transactionnels Resend et couverture de tests robuste.
 
@@ -98,22 +97,22 @@ Les bindings Service/Repository sont enregistrés dans `AppServiceProvider` et `
 
 # 🧱 Stack Technique
 
-| Technologie | Usage |
-|-------------|--------|
-| Laravel 12 | Framework principal |
-| PHP 8.2+ | Langage (CI/Docker cible PHP 8.5) |
-| PostgreSQL | Base de données relationnelle (runtime) |
-| SQLite | Base de données pour tests/CI |
-| firebase/php-jwt | Émission et vérification JWT locale |
-| laravel/reverb | Broadcasting WebSocket temps réel |
-| pusher/pusher-php-server | Compatible Reverb |
-| PHPUnit 11 | Tests unitaires et feature |
-| darkaonline/l5-swagger | Documentation OpenAPI |
-| resend/resend-laravel | Emails transactionnels |
-| predis/predis | Client Redis |
-| OpenRouteService | Géocodage & calcul distance/durée |
-| Laravel Pint | Style de code |
-| SonarQube | Qualité de code (CI) |
+| Technologie              | Usage                                   |
+| ------------------------ | --------------------------------------- |
+| Laravel 12               | Framework principal                     |
+| PHP 8.2+                 | Langage (CI/Docker cible PHP 8.5)       |
+| PostgreSQL               | Base de données relationnelle (runtime) |
+| SQLite                   | Base de données pour tests/CI           |
+| firebase/php-jwt         | Émission et vérification JWT locale     |
+| laravel/reverb           | Broadcasting WebSocket temps réel       |
+| pusher/pusher-php-server | Compatible Reverb                       |
+| PHPUnit 11               | Tests unitaires et feature              |
+| darkaonline/l5-swagger   | Documentation OpenAPI                   |
+| resend/resend-laravel    | Emails transactionnels                  |
+| predis/predis            | Client Redis                            |
+| OpenRouteService         | Géocodage & calcul distance/durée       |
+| Laravel Pint             | Style de code                           |
+| SonarQube                | Qualité de code (CI)                    |
 
 ---
 
@@ -134,6 +133,7 @@ Les bindings Service/Repository sont enregistrés dans `AppServiceProvider` et `
 ## Règles métier importantes
 
 ### 👤 Person / User
+
 - L'inscription crée simultanément un `Person` et un `User`
 - Possède un seul véhicule (optionnel) via `persons.car_id`
 - Possède un rôle (`admin` ou `user`)
@@ -142,12 +142,14 @@ Les bindings Service/Repository sont enregistrés dans `AppServiceProvider` et `
 - Après 90 jours : anonymisation automatique par la commande `accounts:purge-deleted`
 
 ### 🚗 Trip
+
 - `available_seats > 0`
 - `distance_km > 0`
 - Ne peut pas être annulé s'il a déjà commencé
 - Création : géocodage ORS → calcul distance/durée → persistance + `arrival_time` dérivé
 
 ### 📌 Reservation
+
 - Clé primaire composite (`person_id + trip_id`)
 - Le conducteur ne peut pas réserver son propre trajet
 - Pas de double réservation
@@ -155,6 +157,7 @@ Les bindings Service/Repository sont enregistrés dans `AppServiceProvider` et `
 - Impossible sur un trajet déjà commencé
 
 ### 💬 Conversation
+
 - Fils de discussion à deux parties autour d'un trajet
 - Un conducteur peut contacter un passager de son trajet
 - Un passager peut contacter le conducteur d'un trajet
@@ -167,34 +170,42 @@ L'API utilise un système d'authentification local basé sur JWT (HS256). Elle n
 
 ## 🧩 Architecture d'authentification
 
-| Token | Durée | Usage |
-|-------|-------|--------|
-| `access_token` | Court terme (ex: 1h) | Accès aux routes protégées |
-| `refresh_token` | Long terme (ex: 30 jours) | Renouvellement du JWT |
+| Token           | Durée                     | Usage                      |
+| --------------- | ------------------------- | -------------------------- |
+| `access_token`  | Court terme (ex: 1h)      | Accès aux routes protégées |
+| `refresh_token` | Long terme (ex: 30 jours) | Renouvellement du JWT      |
 
 ## 🔄 Flux d'authentification
 
 ### 1️⃣ L'utilisateur s'inscrit ou se connecte via :
+
 ```
 POST /auth/register
 POST /auth/login
 ```
 
 ### 2️⃣ Le serveur :
+
 - Vérifie les identifiants et le statut `is_active`
 - Hash le mot de passe (bcrypt)
 - Génère un `access_token` JWT signé HS256
 - Génère un `refresh_token` aléatoire (`random_bytes(32)`)
 - Stocke le refresh token haché en base (`refresh_tokens`)
-- Retourne les tokens en JSON **et** les pose en cookies HTTP-only sécurisés
+- Pose les tokens en cookies HTTP-only sécurisés
+- Retourne un message de succès JSON sans exposer `access_token` ni `refresh_token`
 
 ### 3️⃣ Le client envoie le JWT via :
+
 ```
 Authorization: Bearer <access_token>
 ```
-ou via le cookie `access_token` (HTTP-only).
+
+ou, dans le cas nominal navigateur/frontend, via le cookie `access_token` (HTTP-only).
+
+> Le frontend Covoit utilise désormais exclusivement les cookies de session ; il ne lit plus de jetons dans les réponses JSON d'authentification.
 
 ### 4️⃣ Le middleware `jwt` (`LocalJwtAuth`) :
+
 - Vérifie la signature (HS256)
 - Vérifie les claims `iss`, `aud`, `exp`
 - Résout `sub` → `User`
@@ -207,49 +218,53 @@ ou via le cookie `access_token` (HTTP-only).
 
 ```json
 {
-  "iss": "couvoit-api",
-  "aud": "couvoit-client",
-  "iat": 1700000000,
-  "exp": 1700000900,
-  "sub": "12",
-  "role_id": 1,
-  "user_id": 1,
-  "jti": "a1b2c3d4e5f6..."
+    "iss": "couvoit-api",
+    "aud": "couvoit-client",
+    "iat": 1700000000,
+    "exp": 1700000900,
+    "sub": "12",
+    "role_id": 1,
+    "user_id": 1,
+    "jti": "a1b2c3d4e5f6..."
 }
 ```
 
 ## 🔎 Claims utilisés
 
-| Claim | Description |
-|-------|-------------|
-| `iss` | Émetteur |
-| `aud` | Audience |
-| `sub` | Identifiant interne utilisateur |
-| `exp` | Expiration |
-| `role_id` | Rôle utilisateur |
-| `jti` | Identifiant unique du token |
+| Claim     | Description                     |
+| --------- | ------------------------------- |
+| `iss`     | Émetteur                        |
+| `aud`     | Audience                        |
+| `sub`     | Identifiant interne utilisateur |
+| `exp`     | Expiration                      |
+| `role_id` | Rôle utilisateur                |
+| `jti`     | Identifiant unique du token     |
 
 ---
 
 # 🔁 Refresh Token (Rotation Sécurisée)
 
 ## Le refresh token :
+
 - Est généré via `random_bytes(32)`
 - Seule la valeur brute est retournée au client
 - Est stocké **haché** en base (`refresh_tokens`) avec date d'expiration
 - Est révoqué à chaque rotation
 
 ## 🔄 Endpoint
+
 ```
 POST /auth/refresh
 ```
 
 ## Processus :
-1. Vérification du refresh token fourni
+
+1. Vérification du refresh token fourni (généralement lu depuis le cookie `refresh_token`)
 2. Révocation du token utilisé
 3. Génération d'un nouveau couple `access_token` + `refresh_token`
 
 ### Cette stratégie protège contre :
+
 - Vol de token
 - Replay attack
 - Réutilisation après compromission
@@ -259,6 +274,7 @@ POST /auth/refresh
 ```
 POST /auth/logout
 ```
+
 Supprime **tous** les refresh tokens de l'utilisateur authentifié.
 
 ---
@@ -310,17 +326,23 @@ La messagerie temps réel est gérée via **Laravel Reverb** (compatible Pusher)
 ```
 chat.user.{personId}
 chat.conversation.{conversationId}
+support.session.{sessionId}
+support.admins
 ```
 
 ## Endpoints de messagerie
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/conversations` | Liste des conversations |
-| GET | `/conversations/{conversation}` | Détail d'une conversation |
-| POST | `/conversations/{conversation}/messages` | Envoyer un message |
-| POST | `/trips/{trip}/contact-driver` | Contacter le conducteur |
-| POST | `/my-trips/{trip}/contact-passenger/{person}` | Contacter un passager |
+| Méthode | Endpoint                                      | Description                                |
+| ------- | --------------------------------------------- | ------------------------------------------ |
+| GET     | `/conversations`                              | Liste des conversations                    |
+| GET     | `/conversations/{conversation}`               | Détail d'une conversation                  |
+| POST    | `/conversations/{conversation}/messages`      | Envoyer un message                         |
+| POST    | `/trips/{trip}/contact-driver`                | Contacter le conducteur                    |
+| POST    | `/my-trips/{trip}/contact-passenger/{person}` | Contacter un passager                      |
+| POST    | `/support-chat/sessions`                      | Ouvrir ou retrouver une session de support |
+| GET     | `/support-chat/sessions/{session}/messages`   | Historique des messages de support         |
+| POST    | `/support-chat/sessions/{session}/messages`   | Envoyer un message de support              |
+| POST    | `/support-chat/sessions/{session}/close`      | Clore une session de support               |
 
 > Des alias `/chat/conversations...` sont également disponibles.
 
@@ -411,16 +433,19 @@ php artisan serve
 ```
 
 ### API accessible sur :
+
 ```
 http://localhost:8000
 ```
 
 ### (Optionnel) Broadcasting temps réel :
+
 ```bash
 php artisan reverb:start
 ```
 
 ### (Optionnel) Queue worker :
+
 ```bash
 php artisan queue:listen --tries=1 --timeout=0
 ```
@@ -436,11 +461,13 @@ php artisan l5-swagger:generate
 ```
 
 ### Swagger UI accessible via :
+
 ```
 /api/documentation
 ```
 
 ### Spec générée via :
+
 ```
 /docs
 ```
@@ -485,6 +512,7 @@ php artisan test --coverage-clover=coverage.xml
 - Couverture complète : Services, Policies, Repositories, DTOs, Resources, Middleware, Controllers
 
 ## Domaines couverts :
+
 - Flux auth (register, login, refresh, logout, forgot/reset password)
 - Middleware JWT
 - Endpoints chat/conversations
@@ -496,6 +524,7 @@ php artisan test --coverage-clover=coverage.xml
 ## CI/CD (GitHub Actions)
 
 Le workflow `.github/workflows/tests.yml` :
+
 1. Installe les dépendances Composer
 2. Prépare `.env` (SQLite)
 3. Exécute les migrations
@@ -539,11 +568,11 @@ trip:{id}
 
 ## Policies principales :
 
-| Policy | Modèle couvert |
-|--------|----------------|
-| `PersonPolicy` | Gestion des profils et rôles |
-| `CarPolicy` | Gestion des véhicules |
-| `TripPolicy` | Publication, modification, annulation des trajets |
+| Policy         | Modèle couvert                                    |
+| -------------- | ------------------------------------------------- |
+| `PersonPolicy` | Gestion des profils et rôles                      |
+| `CarPolicy`    | Gestion des véhicules                             |
+| `TripPolicy`   | Publication, modification, annulation des trajets |
 
 ## Comportement clé :
 
@@ -581,10 +610,10 @@ public function before(Person $user): ?bool
 
 Déclarées dans `routes/console.php` :
 
-| Commande | Fréquence | Description |
-|----------|-----------|-------------|
-| `auth:clear-resets` | Toutes les 15 min | Nettoyage des tokens de réinitialisation expirés |
-| `accounts:purge-deleted` | Quotidien | Anonymisation des comptes supprimés depuis > 90 jours |
+| Commande                 | Fréquence         | Description                                           |
+| ------------------------ | ----------------- | ----------------------------------------------------- |
+| `auth:clear-resets`      | Toutes les 15 min | Nettoyage des tokens de réinitialisation expirés      |
+| `accounts:purge-deleted` | Quotidien         | Anonymisation des comptes supprimés depuis > 90 jours |
 
 ### Exécution manuelle :
 
@@ -667,78 +696,90 @@ tests/                      Tests unitaires et feature (PHPUnit 11)
 
 ## 🔐 Authentification — Routes Publiques
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/auth/register` | Inscription |
-| POST | `/auth/login` | Connexion |
-| POST | `/auth/refresh` | Renouvellement du token JWT |
-| POST | `/auth/logout` | Déconnexion (révocation tokens) |
-| GET | `/auth/me` | Profil de l'utilisateur courant |
-| POST | `/auth/forgot-password` | Demande de réinitialisation |
-| POST | `/auth/reset-password` | Réinitialisation du mot de passe |
+| Méthode | Endpoint                | Description                                  |
+| ------- | ----------------------- | -------------------------------------------- |
+| POST    | `/auth/register`        | Inscription                                  |
+| POST    | `/auth/login`           | Connexion                                    |
+| POST    | `/auth/refresh`         | Renouvellement de session via cookie refresh |
+| POST    | `/auth/logout`          | Déconnexion (révocation tokens)              |
+| GET     | `/auth/me`              | Profil de l'utilisateur courant              |
+| POST    | `/auth/forgot-password` | Demande de réinitialisation                  |
+| POST    | `/auth/reset-password`  | Réinitialisation du mot de passe             |
+
+> Les endpoints d'authentification retournent un message de succès et définissent les cookies de session. Ils n'exposent plus les jetons dans la réponse JSON.
 
 ## 👤 Persons
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/persons` | Liste des utilisateurs |
-| GET | `/persons/{person}` | Détail d'un utilisateur |
-| GET | `/persons/{person}/trips-driver` | Trajets en tant que conducteur |
-| GET | `/persons/{person}/trips-passenger` | Trajets en tant que passager |
-| POST | `/persons` | Création d'un utilisateur |
-| PATCH | `/persons/role` | Mise à jour du rôle |
-| PATCH | `/persons/{person}` | Mise à jour d'un utilisateur |
-| DELETE | `/persons/{person}` | Suppression d'un utilisateur |
+| Méthode | Endpoint                            | Description                    |
+| ------- | ----------------------------------- | ------------------------------ |
+| GET     | `/persons`                          | Liste des utilisateurs         |
+| GET     | `/persons/{person}`                 | Détail d'un utilisateur        |
+| GET     | `/persons/{person}/trips-driver`    | Trajets en tant que conducteur |
+| GET     | `/persons/{person}/trips-passenger` | Trajets en tant que passager   |
+| POST    | `/persons`                          | Création d'un utilisateur      |
+| PATCH   | `/persons/role`                     | Mise à jour du rôle            |
+| PATCH   | `/persons/{person}`                 | Mise à jour d'un utilisateur   |
+| DELETE  | `/persons/{person}`                 | Suppression d'un utilisateur   |
 
 ## 🚗 Trajets
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/trips` | Liste des trajets |
-| GET | `/trips/{trip}` | Détail d'un trajet |
-| GET | `/trips/{trip}/person` | Liste des passagers |
-| POST | `/trips` | Création d'un trajet |
-| PATCH | `/trips/{trip}` | Mise à jour d'un trajet |
-| PATCH | `/trips/{trip}/cancel` | Annulation d'un trajet |
-| DELETE | `/trips/{trip}` | Suppression d'un trajet |
-| POST | `/trips/{trip}/person` | Réservation d'un siège |
-| DELETE | `/trips/{trip}/reservations` | Annulation d'une réservation |
-| POST | `/trips/{trip}/contact-driver` | Contacter le conducteur |
-| POST | `/my-trips/{trip}/contact-passenger/{person}` | Contacter un passager |
+| Méthode | Endpoint                                      | Description                                                                           |
+| ------- | --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| GET     | `/trips`                                      | Liste des trajets                                                                     |
+| GET     | `/trips/{trip}`                               | Détail d'un trajet, incluant désormais `driver.car` (plaque, modèle, marque, couleur) |
+| GET     | `/trips/{trip}/person`                        | Liste des passagers                                                                   |
+| POST    | `/trips`                                      | Création d'un trajet                                                                  |
+| PATCH   | `/trips/{trip}`                               | Mise à jour d'un trajet                                                               |
+| PATCH   | `/trips/{trip}/cancel`                        | Annulation d'un trajet                                                                |
+| DELETE  | `/trips/{trip}`                               | Suppression d'un trajet                                                               |
+| POST    | `/trips/{trip}/person`                        | Réservation d'un siège                                                                |
+| DELETE  | `/trips/{trip}/reservations`                  | Annulation d'une réservation                                                          |
+| POST    | `/trips/{trip}/contact-driver`                | Contacter le conducteur                                                               |
+| POST    | `/my-trips/{trip}/contact-passenger/{person}` | Contacter un passager                                                                 |
 
 ## 🏷 Marques & Catalogue
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/brands` | Liste des marques |
-| GET | `/brand/{brand}` | Détail d'une marque |
+| Méthode | Endpoint         | Description         |
+| ------- | ---------------- | ------------------- |
+| GET     | `/brands`        | Liste des marques   |
+| GET     | `/brand/{brand}` | Détail d'une marque |
 
 ## 🚘 Voitures
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/cars` | Liste des voitures |
-| GET | `/cars/{car}` | Détail d'une voiture |
-| GET | `/cars/search` | Recherche catalogue |
-| POST | `/cars` | Création d'une voiture |
-| PUT | `/cars/{car}` | Mise à jour complète |
-| DELETE | `/cars/{car}` | Suppression d'une voiture |
+| Méthode | Endpoint       | Description               |
+| ------- | -------------- | ------------------------- |
+| GET     | `/cars`        | Liste des voitures        |
+| GET     | `/cars/{car}`  | Détail d'une voiture      |
+| GET     | `/cars/search` | Recherche catalogue       |
+| POST    | `/cars`        | Création d'une voiture    |
+| PUT     | `/cars/{car}`  | Mise à jour complète      |
+| DELETE  | `/cars/{car}`  | Suppression d'une voiture |
 
 ## 💬 Conversations
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/conversations` | Liste des conversations |
-| GET | `/conversations/{conversation}` | Détail d'une conversation |
-| POST | `/conversations/{conversation}/messages` | Envoyer un message |
-| POST | `/broadcasting/auth-proxy` | Auth canaux privés Reverb |
+| Méthode | Endpoint                                 | Description               |
+| ------- | ---------------------------------------- | ------------------------- |
+| GET     | `/conversations`                         | Liste des conversations   |
+| GET     | `/conversations/{conversation}`          | Détail d'une conversation |
+| POST    | `/conversations/{conversation}/messages` | Envoyer un message        |
+| POST    | `/broadcasting/auth-proxy`               | Auth canaux privés Reverb |
+
+## 🆘 Support temps réel
+
+| Méthode | Endpoint                                    | Description                                         |
+| ------- | ------------------------------------------- | --------------------------------------------------- |
+| POST    | `/support-chat/sessions`                    | Crée ou retrouve une session de support utilisateur |
+| GET     | `/support-chat/sessions/{session}`          | Détail d'une session de support                     |
+| GET     | `/support-chat/sessions/{session}/messages` | Liste des messages de support                       |
+| POST    | `/support-chat/sessions/{session}/messages` | Envoi de message de support                         |
+| POST    | `/support-chat/sessions/{session}/close`    | Clôture de session                                  |
 
 ## 🩺 Santé
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/up` | Health check |
-| GET | `/` | Ping (`{"message":"ok"}`) |
+| Méthode | Endpoint | Description               |
+| ------- | -------- | ------------------------- |
+| GET     | `/up`    | Health check              |
+| GET     | `/`      | Ping (`{"message":"ok"}`) |
 
 ## 📌 Remarques importantes
 
@@ -753,38 +794,52 @@ tests/                      Tests unitaires et feature (PHPUnit 11)
 # 🔧 Dépannage
 
 ### `Missing Bearer token`
-- Envoyer `Authorization: Bearer <access_token>` ou s'appuyer sur le cookie `access_token`
+
+- Envoyer `Authorization: Bearer <access_token>` pour un client non navigateur, ou s'appuyer sur le cookie `access_token`
 - Vérifier que la requête atteint bien une route protégée et que les cookies sont transmis
 
 ### `Token expired` ou échecs d'auth inattendus
-- Appeler `POST /auth/refresh` avec un refresh token valide
+
+- Appeler `POST /auth/refresh` avec un cookie `refresh_token` valide
 - Si la config a changé : `php artisan config:clear`
 - Si le cache est incohérent : `php artisan optimize:clear`
 
+### Les détails véhicule n'apparaissent pas côté frontend
+
+- Vérifier `GET /trips/{trip}` dans la réponse JSON
+- Confirmer que `TripResource` expose `driver.car`, `driver.car.model.brand` et `driver.car.color`
+- Si la couleur textuelle apparaît sans pastille, vérifier la présence de `driver.car.color.hex_code`
+
 ### La création de trajet échoue avec des erreurs ORS
+
 - Vérifier `OPENROUTESERVICE_API_KEY`
 - Confirmer que les adresses de départ/arrivée sont géocodables par ORS
 - Consulter les logs : `php artisan pail --timeout=0`
 
 ### Le chat temps réel ne reçoit pas d'événements
+
 - Vérifier `BROADCAST_CONNECTION=reverb`
 - S'assurer que `php artisan reverb:start` est lancé
 - Confirmer que le client s'authentifie via `POST /broadcasting/auth-proxy`
 - Vérifier que l'utilisateur appartient au canal privé demandé
 
 ### Erreurs de cache tags ou lectures incohérentes
+
 - Préférer Redis en environnement runtime (nécessaire pour les tagged caches)
 - Après changement de config ou de driver :
+
 ```bash
 php artisan optimize:clear
 ```
 
 ### Les emails ne sont pas envoyés
+
 - Vérifier `MAIL_MAILER=resend` et `RESEND_API_KEY`
 - Vérifier les template IDs Resend dans `.env`
 - Si les template IDs sont vides, l'envoi est silencieusement ignoré
 
 ### `composer setup` ou `composer dev` échoue sur les commandes npm
+
 - Ce dépôt backend n'inclut pas de `package.json` committé
 - Utiliser directement les commandes PHP/Artisan
 
@@ -806,4 +861,5 @@ php artisan optimize:clear
 # 👤 Auteur
 
 ### Obidah Hajjo
+
 ### Full Stack Developer

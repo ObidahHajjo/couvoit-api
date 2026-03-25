@@ -19,7 +19,7 @@
 
 </div>
 
-واجهة برمجية REST **موجّهة للإنتاج** لمنصة مشاركة الركوب، مبنية بـ **Laravel 12** و**PHP 8.2+** و**PostgreSQL** ونظام **JWT محلي مخصص**.
+واجهة برمجية REST **موجّهة للإنتاج** لمنصة مشاركة الركوب، مبنية بـ **Laravel 12** و**PHP 8.2+** و**PostgreSQL** ونظام **JWT محلي مخصص** يعتمد على **كوكيز httpOnly**.
 
 يطبّق المشروع **معمارية طبقية نظيفة** مع فصل صارم للمسؤوليات، وسياسات تفويض، ومراسلة فورية عبر Reverb، وتخزين مؤقت منظم، وبريد إلكتروني تعاملي عبر Resend، وتغطية اختبارات شاملة.
 
@@ -99,22 +99,22 @@ Infrastructure (البنية التحتية)
 
 # 🧱 التقنيات المستخدمة
 
-| التقنية | الاستخدام |
-|---------|-----------|
-| Laravel 12 | الإطار الرئيسي |
-| PHP 8.2+ | اللغة (CI/Docker يستهدف PHP 8.5) |
-| PostgreSQL | قاعدة البيانات العلائقية (الإنتاج) |
-| SQLite | قاعدة البيانات للاختبارات/CI |
-| firebase/php-jwt | إصدار JWT والتحقق منه محلياً |
-| laravel/reverb | بث WebSocket الفوري |
-| pusher/pusher-php-server | متوافق مع Reverb |
-| PHPUnit 11 | اختبارات الوحدة والميزة |
-| darkaonline/l5-swagger | توثيق OpenAPI |
-| resend/resend-laravel | البريد الإلكتروني التعاملي |
-| predis/predis | عميل Redis |
-| OpenRouteService | الترميز الجغرافي وحساب المسافة/المدة |
-| Laravel Pint | أسلوب الكود |
-| SonarQube | جودة الكود (CI) |
+| التقنية                  | الاستخدام                            |
+| ------------------------ | ------------------------------------ |
+| Laravel 12               | الإطار الرئيسي                       |
+| PHP 8.2+                 | اللغة (CI/Docker يستهدف PHP 8.5)     |
+| PostgreSQL               | قاعدة البيانات العلائقية (الإنتاج)   |
+| SQLite                   | قاعدة البيانات للاختبارات/CI         |
+| firebase/php-jwt         | إصدار JWT والتحقق منه محلياً         |
+| laravel/reverb           | بث WebSocket الفوري                  |
+| pusher/pusher-php-server | متوافق مع Reverb                     |
+| PHPUnit 11               | اختبارات الوحدة والميزة              |
+| darkaonline/l5-swagger   | توثيق OpenAPI                        |
+| resend/resend-laravel    | البريد الإلكتروني التعاملي           |
+| predis/predis            | عميل Redis                           |
+| OpenRouteService         | الترميز الجغرافي وحساب المسافة/المدة |
+| Laravel Pint             | أسلوب الكود                          |
+| SonarQube                | جودة الكود (CI)                      |
 
 ---
 
@@ -135,6 +135,7 @@ Infrastructure (البنية التحتية)
 ## قواعد العمل الرئيسية
 
 ### 👤 Person / User
+
 - يُنشئ التسجيل `Person` و`User` في آنٍ واحد
 - يملك مركبة واحدة (اختياري) عبر `persons.car_id`
 - يملك دوراً (`admin` أو `user`)
@@ -143,12 +144,14 @@ Infrastructure (البنية التحتية)
 - بعد 90 يوماً: إخفاء الهوية تلقائياً بواسطة أمر `accounts:purge-deleted`
 
 ### 🚗 Trip
+
 - `available_seats > 0`
 - `distance_km > 0`
 - لا يمكن إلغاؤها بعد أن تبدأ
 - تدفق الإنشاء: ترميز جغرافي ORS ← حساب المسافة/المدة ← الحفظ + `arrival_time` المشتق
 
 ### 📌 Reservation
+
 - مفتاح أساسي مركّب (`person_id + trip_id`)
 - لا يستطيع السائق حجز رحلته الخاصة
 - لا حجوزات مكررة
@@ -156,6 +159,7 @@ Infrastructure (البنية التحتية)
 - مستحيل على رحلة بدأت بالفعل
 
 ### 💬 Conversation
+
 - خيوط نقاش ثنائية حول رحلة
 - يمكن للسائق التواصل مع راكب في رحلته
 - يمكن للراكب التواصل مع سائق الرحلة
@@ -168,34 +172,42 @@ Infrastructure (البنية التحتية)
 
 ## 🧩 معمارية المصادقة
 
-| الرمز | المدة | الاستخدام |
-|-------|-------|-----------|
-| `access_token` | قصير الأمد (مثلاً: ساعة) | الوصول إلى المسارات المحمية |
-| `refresh_token` | طويل الأمد (مثلاً: 30 يوماً) | تجديد JWT |
+| الرمز           | المدة                        | الاستخدام                   |
+| --------------- | ---------------------------- | --------------------------- |
+| `access_token`  | قصير الأمد (مثلاً: ساعة)     | الوصول إلى المسارات المحمية |
+| `refresh_token` | طويل الأمد (مثلاً: 30 يوماً) | تجديد JWT                   |
 
 ## 🔄 تدفق المصادقة
 
 ### 1️⃣ يُسجّل المستخدم أو يُسجّل دخوله عبر:
+
 ```
 POST /auth/register
 POST /auth/login
 ```
 
 ### 2️⃣ الخادم:
+
 - يتحقق من بيانات الاعتماد وحالة `is_active`
 - يُشفّر كلمة المرور (bcrypt)
 - يُولّد `access_token` JWT موقّع بـ HS256
 - يُولّد `refresh_token` عشوائياً (`random_bytes(32)`)
 - يُخزّن الرمز المُجزّأ في قاعدة البيانات (`refresh_tokens`)
-- يُعيد الرموز بتنسيق JSON **ويضعها** في ملفات تعريف ارتباط HTTP-only آمنة
+- يضع الرموز في ملفات تعريف ارتباط HTTP-only آمنة
+- يعيد رسالة نجاح JSON بدون كشف `access_token` أو `refresh_token`
 
 ### 3️⃣ يُرسل العميل JWT عبر:
+
 ```
 Authorization: Bearer <access_token>
 ```
-أو عبر ملف تعريف الارتباط `access_token` (HTTP-only).
+
+أو، في تدفق المتصفح/الواجهة الأمامية المعتاد، عبر ملف تعريف الارتباط `access_token` (HTTP-only).
+
+> تعتمد واجهة Covoit الأمامية الآن حصراً على كوكيز الجلسة، ولم تعد تقرأ رموز المصادقة من استجابات JSON.
 
 ### 4️⃣ الوسيط `jwt` (`LocalJwtAuth`):
+
 - يتحقق من التوقيع (HS256)
 - يتحقق من المطالبات `iss` و`aud` و`exp`
 - يحلّ `sub` → `User`
@@ -208,49 +220,53 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "iss": "couvoit-api",
-  "aud": "couvoit-client",
-  "iat": 1700000000,
-  "exp": 1700000900,
-  "sub": "12",
-  "role_id": 1,
-  "user_id": 1,
-  "jti": "a1b2c3d4e5f6..."
+    "iss": "couvoit-api",
+    "aud": "couvoit-client",
+    "iat": 1700000000,
+    "exp": 1700000900,
+    "sub": "12",
+    "role_id": 1,
+    "user_id": 1,
+    "jti": "a1b2c3d4e5f6..."
 }
 ```
 
 ## 🔎 المطالبات المستخدمة
 
-| المطالبة | الوصف |
-|----------|-------|
-| `iss` | المُصدِر |
-| `aud` | الجمهور المستهدف |
-| `sub` | معرّف المستخدم الداخلي |
-| `exp` | تاريخ الانتهاء |
-| `role_id` | دور المستخدم |
-| `jti` | معرّف الرمز الفريد |
+| المطالبة  | الوصف                  |
+| --------- | ---------------------- |
+| `iss`     | المُصدِر               |
+| `aud`     | الجمهور المستهدف       |
+| `sub`     | معرّف المستخدم الداخلي |
+| `exp`     | تاريخ الانتهاء         |
+| `role_id` | دور المستخدم           |
+| `jti`     | معرّف الرمز الفريد     |
 
 ---
 
 # 🔁 رمز التحديث (التدوير الآمن)
 
 ## رمز التحديث:
+
 - يُولَّد عبر `random_bytes(32)`
 - تُعاد القيمة الخام فقط إلى العميل
 - يُخزَّن **مُجزَّأً** في قاعدة البيانات (`refresh_tokens`) مع تاريخ انتهاء
 - يُلغى عند كل تدوير
 
 ## 🔄 نقطة النهاية
+
 ```
 POST /auth/refresh
 ```
 
 ## العملية:
-1. التحقق من رمز التحديث المقدَّم
+
+1. التحقق من رمز التحديث المقدَّم (ويُقرأ عادةً من ملف تعريف الارتباط `refresh_token`)
 2. إلغاء الرمز المُستخدَم
 3. توليد زوج جديد من `access_token` + `refresh_token`
 
 ### تحمي هذه الاستراتيجية من:
+
 - سرقة الرمز
 - هجمات إعادة التشغيل
 - إعادة الاستخدام بعد الاختراق
@@ -260,6 +276,7 @@ POST /auth/refresh
 ```
 POST /auth/logout
 ```
+
 يحذف **جميع** رموز التحديث للمستخدم المصادَق عليه.
 
 ---
@@ -311,17 +328,23 @@ AUTH_COOKIE_SAMESITE=lax
 ```
 chat.user.{personId}
 chat.conversation.{conversationId}
+support.session.{sessionId}
+support.admins
 ```
 
 ## نقاط نهاية المراسلة
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/conversations` | قائمة المحادثات |
-| GET | `/conversations/{conversation}` | تفاصيل محادثة |
-| POST | `/conversations/{conversation}/messages` | إرسال رسالة |
-| POST | `/trips/{trip}/contact-driver` | التواصل مع السائق |
-| POST | `/my-trips/{trip}/contact-passenger/{person}` | التواصل مع راكب |
+| الطريقة | نقطة النهاية                                  | الوصف                         |
+| ------- | --------------------------------------------- | ----------------------------- |
+| GET     | `/conversations`                              | قائمة المحادثات               |
+| GET     | `/conversations/{conversation}`               | تفاصيل محادثة                 |
+| POST    | `/conversations/{conversation}/messages`      | إرسال رسالة                   |
+| POST    | `/trips/{trip}/contact-driver`                | التواصل مع السائق             |
+| POST    | `/my-trips/{trip}/contact-passenger/{person}` | التواصل مع راكب               |
+| POST    | `/support-chat/sessions`                      | فتح أو إعادة استخدام جلسة دعم |
+| GET     | `/support-chat/sessions/{session}/messages`   | سجل رسائل الدعم               |
+| POST    | `/support-chat/sessions/{session}/messages`   | إرسال رسالة دعم               |
+| POST    | `/support-chat/sessions/{session}/close`      | إغلاق جلسة دعم                |
 
 > أسماء مستعارة `/chat/conversations...` متاحة أيضاً.
 
@@ -412,16 +435,19 @@ php artisan serve
 ```
 
 ### الواجهة البرمجية متاحة على:
+
 ```
 http://localhost:8000
 ```
 
 ### (اختياري) البث الفوري:
+
 ```bash
 php artisan reverb:start
 ```
 
 ### (اختياري) عامل الطابور:
+
 ```bash
 php artisan queue:listen --tries=1 --timeout=0
 ```
@@ -437,11 +463,13 @@ php artisan l5-swagger:generate
 ```
 
 ### واجهة Swagger UI متاحة على:
+
 ```
 /api/documentation
 ```
 
 ### المواصفة المُولَّدة على:
+
 ```
 /docs
 ```
@@ -486,6 +514,7 @@ php artisan test --coverage-clover=coverage.xml
 - تغطية كاملة: Services وPolicies وRepositories وDTOs وResources وMiddleware وControllers
 
 ## المجالات المغطاة:
+
 - تدفقات المصادقة (التسجيل، تسجيل الدخول، التحديث، تسجيل الخروج، إعادة تعيين كلمة المرور)
 - وسيط JWT
 - نقاط نهاية الدردشة/المحادثات
@@ -497,6 +526,7 @@ php artisan test --coverage-clover=coverage.xml
 ## CI/CD (GitHub Actions)
 
 يقوم سير العمل `.github/workflows/tests.yml` بـ:
+
 1. تثبيت اعتمادات Composer
 2. إعداد `.env` (SQLite)
 3. تشغيل الترحيلات
@@ -540,11 +570,11 @@ trip:{id}
 
 ## السياسات الرئيسية:
 
-| السياسة | النموذج المُغطَّى |
-|---------|-----------------|
+| السياسة        | النموذج المُغطَّى              |
+| -------------- | ------------------------------ |
 | `PersonPolicy` | إدارة الملفات الشخصية والأدوار |
-| `CarPolicy` | إدارة المركبات |
-| `TripPolicy` | نشر الرحلات وتعديلها وإلغاؤها |
+| `CarPolicy`    | إدارة المركبات                 |
+| `TripPolicy`   | نشر الرحلات وتعديلها وإلغاؤها  |
 
 ## السلوك الرئيسي:
 
@@ -582,10 +612,10 @@ public function before(Person $user): ?bool
 
 مُعلَن عنها في `routes/console.php`:
 
-| الأمر | التكرار | الوصف |
-|-------|---------|-------|
-| `auth:clear-resets` | كل 15 دقيقة | تنظيف رموز إعادة التعيين المنتهية |
-| `accounts:purge-deleted` | يومياً | إخفاء هوية الحسابات المحذوفة منذ أكثر من 90 يوماً |
+| الأمر                    | التكرار     | الوصف                                             |
+| ------------------------ | ----------- | ------------------------------------------------- |
+| `auth:clear-resets`      | كل 15 دقيقة | تنظيف رموز إعادة التعيين المنتهية                 |
+| `accounts:purge-deleted` | يومياً      | إخفاء هوية الحسابات المحذوفة منذ أكثر من 90 يوماً |
 
 ### التنفيذ اليدوي:
 
@@ -668,78 +698,90 @@ tests/                      اختبارات الوحدة والميزة (PHPUni
 
 ## 🔐 المصادقة — المسارات العامة
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| POST | `/auth/register` | التسجيل |
-| POST | `/auth/login` | تسجيل الدخول |
-| POST | `/auth/refresh` | تجديد رمز JWT |
-| POST | `/auth/logout` | تسجيل الخروج (إلغاء الرموز) |
-| GET | `/auth/me` | ملف المستخدم الحالي |
-| POST | `/auth/forgot-password` | طلب إعادة تعيين كلمة المرور |
-| POST | `/auth/reset-password` | إعادة تعيين كلمة المرور |
+| الطريقة | نقطة النهاية            | الوصف                         |
+| ------- | ----------------------- | ----------------------------- |
+| POST    | `/auth/register`        | التسجيل                       |
+| POST    | `/auth/login`           | تسجيل الدخول                  |
+| POST    | `/auth/refresh`         | تجديد الجلسة عبر كوكي التحديث |
+| POST    | `/auth/logout`          | تسجيل الخروج (إلغاء الرموز)   |
+| GET     | `/auth/me`              | ملف المستخدم الحالي           |
+| POST    | `/auth/forgot-password` | طلب إعادة تعيين كلمة المرور   |
+| POST    | `/auth/reset-password`  | إعادة تعيين كلمة المرور       |
+
+> نقاط نهاية المصادقة تعيد رسالة نجاح وتضبط كوكيز الجلسة. لم تعد تكشف الرموز داخل جسم JSON.
 
 ## 👤 الأشخاص
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/persons` | قائمة المستخدمين |
-| GET | `/persons/{person}` | تفاصيل مستخدم |
-| GET | `/persons/{person}/trips-driver` | الرحلات كسائق |
-| GET | `/persons/{person}/trips-passenger` | الرحلات كراكب |
-| POST | `/persons` | إنشاء مستخدم |
-| PATCH | `/persons/role` | تحديث الدور |
-| PATCH | `/persons/{person}` | تحديث مستخدم |
-| DELETE | `/persons/{person}` | حذف مستخدم |
+| الطريقة | نقطة النهاية                        | الوصف            |
+| ------- | ----------------------------------- | ---------------- |
+| GET     | `/persons`                          | قائمة المستخدمين |
+| GET     | `/persons/{person}`                 | تفاصيل مستخدم    |
+| GET     | `/persons/{person}/trips-driver`    | الرحلات كسائق    |
+| GET     | `/persons/{person}/trips-passenger` | الرحلات كراكب    |
+| POST    | `/persons`                          | إنشاء مستخدم     |
+| PATCH   | `/persons/role`                     | تحديث الدور      |
+| PATCH   | `/persons/{person}`                 | تحديث مستخدم     |
+| DELETE  | `/persons/{person}`                 | حذف مستخدم       |
 
 ## 🚗 الرحلات
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/trips` | قائمة الرحلات |
-| GET | `/trips/{trip}` | تفاصيل رحلة |
-| GET | `/trips/{trip}/person` | قائمة الركاب |
-| POST | `/trips` | إنشاء رحلة |
-| PATCH | `/trips/{trip}` | تحديث رحلة |
-| PATCH | `/trips/{trip}/cancel` | إلغاء رحلة |
-| DELETE | `/trips/{trip}` | حذف رحلة |
-| POST | `/trips/{trip}/person` | حجز مقعد |
-| DELETE | `/trips/{trip}/reservations` | إلغاء حجز |
-| POST | `/trips/{trip}/contact-driver` | التواصل مع السائق |
-| POST | `/my-trips/{trip}/contact-passenger/{person}` | التواصل مع راكب |
+| الطريقة | نقطة النهاية                                  | الوصف                                                                   |
+| ------- | --------------------------------------------- | ----------------------------------------------------------------------- |
+| GET     | `/trips`                                      | قائمة الرحلات                                                           |
+| GET     | `/trips/{trip}`                               | تفاصيل رحلة، وتتضمن الآن `driver.car` (اللوحة، الموديل، الماركة، اللون) |
+| GET     | `/trips/{trip}/person`                        | قائمة الركاب                                                            |
+| POST    | `/trips`                                      | إنشاء رحلة                                                              |
+| PATCH   | `/trips/{trip}`                               | تحديث رحلة                                                              |
+| PATCH   | `/trips/{trip}/cancel`                        | إلغاء رحلة                                                              |
+| DELETE  | `/trips/{trip}`                               | حذف رحلة                                                                |
+| POST    | `/trips/{trip}/person`                        | حجز مقعد                                                                |
+| DELETE  | `/trips/{trip}/reservations`                  | إلغاء حجز                                                               |
+| POST    | `/trips/{trip}/contact-driver`                | التواصل مع السائق                                                       |
+| POST    | `/my-trips/{trip}/contact-passenger/{person}` | التواصل مع راكب                                                         |
 
 ## 🏷 الماركات والكتالوج
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/brands` | قائمة الماركات |
-| GET | `/brand/{brand}` | تفاصيل ماركة |
+| الطريقة | نقطة النهاية     | الوصف          |
+| ------- | ---------------- | -------------- |
+| GET     | `/brands`        | قائمة الماركات |
+| GET     | `/brand/{brand}` | تفاصيل ماركة   |
 
 ## 🚘 المركبات
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/cars` | قائمة المركبات |
-| GET | `/cars/{car}` | تفاصيل مركبة |
-| GET | `/cars/search` | بحث في الكتالوج |
-| POST | `/cars` | إنشاء مركبة |
-| PUT | `/cars/{car}` | تحديث كامل |
-| DELETE | `/cars/{car}` | حذف مركبة |
+| الطريقة | نقطة النهاية   | الوصف           |
+| ------- | -------------- | --------------- |
+| GET     | `/cars`        | قائمة المركبات  |
+| GET     | `/cars/{car}`  | تفاصيل مركبة    |
+| GET     | `/cars/search` | بحث في الكتالوج |
+| POST    | `/cars`        | إنشاء مركبة     |
+| PUT     | `/cars/{car}`  | تحديث كامل      |
+| DELETE  | `/cars/{car}`  | حذف مركبة       |
 
 ## 💬 المحادثات
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/conversations` | قائمة المحادثات |
-| GET | `/conversations/{conversation}` | تفاصيل محادثة |
-| POST | `/conversations/{conversation}/messages` | إرسال رسالة |
-| POST | `/broadcasting/auth-proxy` | مصادقة قنوات Reverb الخاصة |
+| الطريقة | نقطة النهاية                             | الوصف                      |
+| ------- | ---------------------------------------- | -------------------------- |
+| GET     | `/conversations`                         | قائمة المحادثات            |
+| GET     | `/conversations/{conversation}`          | تفاصيل محادثة              |
+| POST    | `/conversations/{conversation}/messages` | إرسال رسالة                |
+| POST    | `/broadcasting/auth-proxy`               | مصادقة قنوات Reverb الخاصة |
+
+## 🆘 الدعم الفوري
+
+| الطريقة | نقطة النهاية                                | الوصف                                    |
+| ------- | ------------------------------------------- | ---------------------------------------- |
+| POST    | `/support-chat/sessions`                    | إنشاء أو إعادة استخدام جلسة دعم للمستخدم |
+| GET     | `/support-chat/sessions/{session}`          | تفاصيل جلسة الدعم                        |
+| GET     | `/support-chat/sessions/{session}/messages` | قائمة رسائل الدعم                        |
+| POST    | `/support-chat/sessions/{session}/messages` | إرسال رسالة دعم                          |
+| POST    | `/support-chat/sessions/{session}/close`    | إغلاق الجلسة                             |
 
 ## 🩺 الصحة
 
-| الطريقة | نقطة النهاية | الوصف |
-|---------|-------------|-------|
-| GET | `/up` | فحص الصحة |
-| GET | `/` | Ping (`{"message":"ok"}`) |
+| الطريقة | نقطة النهاية | الوصف                     |
+| ------- | ------------ | ------------------------- |
+| GET     | `/up`        | فحص الصحة                 |
+| GET     | `/`          | Ping (`{"message":"ok"}`) |
 
 ## 📌 ملاحظات مهمة
 
@@ -754,38 +796,52 @@ tests/                      اختبارات الوحدة والميزة (PHPUni
 # 🔧 استكشاف الأخطاء
 
 ### `Missing Bearer token`
-- أرسل `Authorization: Bearer <access_token>` أو اعتمد على ملف تعريف الارتباط `access_token`
+
+- أرسل `Authorization: Bearer <access_token>` للعملاء غير المتصفحيين، أو اعتمد على ملف تعريف الارتباط `access_token`
 - تحقق من أن الطلب يصل إلى مسار محمي وأن ملفات تعريف الارتباط تُرسَل
 
 ### `Token expired` أو أخطاء مصادقة غير متوقعة
-- استدعِ `POST /auth/refresh` برمز تحديث صالح
+
+- استدعِ `POST /auth/refresh` مع ملف تعريف ارتباط `refresh_token` صالح
 - إذا تغيّر الإعداد: `php artisan config:clear`
 - إذا كان التخزين المؤقت غير متسق: `php artisan optimize:clear`
 
+### تفاصيل المركبة لا تظهر في الواجهة الأمامية
+
+- تحقّق من استجابة JSON للمسار `GET /trips/{trip}`
+- تأكّد من أن `TripResource` يعرض `driver.car` و`driver.car.model.brand` و`driver.car.color`
+- إذا ظهر اسم اللون بدون مربع اللون، فتحقّق من وجود `driver.car.color.hex_code`
+
 ### فشل إنشاء الرحلة بأخطاء ORS
+
 - تحقق من `OPENROUTESERVICE_API_KEY`
 - تأكد من أن عناوين الانطلاق والوصول قابلة للترميز الجغرافي بواسطة ORS
 - راجع السجلات: `php artisan pail --timeout=0`
 
 ### الدردشة الفورية لا تستقبل الأحداث
+
 - تحقق من `BROADCAST_CONNECTION=reverb`
 - تأكد من تشغيل `php artisan reverb:start`
 - تأكد من مصادقة العميل عبر `POST /broadcasting/auth-proxy`
 - تحقق من أن المستخدم المصادَق عليه ينتمي إلى القناة الخاصة المطلوبة
 
 ### أخطاء علامات التخزين المؤقت أو القراءات غير المتسقة
+
 - فضّل Redis في بيئات التشغيل (مطلوب للتخزين المؤقت بالعلامات)
 - بعد تغيير الإعداد أو برنامج التشغيل:
+
 ```bash
 php artisan optimize:clear
 ```
 
 ### الرسائل الإلكترونية لا تُرسَل
+
 - تحقق من `MAIL_MAILER=resend` و`RESEND_API_KEY`
 - تحقق من معرّفات قوالب Resend في `.env`
 - إذا كانت معرّفات القوالب فارغة، يُتجاهَل الإرسال بصمت
 
 ### `composer setup` أو `composer dev` يفشل على أوامر npm
+
 - هذا المستودع الخلفي لا يحتوي على `package.json` مُلتزَم به
 - استخدم أوامر PHP/Artisan مباشرةً بدلاً من ذلك
 
@@ -807,6 +863,7 @@ php artisan optimize:clear
 # 👤 المؤلف
 
 ### عبيدة حجو
+
 ### مطوّر Full Stack
 
 </div>
