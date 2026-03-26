@@ -38,7 +38,7 @@ class CarTest extends TestCase
         [$model, $color] = $this->seedModelAndColor();
 
         $car = Car::query()->create([
-            'license_plate' => '12-ABC-34',
+            'license_plate' => 'AB-123-CD',
             'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
@@ -46,7 +46,7 @@ class CarTest extends TestCase
 
         $this->assertDatabaseHas('cars', [
             'id' => $car->id,
-            'license_plate' => '12-ABC-34',
+            'license_plate' => 'AB-123-CD',
             'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
@@ -58,7 +58,7 @@ class CarTest extends TestCase
         [$model, $color] = $this->seedModelAndColor();
 
         $car = Car::query()->create([
-            'license_plate' => '56-DEF-78',
+            'license_plate' => 'EF-456-GH',
             'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,

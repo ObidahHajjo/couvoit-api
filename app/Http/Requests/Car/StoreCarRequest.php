@@ -10,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *
  * Normalizes:
  * - brand/model strings into objects
- * - carregistration to the 00-XXX-00 format
+ * - carregistration to the XX-000-XX format
  * - nested names to lowercase
  * - hex_code to uppercase
  */

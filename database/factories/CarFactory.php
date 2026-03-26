@@ -14,7 +14,7 @@ class CarFactory extends Factory
     public function definition(): array
     {
         return [
-            'license_plate' => strtoupper($this->faker->unique()->bothify('##-???-##')),
+            'license_plate' => strtoupper($this->faker->unique()->bothify('??-###-??')),
             'seats' => $this->faker->numberBetween(1, 9),
             'model_id' => CarModel::factory(),
             'color_id' => Color::factory(),

@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * Update car request.
  *
  * Normalizes only fields present:
- * - carregistration (or license_plate alias) => normalize to 00-XXX-00
+ * - carregistration (or license_plate alias) => normalize to XX-000-XX
  * - nested names lowercased
  * - hex_code uppercased
  */

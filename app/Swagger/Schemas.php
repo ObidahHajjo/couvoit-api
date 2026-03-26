@@ -82,7 +82,7 @@ use OpenApi\Attributes as OA;
             ],
             type: 'object',
         ),
-        new OA\Property(property: 'carregistration', type: 'string', example: '12-ABC-34'),
+        new OA\Property(property: 'carregistration', type: 'string', example: 'AB-123-CD'),
         new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5),
     ],
     type: 'object'
@@ -90,8 +90,8 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'UpdateCarRequestPayload',
     properties: [
-        new OA\Property(property: 'carregistration', type: 'string', example: '12-ABC-34', nullable: true),
-        new OA\Property(property: 'license_plate', type: 'string', example: '12-ABC-34', nullable: true),
+        new OA\Property(property: 'carregistration', type: 'string', example: 'AB-123-CD', nullable: true),
+        new OA\Property(property: 'license_plate', type: 'string', example: 'AB-123-CD', nullable: true),
         new OA\Property(
             property: 'color',
             properties: [

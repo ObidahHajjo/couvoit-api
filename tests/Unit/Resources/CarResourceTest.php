@@ -62,7 +62,7 @@ class CarResourceTest extends TestCase
         ]);
 
         $car = Car::query()->create([
-            'license_plate' => '12-ABC-34',
+            'license_plate' => 'AB-123-CD',
             'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
@@ -74,7 +74,7 @@ class CarResourceTest extends TestCase
         $payload = (new CarResource($car))->toArray($this->request);
 
         $this->assertSame($car->id, $payload['id']);
-        $this->assertSame('12-ABC-34', $payload['license_plate']);
+        $this->assertSame('AB-123-CD', $payload['license_plate']);
         $this->assertSame(5, $payload['seats']);
 
         $this->assertIsArray($payload['model']);
@@ -117,7 +117,7 @@ class CarResourceTest extends TestCase
         ]);
 
         $car = Car::query()->create([
-            'license_plate' => '12-ABC-34',
+            'license_plate' => 'AB-123-CD',
             'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
@@ -136,7 +136,7 @@ class CarResourceTest extends TestCase
         $payload = (new CarResource($car))->toArray($this->request);
 
         $this->assertSame($car->id, $payload['id']);
-        $this->assertSame('12-ABC-34', $payload['license_plate']);
+        $this->assertSame('AB-123-CD', $payload['license_plate']);
         $this->assertSame(5, $payload['seats']);
 
         if (isset($payload['model']) && is_array($payload['model'])) {

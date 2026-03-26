@@ -23,7 +23,7 @@ class CarCreateDataTest extends TestCase
     public function test_from_array_normalizes_and_maps_keys(): void
     {
         $dto = CarCreateData::fromArray([
-            'license_plate' => ' 12-abc-34 ',
+            'license_plate' => ' ab-123-cd ',
             'model' => ['name' => '  Golf  '],
             'seats' => 5,
             'brand' => ['name' => '  VW '],
@@ -31,7 +31,7 @@ class CarCreateDataTest extends TestCase
             'color' => ['hex_code' => ' #00AAFF ', 'name' => ' Sky '],
         ]);
 
-        $this->assertSame('12-ABC-34', $dto->licensePlate);
+        $this->assertSame('AB-123-CD', $dto->licensePlate);
         $this->assertSame('golf', $dto->modelName);
         $this->assertSame(5, $dto->seats);
         $this->assertSame('vw', $dto->brandName);
@@ -49,7 +49,7 @@ class CarCreateDataTest extends TestCase
     public function test_from_array_accepts_legacy_license_key(): void
     {
         $dto = CarCreateData::fromArray([
-            'carregistration' => '12abc34',
+            'carregistration' => 'xy999zz',
             'model' => ['name' => 'clio'],
             'seats' => 5,
             'brand' => ['name' => 'renault'],
@@ -57,7 +57,7 @@ class CarCreateDataTest extends TestCase
             'color' => ['hex_code' => '#ffffff', 'name' => 'white'],
         ]);
 
-        $this->assertSame('12-ABC-34', $dto->licensePlate);
+        $this->assertSame('XY-999-ZZ', $dto->licensePlate);
     }
 
     /**
