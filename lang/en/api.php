@@ -30,5 +30,6 @@ return [
         'unauthorized' => 'Unauthorized',
         'account_inactive' => 'Account inactive',
         'token_expired' => 'Token expired',
+        'trip.date_time_in_past' => 'The trip date and time must be in the future.'
     ],
 ];

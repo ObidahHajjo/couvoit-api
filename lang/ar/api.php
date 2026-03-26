@@ -30,5 +30,6 @@ return [
         'unauthorized' => 'غير مصرح',
         'account_inactive' => 'الحساب غير نشط',
         'token_expired' => 'انتهت صلاحية الرمز',
+        'trip.date_time_in_past' => 'يجب أن يكون تاريخ ووقت الرحلة في المستقبل.'
     ],
 ];

@@ -114,7 +114,7 @@ readonly class TripService implements TripServiceInterface
         }
 
         if ($driverId !== $authPerson->id && ! $user->isAdmin()) {
-            throw new ForbiddenException('You cannot create a trip for another user.');
+            throw new ValidationLogicException('You cannot create a trip for another user.');
         }
 
         $driver = ($driverId === $authPerson->id)
@@ -125,6 +125,9 @@ readonly class TripService implements TripServiceInterface
             throw new ForbiddenException('Only drivers (persons with a car) can create trips.');
         }
 
+        if($payload["trip_datetime"] < now()) {
+            throw new ValidationLogicException(__('trip.date_time_in_past'));
+        }
         return DB::transaction(function () use ($payload, $driver) {
             $departureAddressId = $this->addressResolver->resolveId($payload['starting_address']);
             $arrivalAddressId = $this->addressResolver->resolveId($payload['arrival_address']);

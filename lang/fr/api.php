@@ -39,5 +39,6 @@ return [
         'unauthorized' => 'Non autorise',
         'account_inactive' => 'Compte inactif',
         'token_expired' => 'Jeton expire',
+        'trip.date_time_in_past' => "La date et l'heure du voyage doivent être futures."
     ],
 ];
