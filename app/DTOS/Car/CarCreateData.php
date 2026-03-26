@@ -2,6 +2,7 @@
 
 namespace App\DTOS\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use InvalidArgumentException;
 
 /**
@@ -84,7 +85,7 @@ final readonly class CarCreateData
         }
 
         return new self(
-            licensePlate: strtoupper(trim($license)),
+            licensePlate: LicensePlateFormatter::normalize($license),
             modelName: strtolower(trim($modelName)),
             seats: (int) $seats,
             brandName: strtolower(trim($brandName)),

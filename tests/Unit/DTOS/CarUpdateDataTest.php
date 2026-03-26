@@ -22,7 +22,7 @@ class CarUpdateDataTest extends TestCase
     public function test_from_array_maps_partial_and_normalizes(): void
     {
         $dto = CarUpdateData::fromArray([
-            'license_plate' => ' ab-123-cd ',
+            'license_plate' => ' 12-abc-34 ',
             'model' => ['name' => '  Golf  '],
             'seats' => 4,
             'brand' => ['name' => '  VW '],
@@ -30,7 +30,7 @@ class CarUpdateDataTest extends TestCase
             'color' => ['hex_code' => ' #00AAFF '],
         ]);
 
-        $this->assertSame('AB-123-CD', $dto->licensePlate);
+        $this->assertSame('12-ABC-34', $dto->licensePlate);
         $this->assertSame('golf', $dto->modelName);
         $this->assertSame(4, $dto->seats);
         $this->assertSame('vw', $dto->brandName);

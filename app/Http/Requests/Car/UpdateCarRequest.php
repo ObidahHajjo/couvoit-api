@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Update car request.
  *
  * Normalizes only fields present:
- * - carregistration (or license_plate alias) => uppercase, remove spaces/dashes
+ * - carregistration (or license_plate alias) => normalize to 00-XXX-00
  * - nested names lowercased
  * - hex_code uppercased
  */
@@ -38,7 +39,7 @@ class UpdateCarRequest extends FormRequest
 
         if ($plate !== null) {
             $raw = (string) $plate;
-            $normalized = strtoupper(preg_replace('/[\s\-]+/', '', $raw) ?? '');
+            $normalized = LicensePlateFormatter::normalize($raw);
             $this->merge(['carregistration' => $normalized]);
         }
 
@@ -92,7 +93,7 @@ class UpdateCarRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'carregistration' => ['sometimes', 'string', 'regex:/^[A-Z0-9]{2,12}$/'],
+            'carregistration' => ['sometimes', 'string', 'regex:'.LicensePlateFormatter::DISPLAY_PATTERN],
 
             'color' => ['sometimes', 'array'],
             'color.name' => ['required_with:color', 'string', 'min:1', 'max:50'],

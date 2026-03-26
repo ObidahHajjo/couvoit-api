@@ -2,6 +2,7 @@
 
 namespace App\DTOS\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use InvalidArgumentException;
 
 /**
@@ -63,7 +64,7 @@ final readonly class CarUpdateData
 
         return new self(
             licensePlate: is_string($license) && trim($license) !== ''
-                ? strtoupper(trim($license))
+                ? LicensePlateFormatter::normalize($license)
                 : null,
 
             modelName: $modelName !== null

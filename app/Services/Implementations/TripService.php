@@ -105,6 +105,7 @@ readonly class TripService implements TripServiceInterface
     {
         $driverId = (int) ($payload['person_id'] ?? $authPerson->id);
         $user = $authPerson->user;
+        $tripDateTime = Carbon::parse($payload['trip_datetime']);
 
         $availableSeats = (int) ($payload['available_seats'] ?? 0);
         $personCarAvailableSeats = $authPerson->car->seats;
@@ -125,7 +126,7 @@ readonly class TripService implements TripServiceInterface
             throw new ForbiddenException('Only drivers (persons with a car) can create trips.');
         }
 
-        if($payload["trip_datetime"] < now()) {
+        if ($tripDateTime->lessThanOrEqualTo(now())) {
             throw new ValidationLogicException(__('trip.date_time_in_past'));
         }
         return DB::transaction(function () use ($payload, $driver) {
@@ -198,6 +199,11 @@ readonly class TripService implements TripServiceInterface
                 $updates['distance_km'] = $payload['kms'];
             }
             if (array_key_exists('trip_datetime', $payload)) {
+                $tripDateTime = Carbon::parse($payload['trip_datetime']);
+                if ($tripDateTime->lessThanOrEqualTo(now())) {
+                    throw new ValidationLogicException(__('trip.date_time_in_past'));
+                }
+
                 $updates['departure_time'] = $payload['trip_datetime'];
             }
             if (array_key_exists('available_seats', $payload)) {

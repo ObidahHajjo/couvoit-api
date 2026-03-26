@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Exceptions\ForbiddenException;
+use App\Exceptions\ValidationLogicException;
 use App\Models\Address;
 use App\Models\Car;
 use App\Models\City;
@@ -137,6 +138,26 @@ final class TripServiceTest extends TestCase
         $this->tripEmails->shouldReceive('sendReservationCreated')->once()->with($lockedTrip, $passenger);
 
         self::assertTrue($this->service->reserveSeat($trip, 10, $passenger));
+    }
+
+    public function test_create_trip_rejects_past_datetime(): void
+    {
+        $this->expectException(ValidationLogicException::class);
+
+        $auth = $this->makePerson(1, 'auth@example.test');
+        $car = new Car;
+        $car->seats = 4;
+        $auth->car_id = 1;
+        $auth->setRelation('car', $car);
+
+        $payload = [
+            'trip_datetime' => '2026-02-18T11:59:00+01:00',
+            'available_seats' => 2,
+            'starting_address' => ['street' => 'A'],
+            'arrival_address' => ['street' => 'B'],
+        ];
+
+        $this->service->createTrip($payload, $auth);
     }
 
     public function test_cancel_reservation_invalidates_cache_and_sends_emails_after_commit(): void

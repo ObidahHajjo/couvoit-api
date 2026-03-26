@@ -31,7 +31,7 @@ final class PersonTest extends TestCase
     /**
      * Create a Car record with required dependencies (Brand/Type/CarModel/Color).
      */
-    private function makeCar(string $licensePlate = 'AA-123-AA'): Car
+    private function makeCar(string $licensePlate = '12-ABC-34'): Car
     {
         $brand = Brand::query()->create(['name' => 'Brand_'.Str::random(6)]);
         $type = Type::query()->create(['type' => 'Type_'.Str::random(6)]);
@@ -111,14 +111,14 @@ final class PersonTest extends TestCase
      */
     public function test_person_belongs_to_car_when_car_id_is_set(): void
     {
-        $car = $this->makeCar('CC-789-CC');
+        $car = $this->makeCar('56-DEF-78');
         $person = $this->makePerson(['car_id' => $car->id]);
 
         $person->load('car');
 
         $this->assertNotNull($person->car);
         $this->assertSame($car->id, $person->car->id);
-        $this->assertSame('CC-789-CC', $person->car->license_plate);
+        $this->assertSame('56-DEF-78', $person->car->license_plate);
     }
 
     /**

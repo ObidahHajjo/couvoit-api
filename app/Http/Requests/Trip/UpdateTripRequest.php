@@ -29,7 +29,7 @@ class UpdateTripRequest extends FormRequest
     {
         return [
             'kms' => ['sometimes', 'numeric', 'gt:0'],
-            'trip_datetime' => ['sometimes', 'date'],
+            'trip_datetime' => ['sometimes', 'date', 'after:now'],
             'available_seats' => ['sometimes', 'integer', 'min:1', 'max:9'],
             'smoking_allowed' => ['sometimes', 'boolean'],
 

@@ -81,7 +81,7 @@ class CarServiceTest extends TestCase
         $person = new Person(['car_id' => 10]);
 
         $dto = new CarCreateData(
-            licensePlate: 'AA-123-BB',
+            licensePlate: '12-ABC-34',
             modelName: 'golf',
             seats: 5,
             brandName: 'vw',
@@ -101,7 +101,7 @@ class CarServiceTest extends TestCase
         $person->id = 5;
 
         $dto = new CarCreateData(
-            licensePlate: 'AA-123-BB',
+            licensePlate: '12-ABC-34',
             modelName: 'golf',
             seats: 5,
             brandName: 'vw',
@@ -132,7 +132,7 @@ class CarServiceTest extends TestCase
             ->with([
                 'color_id' => 1,
                 'model_id' => 2,
-                'license_plate' => 'AA-123-BB',
+                'license_plate' => '12-ABC-34',
                 'seats' => 5,
             ])
             ->andReturn($created);
@@ -167,11 +167,11 @@ class CarServiceTest extends TestCase
         $car = new Car;
         $car->id = 10;
 
-        $dto = new CarUpdateData(licensePlate: 'AB-999-CD');
+        $dto = new CarUpdateData(licensePlate: '12-ABC-34');
 
         $this->cars->shouldReceive('update')
             ->once()
-            ->with($car, ['license_plate' => 'AB-999-CD'])
+            ->with($car, ['license_plate' => '12-ABC-34'])
             ->andReturnTrue();
 
         $fresh = new Car;

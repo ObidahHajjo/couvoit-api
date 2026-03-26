@@ -71,7 +71,7 @@ class CarControllerTest extends TestCase
         $color = Color::query()->create(['name' => 'blue', 'hex_code' => '#0000ff']);
 
         return Car::query()->create([
-            'license_plate' => 'AA-123-BB',
+            'license_plate' => '12-ABC-34',
             'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
@@ -140,7 +140,7 @@ class CarControllerTest extends TestCase
         $res->assertOk();
         $res->assertJsonCount(1, 'data');
         $res->assertJsonPath('data.0.id', $car->id);
-        $res->assertJsonPath('data.0.license_plate', 'AA-123-BB');
+        $res->assertJsonPath('data.0.license_plate', '12-ABC-34');
     }
 
     /**
@@ -202,6 +202,6 @@ class CarControllerTest extends TestCase
 
         $res->assertOk();
         $res->assertJsonPath('data.id', $car->id);
-        $res->assertJsonPath('data.license_plate', 'AA-123-BB');
+        $res->assertJsonPath('data.license_plate', '12-ABC-34');
     }
 }

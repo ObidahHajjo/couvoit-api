@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -9,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *
  * Normalizes:
  * - brand/model strings into objects
- * - carregistration by removing spaces/dashes and uppercasing
+ * - carregistration to the 00-XXX-00 format
  * - nested names to lowercase
  * - hex_code to uppercase
  */
@@ -49,7 +50,7 @@ class StoreCarRequest extends FormRequest
         }
 
         $raw = (string) ($this->input('carregistration') ?? '');
-        $normalized = strtoupper(preg_replace('/[\s\-]+/', '', $raw) ?? '');
+        $normalized = LicensePlateFormatter::normalize($raw);
 
         $this->merge([
             'carregistration' => $normalized,
@@ -98,7 +99,7 @@ class StoreCarRequest extends FormRequest
             'color.name' => ['required', 'string', 'min:1', 'max:50'],
             'color.hex_code' => ['required', 'string', 'size:7', 'regex:/^#[0-9A-F]{6}$/'],
 
-            'carregistration' => ['required', 'string', 'regex:/^[A-Z0-9]{2,12}$/'],
+            'carregistration' => ['required', 'string', 'regex:'.LicensePlateFormatter::DISPLAY_PATTERN],
         ];
     }
 }
