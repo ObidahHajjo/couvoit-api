@@ -28,7 +28,7 @@ class StoreTripRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'trip_datetime' => ['required', 'date'],
+            'trip_datetime' => ['required', 'date', 'after:now'],
             'available_seats' => ['required', 'integer', 'min:1', 'max:9'],
             'smoking_allowed' => ['sometimes', 'boolean'],
 
