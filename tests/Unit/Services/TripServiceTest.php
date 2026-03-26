@@ -21,6 +21,7 @@ use App\Services\Interfaces\OrsRoutingClientInterface;
 use App\Services\Interfaces\TripEmailServiceInterface;
 use App\Support\Cache\RepositoryCacheManager;
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -99,6 +100,36 @@ final class TripServiceTest extends TestCase
         ];
 
         $this->service->createTrip($payload, $auth);
+    }
+
+    public function test_search_trips_passes_date_and_time_filters_to_repository(): void
+    {
+        $paginator = Mockery::mock(LengthAwarePaginator::class);
+
+        $this->trips->shouldReceive('search')
+            ->once()
+            ->with('Paris', 'Lyon', '2026-02-20', '14:30', 20)
+            ->andReturn($paginator);
+
+        self::assertSame(
+            $paginator,
+            $this->service->searchTrips('Paris', 'Lyon', '2026-02-20', '14:30', 20)
+        );
+    }
+
+    public function test_search_trips_passes_date_only_without_time(): void
+    {
+        $paginator = Mockery::mock(LengthAwarePaginator::class);
+
+        $this->trips->shouldReceive('search')
+            ->once()
+            ->with('Paris', 'Lyon', '2026-02-20', null, 20)
+            ->andReturn($paginator);
+
+        self::assertSame(
+            $paginator,
+            $this->service->searchTrips('Paris', 'Lyon', '2026-02-20', null, 20)
+        );
     }
 
     public function test_reserve_seat_invalidates_cache_and_sends_emails_after_commit(): void

@@ -28,7 +28,7 @@ return new class extends Migration
         });
 
         if (Schema::getConnection()->getDriverName() !== 'sqlite') {
-            DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_available_seats CHECK (available_seats > 0);');
+            DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_available_seats CHECK (available_seats >= 0);');
             DB::statement('ALTER TABLE trips ADD CONSTRAINT chk_distance_km CHECK (distance_km > 0);');
         }
     }

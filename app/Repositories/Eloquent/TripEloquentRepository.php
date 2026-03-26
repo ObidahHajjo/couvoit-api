@@ -47,10 +47,18 @@ readonly class TripEloquentRepository implements TripRepositoryInterface
      * @param  string|null  $startingCity  The departure city to filter by.
      * @param  string|null  $arrivalCity  The arrival city to filter by.
      * @param  string|null  $tripDate  The departure date to filter by.
+     * @param  string|null  $tripTime  The minimum departure time on that date.
      * @param  int  $perPage  Number of results per page.
      * @return LengthAwarePaginator Paginated list of trips matching the criteria.
      */
-    public function search(?string $startingCity, ?string $arrivalCity, ?string $tripDate, int $perPage = 15): LengthAwarePaginator
+    public function search(
+        ?string $startingCity,
+        ?string $arrivalCity,
+        ?string $tripDate,
+        ?string $tripTime,
+        int $perPage = 15,
+        ?int $excludePersonId = null
+    ): LengthAwarePaginator
     {
         $page = request()->integer('page', 1);
 
@@ -58,12 +66,17 @@ readonly class TripEloquentRepository implements TripRepositoryInterface
             $startingCity,
             $arrivalCity,
             $tripDate,
+            $tripTime,
             $perPage,
             $page,
-            function () use ($startingCity, $arrivalCity, $tripDate, $perPage) {
+            function () use ($startingCity, $arrivalCity, $tripDate, $tripTime, $perPage, $excludePersonId) {
                 $query = Trip::query()
                     ->with(['driver', 'departureAddress.city', 'arrivalAddress.city'])
                     ->withCount(['passengers']);
+
+                if ($excludePersonId) {
+                    $query->where('person_id', '!=', $excludePersonId);
+                }
 
                 if ($startingCity) {
                     $query->whereHas('departureAddress.city', function ($qq) use ($startingCity) {
@@ -77,16 +90,21 @@ readonly class TripEloquentRepository implements TripRepositoryInterface
                     });
                 }
 
-                if ($tripDate) {
-                    $query->whereDate('departure_time', '=', $tripDate);
+                if ($tripDate && $tripTime) {
+                    $query->where('departure_time', '>=', "$tripDate $tripTime")
+                          ->where('departure_time', '<=', "$tripDate 23:59:59");
+                } elseif ($tripDate) {
+                    $query->whereDate('departure_time', '>=', $tripDate);
+                } else {
+                    $query->where('departure_time', '>', Carbon::now());
                 }
 
                 return $query
-                    ->where('departure_time', '>', Carbon::now())
-                    ->whereRaw('available_seats > (select count(*) from reservations where reservations.trip_id = trips.id)')
+                    ->where('available_seats', '>', 0)
                     ->orderBy('departure_time')
                     ->paginate($perPage);
-            }
+            },
+            $excludePersonId
         );
     }
 

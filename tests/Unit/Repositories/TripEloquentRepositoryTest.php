@@ -43,14 +43,14 @@ final class TripEloquentRepositoryTest extends TestCase
 
         $cache->shouldReceive('rememberTripSearch')
             ->once()
-            ->with('Paris', 'Lyon', '2026-02-20', 15, 1, Mockery::type('callable'))
-            ->andReturnUsing(function ($a, $b, $c, $d, $e, $callback) use ($paginator) {
+            ->with('Paris', 'Lyon', '2026-02-20', '14:30', 15, 1, Mockery::type('callable'))
+            ->andReturnUsing(function ($a, $b, $c, $d, $e, $f, $callback) use ($paginator) {
                 return $paginator;
             });
 
         request()->merge(['page' => 1]);
 
-        $p = $repo->search('Paris', 'Lyon', '2026-02-20');
+        $p = $repo->search('Paris', 'Lyon', '2026-02-20', '14:30');
 
         self::assertNotNull($p);
     }

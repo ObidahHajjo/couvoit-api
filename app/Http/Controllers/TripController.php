@@ -43,6 +43,7 @@ class TripController extends Controller
             new OA\Parameter(name: 'startingcity', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'arrivalcity', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'tripdate', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'triptime', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'time', example: '14:30')),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15)),
         ],
         responses: [
@@ -55,7 +56,7 @@ class TripController extends Controller
     /**
      * Search trips.
      *
-     * Supported filters: startingcity, arrivalcity, tripdate and per_page.
+     * Supported filters: startingcity, arrivalcity, tripdate, triptime and per_page.
      *
      * @throws Throwable Propagates service-layer failures.
      */
@@ -63,10 +64,19 @@ class TripController extends Controller
     {
         $starting = $request->validated('startingcity');
         $arrival = $request->validated('arrivalcity');
-        $date = $request->validated('tripdate');
+        $tripDateInput = $request->validated('tripdate');
+        $time = $request->validated('triptime');
         $perPage = (int) ($request->validated('per_page') ?? 15);
+        $date = $tripDateInput;
 
-        $paginator = $this->trips->searchTrips($starting, $arrival, $date, $perPage);
+        if (is_string($tripDateInput) && str_contains($tripDateInput, ' ')) {
+            [$date, $timeFromDate] = explode(' ', $tripDateInput, 2);
+            $time ??= $timeFromDate;
+        }
+
+        $excludePersonId = auth()->user()?->person?->id;
+
+        $paginator = $this->trips->searchTrips($starting, $arrival, $date, $time, $perPage, $excludePersonId);
 
         return TripResource::collection($paginator)
             ->response()

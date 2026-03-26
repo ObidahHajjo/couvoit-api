@@ -268,7 +268,8 @@ use OpenApi\Attributes as OA;
     properties: [
         new OA\Property(property: 'startingcity', type: 'string', maxLength: 255, example: 'Paris', nullable: true),
         new OA\Property(property: 'arrivalcity', type: 'string', maxLength: 255, example: 'Lyon', nullable: true),
-        new OA\Property(property: 'tripdate', type: 'string', format: 'date', example: '2026-02-20', nullable: true),
+        new OA\Property(property: 'tripdate', type: 'string', example: '2026-02-20 14:30', description: 'Accepted formats: Y-m-d or Y-m-d H:i', nullable: true),
+        new OA\Property(property: 'triptime', type: 'string', format: 'time', example: '14:30', nullable: true),
         new OA\Property(property: 'per_page', type: 'integer', maximum: 100, minimum: 1, example: 15, nullable: true),
     ],
     type: 'object'

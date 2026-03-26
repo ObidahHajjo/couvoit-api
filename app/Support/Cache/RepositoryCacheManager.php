@@ -950,16 +950,20 @@ class RepositoryCacheManager
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
+        ?string $tripTime,
         int $perPage,
-        int $page
+        int $page,
+        ?int $excludePersonId = null
     ): string {
         return sprintf(
-            'trips:search:%s:%s:%s:per:%d:page:%d',
+            'trips:search:%s:%s:%s:%s:per:%d:page:%d:exc:%s',
             $this->normalize($startingCity ?? 'any'),
             $this->normalize($arrivalCity ?? 'any'),
             $tripDate ?? 'any',
+            $tripTime ?? 'any',
             $perPage,
-            $page
+            $page,
+            $excludePersonId ?? 'none'
         );
     }
 
@@ -1010,14 +1014,16 @@ class RepositoryCacheManager
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
+        ?string $tripTime,
         int $perPage,
         int $page,
-        Closure $callback
+        Closure $callback,
+        ?int $excludePersonId = null
     ): LengthAwarePaginator {
         /** @var LengthAwarePaginator $paginator */
         $paginator = $this->remember(
             $this->tripSearchTags(),
-            $this->tripSearchKey($startingCity, $arrivalCity, $tripDate, $perPage, $page),
+            $this->tripSearchKey($startingCity, $arrivalCity, $tripDate, $tripTime, $perPage, $page, $excludePersonId),
             self::TTL_LONG,
             $callback
         );

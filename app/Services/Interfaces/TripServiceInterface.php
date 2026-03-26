@@ -24,6 +24,7 @@ interface TripServiceInterface
      * @param string|null $startingCity Starting city name (case-insensitive).
      * @param string|null $arrivalCity  Arrival city name (case-insensitive).
      * @param string|null $tripDate     Trip date in format YYYY-MM-DD.
+     * @param string|null $tripTime     Trip time in format HH:MM.
      * @param int         $perPage      Pagination size.
      *
      * @return LengthAwarePaginator
@@ -34,7 +35,9 @@ interface TripServiceInterface
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int $perPage = 15
+        ?string $tripTime,
+        int $perPage = 15,
+        ?int $excludePersonId = null
     ): LengthAwarePaginator;
 
     /**

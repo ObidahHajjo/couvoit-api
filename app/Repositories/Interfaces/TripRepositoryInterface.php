@@ -13,13 +13,14 @@ use Illuminate\Support\Collection;
 interface TripRepositoryInterface
 {
     /**
-     * Search trips by optional cities and date, returning a paginator.
+     * Search trips by optional cities, date and time, returning a paginator.
      *
      * Cache key includes query params and page number.
      *
      * @param string|null $startingCity
      * @param string|null $arrivalCity
      * @param string|null $tripDate
+     * @param string|null $tripTime
      * @param int $perPage
      * @return LengthAwarePaginator
      */
@@ -27,7 +28,9 @@ interface TripRepositoryInterface
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int     $perPage = 15
+        ?string $tripTime,
+        int     $perPage = 15,
+        ?int    $excludePersonId = null
     ): LengthAwarePaginator;
 
     /**

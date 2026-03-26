@@ -68,6 +68,7 @@ readonly class TripService implements TripServiceInterface
      * @param  string|null  $startingCity  The starting city
      * @param  string|null  $arrivalCity  The arrival city
      * @param  string|null  $tripDate  The trip date
+     * @param  string|null  $tripTime  The minimum trip time on that date
      * @param  int  $perPage  Number of results per page
      * @return LengthAwarePaginator<Trip> Paginated search results
      */
@@ -75,9 +76,11 @@ readonly class TripService implements TripServiceInterface
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int $perPage = 15
+        ?string $tripTime,
+        int $perPage = 15,
+        ?int $excludePersonId = null
     ): LengthAwarePaginator {
-        return $this->trips->search($startingCity, $arrivalCity, $tripDate, $perPage);
+        return $this->trips->search($startingCity, $arrivalCity, $tripDate, $tripTime, $perPage, $excludePersonId);
     }
 
     /**
@@ -309,8 +312,11 @@ readonly class TripService implements TripServiceInterface
                 throw new ConflictException('You already reserved this trip.');
             }
 
-            $reserved = $lockedTrip->passengers()->count();
-            if ($reserved >= $lockedTrip->available_seats) {
+            $decremented = Trip::where('id', $lockedTrip->id)
+                ->where('available_seats', '>', 0)
+                ->update(['available_seats' => DB::raw('available_seats - 1')]);
+
+            if ($decremented === 0) {
                 throw new ConflictException('No available seats left.');
             }
 
@@ -375,6 +381,9 @@ readonly class TripService implements TripServiceInterface
             if ($deleted === 0) {
                 throw new NotFoundException('Reservation not found.');
             }
+
+            Trip::where('id', $lockedTrip->id)
+                ->update(['available_seats' => DB::raw('available_seats + 1')]);
 
             DB::afterCommit(function () use ($trip, $personId, $passenger, $tripForEmail) {
                 $this->cache->invalidateReservationWrite(
