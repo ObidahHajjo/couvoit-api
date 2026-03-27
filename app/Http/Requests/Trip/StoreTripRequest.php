@@ -11,7 +11,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreTripRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the request is authorized.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,15 +21,14 @@ class StoreTripRequest extends FormRequest
     }
 
     /**
-     * Validation rules.
+     * Get the validation rules for trip creation.
      *
      * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
-            'kms' => ['required', 'numeric', 'gt:0'],
-            'trip_datetime' => ['required', 'date'],
+            'trip_datetime' => ['required', 'date', 'after:now'],
             'available_seats' => ['required', 'integer', 'min:1', 'max:9'],
             'smoking_allowed' => ['sometimes', 'boolean'],
 

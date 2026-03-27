@@ -7,16 +7,20 @@ use App\Models\Trip;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for trip persistence operations.
+ */
 interface TripRepositoryInterface
 {
     /**
-     * Search trips by optional cities and date, returning a paginator.
+     * Search trips by optional cities, date and time, returning a paginator.
      *
      * Cache key includes query params and page number.
      *
      * @param string|null $startingCity
      * @param string|null $arrivalCity
      * @param string|null $tripDate
+     * @param string|null $tripTime
      * @param int $perPage
      * @return LengthAwarePaginator
      */
@@ -24,7 +28,9 @@ interface TripRepositoryInterface
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int     $perPage = 15
+        ?string $tripTime,
+        int     $perPage = 15,
+        ?int    $excludePersonId = null
     ): LengthAwarePaginator;
 
     /**
@@ -109,4 +115,19 @@ interface TripRepositoryInterface
      * @return Collection<int,mixed>
      */
     public function listByPassenger(int $personId): Collection;
+
+    /**
+     * Count all trips.
+     *
+     * @return int
+     */
+    public function count(): int;
+
+    /**
+     * Get paginated trips for admin.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 }

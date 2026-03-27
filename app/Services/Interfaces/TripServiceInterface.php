@@ -24,6 +24,7 @@ interface TripServiceInterface
      * @param string|null $startingCity Starting city name (case-insensitive).
      * @param string|null $arrivalCity  Arrival city name (case-insensitive).
      * @param string|null $tripDate     Trip date in format YYYY-MM-DD.
+     * @param string|null $tripTime     Trip time in format HH:MM.
      * @param int         $perPage      Pagination size.
      *
      * @return LengthAwarePaginator
@@ -34,7 +35,9 @@ interface TripServiceInterface
         ?string $startingCity,
         ?string $arrivalCity,
         ?string $tripDate,
-        int $perPage = 15
+        ?string $tripTime,
+        int $perPage = 15,
+        ?int $excludePersonId = null
     ): LengthAwarePaginator;
 
     /**
@@ -94,9 +97,9 @@ interface TripServiceInterface
      * - starting_address (array)
      * - arrival_address (array)
      *
-     * @param Trip                $trip       Trip instance to update.
+     * @param Trip                 $trip       Trip instance to update.
      * @param array<string, mixed> $payload    Update data (validated).
-     * @param Person              $authPerson  Authenticated user.
+     * @param Person               $authPerson Authenticated user.
      *
      * @return Trip Updated trip (usually reloaded with relations).
      *
@@ -159,7 +162,7 @@ interface TripServiceInterface
      * @return Person
      *
      * @throws ModelNotFoundException If the person does not exist.
-     * @throws Throwable                                           On repository/database errors.
+     * @throws Throwable              On repository/database errors.
      */
     public function getPersonById(int $personId): Person;
 }

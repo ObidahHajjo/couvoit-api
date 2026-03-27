@@ -19,6 +19,17 @@ class RefreshRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'refresh_token' => $this->cookie('refresh_token'),
+        ]);
+    }
+
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array|string>

@@ -5,13 +5,18 @@ namespace App\Providers;
 use App\Models\Car;
 use App\Models\Person;
 use App\Models\Trip;
+use App\Models\User;
 use App\Policies\CarPolicy;
 use App\Policies\PersonPolicy;
 use App\Policies\TripPolicy;
 use App\Security\JwtIssuer;
 use App\Security\JwtIssuerInterface;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
+/**
+ * Registers authorization policies for the application.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
 
@@ -31,6 +36,13 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ResetPassword::createUrlUsing(function (User $user, string $token): string {
+            $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
+
+            return $frontendUrl
+                . '/reset-password?token=' . urlencode($token)
+                . '&email=' . urlencode($user->email);
+        });
         $this->registerPolicies();
     }
 

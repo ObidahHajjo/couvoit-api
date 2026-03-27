@@ -32,8 +32,8 @@ class TripResource extends JsonResource
     {
         return [
             'id'              => $this->id,
-            'departure_time'  => $this->departure_time,
-            'arrival_time' => $this->arrival_time,
+            'departure_time'  => $this->departure_time?->toIso8601String(),
+            'arrival_time' => $this->arrival_time?->toIso8601String(),
             'distance_km'     => (float) $this->distance_km,
             'available_seats' => $this->available_seats,
             'smoking_allowed' => $this->smoking_allowed,
@@ -45,6 +45,30 @@ class TripResource extends JsonResource
                         'first_name' => $this->driver->first_name !== null ? (string) $this->driver->first_name : null,
                         'last_name'  => $this->driver->last_name !== null ? (string) $this->driver->last_name : null,
                         'pseudo'     => (string) $this->driver->pseudo,
+                        'car'        => $this->driver->relationLoaded('car') && $this->driver->car
+                            ? [
+                                'id'            => (int) $this->driver->car->id,
+                                'license_plate' => (string) $this->driver->car->license_plate,
+                                'model'         => $this->driver->car->relationLoaded('model') && $this->driver->car->model
+                                    ? [
+                                        'id'    => (int) $this->driver->car->model->id,
+                                        'name'  => (string) $this->driver->car->model->name,
+                                        'brand' => $this->driver->car->model->relationLoaded('brand') && $this->driver->car->model->brand
+                                            ? [
+                                                'id'   => (int) $this->driver->car->model->brand->id,
+                                                'name' => (string) $this->driver->car->model->brand->name,
+                                            ]
+                                            : null,
+                                    ]
+                                    : null,
+                                'color'         => $this->driver->car->relationLoaded('color') && $this->driver->car->color
+                                    ? [
+                                        'name'     => (string) $this->driver->car->color->name,
+                                        'hex_code' => (string) $this->driver->car->color->hex_code,
+                                    ]
+                                    : null,
+                            ]
+                            : null,
                     ]
                     : null;
             }),

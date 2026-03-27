@@ -5,13 +5,12 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/api/register": {
+        "/register": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Register",
-                "description": "POST /register",
                 "operationId": "authRegister",
                 "requestBody": {
                     "required": true,
@@ -40,13 +39,12 @@
                 }
             }
         },
-        "/api/login": {
+        "/login": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Login",
-                "description": "POST /login",
                 "operationId": "authLogin",
                 "requestBody": {
                     "required": true,
@@ -78,13 +76,12 @@
                 }
             }
         },
-        "/api/refresh": {
+        "/refresh": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Refresh token",
-                "description": "POST /refresh",
                 "operationId": "authRefresh",
                 "requestBody": {
                     "required": true,
@@ -116,7 +113,7 @@
                 }
             }
         },
-        "/api/brands": {
+        "/brands": {
             "get": {
                 "tags": [
                     "Brands"
@@ -139,7 +136,7 @@
                 ]
             }
         },
-        "/api/brands/{id}": {
+        "/brands/{id}": {
             "get": {
                 "tags": [
                     "Brands"
@@ -175,7 +172,7 @@
                 ]
             }
         },
-        "/api/cars": {
+        "/cars": {
             "get": {
                 "tags": [
                     "Cars"
@@ -238,7 +235,7 @@
                 ]
             }
         },
-        "/api/cars/{id}": {
+        "/cars/{id}": {
             "get": {
                 "tags": [
                     "Cars"
@@ -364,13 +361,12 @@
                 ]
             }
         },
-        "/api/persons": {
+        "/persons": {
             "get": {
                 "tags": [
                     "Persons"
                 ],
                 "summary": "List persons (admin)",
-                "description": "List persons (Admin only).",
                 "operationId": "personsIndex",
                 "responses": {
                     "200": {
@@ -394,7 +390,7 @@
                     "Persons"
                 ],
                 "summary": "Complete my profile",
-                "description": "Store person data (your implementation uses this as \"complete my profile\").",
+                "description": "Complete my profile.\n\nNow: authenticated user is User, profile is User->person.",
                 "operationId": "personsStore",
                 "requestBody": {
                     "required": true,
@@ -427,13 +423,12 @@
                 ]
             }
         },
-        "/api/persons/{id}": {
+        "/persons/{id}": {
             "get": {
                 "tags": [
                     "Persons"
                 ],
                 "summary": "Get person by id",
-                "description": "Show a person.",
                 "operationId": "personsShow",
                 "parameters": [
                     {
@@ -470,7 +465,6 @@
                     "Persons"
                 ],
                 "summary": "Delete person (soft)",
-                "description": "Soft-delete a person (admin only per policy).",
                 "operationId": "personsDestroy",
                 "parameters": [
                     {
@@ -507,7 +501,6 @@
                     "Persons"
                 ],
                 "summary": "Update person",
-                "description": "Update a person.",
                 "operationId": "personsUpdate",
                 "parameters": [
                     {
@@ -553,13 +546,12 @@
                 ]
             }
         },
-        "/api/persons/{id}/trips-driver": {
+        "/persons/{id}/trips-driver": {
             "get": {
                 "tags": [
                     "Persons"
                 ],
                 "summary": "Trips as driver",
-                "description": "List trips where person is driver.",
                 "operationId": "personsTripsDriver",
                 "parameters": [
                     {
@@ -592,13 +584,12 @@
                 ]
             }
         },
-        "/api/persons/{id}/trips-passenger": {
+        "/persons/{id}/trips-passenger": {
             "get": {
                 "tags": [
                     "Persons"
                 ],
                 "summary": "Trips as passenger",
-                "description": "List trips where person is passenger.",
                 "operationId": "personsTripsPassenger",
                 "parameters": [
                     {
@@ -631,13 +622,12 @@
                 ]
             }
         },
-        "/api/admin/person-role": {
+        "/admin/person-role": {
             "patch": {
                 "tags": [
                     "Persons"
                 ],
-                "summary": "Update person role (admin)",
-                "description": "Update a person's role (admin).",
+                "summary": "Update user role (admin)",
                 "operationId": "personsUpdateRole",
                 "requestBody": {
                     "required": true,
@@ -670,7 +660,7 @@
                 ]
             }
         },
-        "/api/trips": {
+        "/trips": {
             "get": {
                 "tags": [
                     "Trips"
@@ -772,7 +762,7 @@
                 ]
             }
         },
-        "/api/trips/{id}": {
+        "/trips/{id}": {
             "get": {
                 "tags": [
                     "Trips"
@@ -898,7 +888,7 @@
                 ]
             }
         },
-        "/api/trips/{id}/person": {
+        "/trips/{id}/person": {
             "get": {
                 "tags": [
                     "Trips"
@@ -990,7 +980,7 @@
                 ]
             }
         },
-        "/api/trips/{id}/cancel": {
+        "/trips/{id}/cancel": {
             "patch": {
                 "tags": [
                     "Trips"
@@ -1029,7 +1019,7 @@
                 ]
             }
         },
-        "/api/trips/{id}/reservations": {
+        "/trips/{id}/reservations": {
             "delete": {
                 "tags": [
                     "Trips"

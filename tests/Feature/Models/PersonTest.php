@@ -3,10 +3,10 @@
 namespace Tests\Feature\Models;
 
 use App\Models\Address;
+use App\Models\Brand;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\City;
-use App\Models\Brand;
 use App\Models\Color;
 use App\Models\Person;
 use App\Models\Trip;
@@ -30,29 +30,26 @@ final class PersonTest extends TestCase
 
     /**
      * Create a Car record with required dependencies (Brand/Type/CarModel/Color).
-     *
-     * @param string $licensePlate
-     * @return Car
      */
-    private function makeCar(string $licensePlate = 'AA-123-AA'): Car
+    private function makeCar(string $licensePlate = 'AB-123-CD'): Car
     {
-        $brand = Brand::query()->create(['name' => 'Brand_' . Str::random(6)]);
-        $type  = Type::query()->create(['type' => 'Type_' . Str::random(6)]);
+        $brand = Brand::query()->create(['name' => 'Brand_'.Str::random(6)]);
+        $type = Type::query()->create(['type' => 'Type_'.Str::random(6)]);
 
         $model = CarModel::query()->create([
-            'name' => 'Model_' . Str::random(6),
-            'seats' => 5,
+            'name' => 'Model_'.Str::random(6),
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);
 
         $color = Color::query()->create([
-            'name' => 'Color_' . Str::random(6),
-            'hex_code' => '#00' . strtoupper(Str::random(4)),
+            'name' => 'Color_'.Str::random(6),
+            'hex_code' => '#00'.strtoupper(Str::random(4)),
         ]);
 
         return Car::query()->create([
             'license_plate' => $licensePlate,
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
@@ -61,14 +58,12 @@ final class PersonTest extends TestCase
     /**
      * Create an Address with City dependency.
      *
-     * @param string $street
-     * @return Address
      * @throws Throwable
      */
     private function makeAddress(string $street = 'Rue A'): Address
     {
         $city = City::query()->create([
-            'name' => 'City_' . Str::random(6),
+            'name' => 'City_'.Str::random(6),
             'postal_code' => (string) random_int(10000, 99999),
         ]);
 
@@ -84,8 +79,8 @@ final class PersonTest extends TestCase
      *
      * Adjust keys if your Person fillable differs.
      *
-     * @param array<string,mixed> $overrides
-     * @return Person
+     * @param  array<string,mixed>  $overrides
+     *
      * @throws Throwable
      */
     private function makePerson(array $overrides = []): Person
@@ -96,7 +91,7 @@ final class PersonTest extends TestCase
             'first_name' => 'First',
             'last_name' => 'Last',
             'pseudo' => "pseudo_$suffix",
-            'phone' => '+336' . random_int(10000000, 99999999),
+            'phone' => '+336'.random_int(10000000, 99999999),
             'car_id' => null,
         ], $overrides);
 
@@ -108,7 +103,7 @@ final class PersonTest extends TestCase
      */
     public function test_person_uses_persons_table(): void
     {
-        $this->assertSame('persons', (new Person())->getTable());
+        $this->assertSame('persons', (new Person)->getTable());
     }
 
     /**
@@ -116,14 +111,14 @@ final class PersonTest extends TestCase
      */
     public function test_person_belongs_to_car_when_car_id_is_set(): void
     {
-        $car = $this->makeCar('CC-789-CC');
+        $car = $this->makeCar('EF-456-GH');
         $person = $this->makePerson(['car_id' => $car->id]);
 
         $person->load('car');
 
         $this->assertNotNull($person->car);
         $this->assertSame($car->id, $person->car->id);
-        $this->assertSame('CC-789-CC', $person->car->license_plate);
+        $this->assertSame('EF-456-GH', $person->car->license_plate);
     }
 
     /**

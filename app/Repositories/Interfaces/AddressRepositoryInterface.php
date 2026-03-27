@@ -4,6 +4,9 @@ namespace App\Repositories\Interfaces;
 
 use App\Models\Address;
 
+/**
+ * Contract for address persistence operations.
+ */
 interface AddressRepositoryInterface
 {
     /**

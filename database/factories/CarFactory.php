@@ -15,8 +15,9 @@ class CarFactory extends Factory
     {
         return [
             'license_plate' => strtoupper($this->faker->unique()->bothify('??-###-??')),
-            'model_id'      => CarModel::factory(),
-            'color_id'      => Color::factory(),
+            'seats' => $this->faker->numberBetween(1, 9),
+            'model_id' => CarModel::factory(),
+            'color_id' => Color::factory(),
         ];
     }
 }

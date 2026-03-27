@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Update car request.
  *
  * Normalizes only fields present:
- * - carregistration (or license_plate alias) => uppercase, remove spaces/dashes
+ * - carregistration (or license_plate alias) => normalize to XX-000-XX
  * - nested names lowercased
  * - hex_code uppercased
  */
@@ -38,7 +39,7 @@ class UpdateCarRequest extends FormRequest
 
         if ($plate !== null) {
             $raw = (string) $plate;
-            $normalized = strtoupper(preg_replace('/[\s\-]+/', '', $raw) ?? '');
+            $normalized = LicensePlateFormatter::normalize($raw);
             $this->merge(['carregistration' => $normalized]);
         }
 
@@ -65,6 +66,12 @@ class UpdateCarRequest extends FormRequest
                     'name' => strtolower((string) data_get($this->input('model', []), 'name', '')),
                 ]),
             ]);
+
+            if (! $this->has('seats') && data_get($this->input('model', []), 'seats') !== null) {
+                $this->merge([
+                    'seats' => data_get($this->input('model', []), 'seats'),
+                ]);
+            }
         }
 
         if ($this->has('color')) {
@@ -86,7 +93,7 @@ class UpdateCarRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'carregistration' => ['sometimes', 'string', 'regex:/^[A-Z0-9]{2,12}$/'],
+            'carregistration' => ['sometimes', 'string', 'regex:'.LicensePlateFormatter::DISPLAY_PATTERN],
 
             'color' => ['sometimes', 'array'],
             'color.name' => ['required_with:color', 'string', 'min:1', 'max:50'],
@@ -94,7 +101,7 @@ class UpdateCarRequest extends FormRequest
 
             'model' => ['sometimes', 'array'],
             'model.name' => ['required_with:model', 'string', 'min:1', 'max:255'],
-            'model.seats' => ['required_with:model', 'integer', 'min:1', 'max:9'],
+            'seats' => ['sometimes', 'integer', 'min:1', 'max:9'],
 
             'brand' => ['required_with:model', 'array'],
             'brand.name' => ['required_with:model', 'string', 'min:1', 'max:50'],

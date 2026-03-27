@@ -20,7 +20,6 @@ class CarTest extends TestCase
         $type = Type::query()->create(['type' => 'Sedan']);
         $model = CarModel::query()->create([
             'name' => 'Series 3',
-            'seats' => 5,
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);
@@ -31,7 +30,7 @@ class CarTest extends TestCase
 
     public function test_car_has_timestamps_disabled(): void
     {
-        $this->assertFalse((new Car())->timestamps);
+        $this->assertFalse((new Car)->timestamps);
     }
 
     public function test_car_fillable_allows_mass_assignment(): void
@@ -39,14 +38,16 @@ class CarTest extends TestCase
         [$model, $color] = $this->seedModelAndColor();
 
         $car = Car::query()->create([
-            'license_plate' => 'AA-123-AA',
+            'license_plate' => 'AB-123-CD',
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
 
         $this->assertDatabaseHas('cars', [
             'id' => $car->id,
-            'license_plate' => 'AA-123-AA',
+            'license_plate' => 'AB-123-CD',
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
@@ -57,13 +58,15 @@ class CarTest extends TestCase
         [$model, $color] = $this->seedModelAndColor();
 
         $car = Car::query()->create([
-            'license_plate' => 'BB-456-BB',
+            'license_plate' => 'EF-456-GH',
+            'seats' => 5,
             'model_id' => $model->id,
             'color_id' => $color->id,
         ]);
 
         $this->assertSame($model->id, $car->model->id);
         $this->assertSame($color->id, $car->color->id);
+        $this->assertSame(5, $car->seats);
         $this->assertSame('Series 3', $car->model->name);
         $this->assertSame('#0000FF', $car->color->hex_code);
     }

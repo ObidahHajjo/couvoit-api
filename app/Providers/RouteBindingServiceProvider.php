@@ -2,14 +2,16 @@
 
 namespace App\Providers;
 
-use App\Models\Brand;
-use App\Models\Car;
-use App\Models\Person;
-use App\Models\Trip;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\ServiceProvider;
+use App\Repositories\Interfaces\BrandRepositoryInterface;
+use App\Repositories\Interfaces\CarRepositoryInterface;
+use App\Repositories\Interfaces\PersonRepositoryInterface;
+use App\Repositories\Interfaces\TripRepositoryInterface;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
 
+/**
+ * Registers custom route model bindings.
+ */
 class RouteBindingServiceProvider extends ServiceProvider
 {
     /**
@@ -25,57 +27,20 @@ class RouteBindingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        /**
-         * PERSON binding: /persons/{person} + related routes.
-         */
         Route::bind('person', function ($value) {
-            $id = (int) $value;
-
-            return Cache::tags(['persons'])->remember(
-                "persons:id:{$id}",
-                now()->addMinutes(10),
-                fn () => Person::query()->findOrFail($id)
-            );
+            return app(PersonRepositoryInterface::class)->findById((int) $value);
         });
 
-        /**
-         * TRIP binding: /trips/{trip} + related routes.
-         */
         Route::bind('trip', function ($value) {
-            $id = (int) $value;
-
-            return Cache::tags(['trips'])->remember(
-                "trips:id:{$id}",
-                now()->addMinutes(10),
-                fn () => Trip::query()->findOrFail($id)
-            );
+            return app(TripRepositoryInterface::class)->findByIdOrFail((int) $value);
         });
 
-        /**
-         * BRAND binding: /brand/{brand}
-         * (Your route is singular: /brand/{brand}. The param name is still {brand}.)
-         */
         Route::bind('brand', function ($value) {
-            $id = (int) $value;
-
-            return Cache::tags(['brands'])->remember(
-                "brands:id:{$id}",
-                now()->addMinutes(10),
-                fn () => Brand::query()->findOrFail($id)
-            );
+            return app(BrandRepositoryInterface::class)->findById((int) $value);
         });
 
-        /**
-         * CAR binding: /cars/{car}
-         */
         Route::bind('car', function ($value) {
-            $id = (int) $value;
-
-            return Cache::tags(['cars'])->remember(
-                "cars:id:{$id}",
-                now()->addMinutes(10),
-                fn () => Car::query()->findOrFail($id)
-            );
+            return app(CarRepositoryInterface::class)->findOrFail((int) $value);
         });
     }
 }

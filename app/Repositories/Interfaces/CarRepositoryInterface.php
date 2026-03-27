@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\Car;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for car persistence operations.
+ */
 interface CarRepositoryInterface
 {
     /**
@@ -54,4 +57,12 @@ interface CarRepositoryInterface
      * @return void
      */
     public function delete(Car $car): void;
+
+    /**
+     * Get paginated cars for admin.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 }

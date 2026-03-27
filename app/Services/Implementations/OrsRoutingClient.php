@@ -7,9 +7,12 @@ use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use RuntimeException;
 
+/**
+ * OpenRouteService-backed routing client implementation.
+ */
 final class OrsRoutingClient implements OrsRoutingClientInterface
 {
-    /** @inheritDoc */
+    /** {@inheritDoc} */
     public function geocode(string $fullAddress): array
     {
         $url = config('services.ors.geocode_url');
@@ -18,6 +21,7 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
         if (!is_string($url) || $url === '') {
             throw new RuntimeException('ORS geocode_url is missing (services.ors.geocode_url).');
         }
+
         if (!is_string($key) || $key === '') {
             throw new RuntimeException('ORS key is missing (services.ors.key).');
         }
@@ -31,17 +35,20 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
             ->throw()
             ->json();
 
-        $coords = data_get($json, 'features.0.geometry.coordinates'); // [lng, lat]
+        $coords = data_get($json, 'features.0.geometry.coordinates');
 
         if (!is_array($coords) || count($coords) < 2) {
             throw new RuntimeException("Geocoding failed for: $fullAddress");
         }
 
-        return ['lng' => (float) $coords[0], 'lat' => (float) $coords[1]];
+        return [
+            'lng' => (float) $coords[0],
+            'lat' => (float) $coords[1],
+        ];
     }
 
-    /** @inheritDoc */
-    public function durationSeconds(array $from, array $to): int
+    /** {@inheritDoc} */
+    public function routeSummary(array $from, array $to): array
     {
         $url = config('services.ors.directions_url');
         $key = config('services.ors.key');
@@ -49,11 +56,11 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
         if (!is_string($url) || $url === '') {
             throw new RuntimeException('ORS directions_url is missing (services.ors.directions_url).');
         }
+
         if (!is_string($key) || $key === '') {
             throw new RuntimeException('ORS key is missing (services.ors.key).');
         }
 
-        // basic payload validation (avoid undefined index)
         foreach (['lng', 'lat'] as $k) {
             if (!array_key_exists($k, $from) || !array_key_exists($k, $to)) {
                 throw new InvalidArgumentException("Missing coordinate key '$k' (expected ['lng'=>..,'lat'=>..]).");
@@ -67,19 +74,32 @@ final class OrsRoutingClient implements OrsRoutingClientInterface
                     [(float) $from['lng'], (float) $from['lat']],
                     [(float) $to['lng'], (float) $to['lat']],
                 ],
-                // optional but recommended:
                 'instructions' => false,
             ])
             ->throw()
             ->json();
 
-        // ✅ correct path for your response
-        $seconds = data_get($json, 'routes.0.summary.duration');
+        $durationSeconds = data_get($json, 'routes.0.summary.duration');
+        $distanceMeters = data_get($json, 'routes.0.summary.distance');
 
-        if (!is_numeric($seconds)) {
+        if (!is_numeric($durationSeconds)) {
             throw new RuntimeException('Routing failed: duration missing.');
         }
 
-        return (int) round((float) $seconds);
+        if (!is_numeric($distanceMeters)) {
+            throw new RuntimeException('Routing failed: distance missing.');
+        }
+
+        return [
+            'duration_seconds' => (int) round((float) $durationSeconds),
+            'distance_meters' => (float) $distanceMeters,
+            'distance_km' => round(((float) $distanceMeters) / 1000, 2),
+        ];
+    }
+
+    /** {@inheritDoc} */
+    public function durationSeconds(array $from, array $to): int
+    {
+        return $this->routeSummary($from, $to)['duration_seconds'];
     }
 }

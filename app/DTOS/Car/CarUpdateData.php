@@ -2,17 +2,20 @@
 
 namespace App\DTOS\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use InvalidArgumentException;
 
+/**
+ * Immutable data transfer object for partial car updates.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Represents validated car data for partial updates. All fields are optional.
+ */
 final readonly class CarUpdateData
 {
     /**
-     * @param string|null $licensePlate
-     * @param string|null $modelName
-     * @param int|null    $seats
-     * @param string|null $brandName
-     * @param string|null $typeName
-     * @param string|null $colorHex
+     * Create a new car update data object.
      */
     public function __construct(
         public ?string $licensePlate = null,
@@ -20,7 +23,8 @@ final readonly class CarUpdateData
         public ?int $seats = null,
         public ?string $brandName = null,
         public ?string $typeName = null,
-        public ?string $colorHex = null
+        public ?string $colorHex = null,
+        public ?string $colorName = null,
     ) {}
 
     /**
@@ -28,11 +32,10 @@ final readonly class CarUpdateData
      *
      * Only provided fields will be mapped.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data  Raw request data
+     * @return static New CarUpdateData instance
      *
-     * @return self
-     *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException When seats is provided but not a positive integer
      */
     public static function fromArray(array $data): self
     {
@@ -44,22 +47,24 @@ final readonly class CarUpdateData
             ?? data_get($data, 'color.hex')
             ?? data_get($data, 'color.code');
 
+        $colorName = data_get($data, 'color.name');
+
         $modelName = data_get($data, 'model.name');
-        $seats     = data_get($data, 'model.seats');
+        $seats = $data['seats'] ?? data_get($data, 'model.seats');
         $brandName = data_get($data, 'brand.name');
-        $typeName  = data_get($data, 'type.name');
+        $typeName = data_get($data, 'type.name');
 
         $normalizedSeats = null;
         if ($seats !== null) {
             if (! is_numeric($seats) || (int) $seats <= 0) {
-                throw new InvalidArgumentException('model.seats must be a positive integer.');
+                throw new InvalidArgumentException('seats must be a positive integer.');
             }
             $normalizedSeats = (int) $seats;
         }
 
         return new self(
             licensePlate: is_string($license) && trim($license) !== ''
-                ? strtoupper(trim($license))
+                ? LicensePlateFormatter::normalize($license)
                 : null,
 
             modelName: $modelName !== null
@@ -79,11 +84,17 @@ final readonly class CarUpdateData
             colorHex: $colorHex !== null && trim((string) $colorHex) !== ''
                 ? strtolower(trim((string) $colorHex))
                 : null,
+
+            colorName: $colorName !== null && trim((string) $colorName) !== ''
+                ? strtolower(trim((string) $colorName))
+                : null,
         );
     }
 
     /**
      * Determine whether no updatable field was provided.
+     *
+     * @return bool True if all fields are null, false otherwise
      */
     public function isEmpty(): bool
     {
@@ -92,6 +103,7 @@ final readonly class CarUpdateData
             && $this->seats === null
             && $this->brandName === null
             && $this->typeName === null
-            && $this->colorHex === null;
+            && $this->colorHex === null
+            && $this->colorName === null;
     }
 }

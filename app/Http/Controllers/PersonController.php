@@ -11,19 +11,27 @@ use App\Models\Person;
 use App\Models\User;
 use App\Services\Interfaces\PersonServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 #[OA\Tag(name: 'Persons', description: 'Person endpoints (admin listing, profile, trips).')]
+/**
+ * Handles person profile endpoints.
+ */
 class PersonController extends Controller
 {
+    /**
+     * Create a new person controller instance.
+     */
     public function __construct(
         private readonly PersonServiceInterface $persons
-    ) {}
+    ) {
+        $this->authorizeResource(Person::class, 'person');
+    }
 
     #[OA\Get(
-        path: '/api/persons',
+        path: '/persons',
         operationId: 'personsIndex',
         summary: 'List persons (admin)',
         security: [['bearerAuth' => []]],
@@ -34,10 +42,11 @@ class PersonController extends Controller
             new OA\Response(response: 403, description: 'Forbidden'),
         ]
     )]
+    /**
+     * List persons.
+     */
     public function index(): JsonResponse
     {
-        $this->authorize('viewAny', Person::class);
-
         $people = $this->persons->list();
 
         return PersonResource::collection($people)
@@ -46,7 +55,7 @@ class PersonController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/persons/{id}',
+        path: '/persons/{id}',
         operationId: 'personsShow',
         summary: 'Get person by id',
         security: [['bearerAuth' => []]],
@@ -59,17 +68,18 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Show a single person profile.
+     */
     public function show(Person $person): JsonResponse
     {
-        $this->authorize('view', [Person::class,$person]);
-
         return PersonResource::make($person)
             ->response()
             ->setStatusCode(Response::HTTP_OK);
     }
 
     #[OA\Get(
-        path: '/api/persons/{id}/trips-driver',
+        path: '/persons/{id}/trips-driver',
         operationId: 'personsTripsDriver',
         summary: 'Trips as driver',
         security: [['bearerAuth' => []]],
@@ -82,9 +92,12 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * List trips driven by the given person.
+     */
     public function tripsDriver(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsDriver', [Person::class,$person]);
+        $this->authorize('viewTripsDriver', [Person::class, $person]);
 
         $trips = $this->persons->tripsAsDriver($person);
 
@@ -94,7 +107,7 @@ class PersonController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/persons/{id}/trips-passenger',
+        path: '/persons/{id}/trips-passenger',
         operationId: 'personsTripsPassenger',
         summary: 'Trips as passenger',
         security: [['bearerAuth' => []]],
@@ -107,9 +120,12 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * List trips reserved by the given person.
+     */
     public function tripsPassenger(Person $person): JsonResponse
     {
-        $this->authorize('viewTripsPassenger', [Person::class,$person]);
+        $this->authorize('viewTripsPassenger', [Person::class, $person]);
 
         $trips = $this->persons->tripsAsPassenger($person);
 
@@ -118,15 +134,8 @@ class PersonController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Complete my profile.
-     *
-     * Now: authenticated user is User, profile is User->person.
-     *
-     * @throws Throwable
-     */
     #[OA\Post(
-        path: '/api/persons',
+        path: '/persons',
         operationId: 'personsStore',
         summary: 'Complete my profile',
         security: [['bearerAuth' => []]],
@@ -139,16 +148,18 @@ class PersonController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Complete or initialize the authenticated user's profile.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function store(StorePersonRequest $request): JsonResponse
     {
-        $this->authorize('create', Person::class);
-
         /** @var User $user */
         $user = auth()->user();
 
         $person = $user->person;
-        if (!$person) {
-            // If you want profile created lazily:
+        if (! $person) {
             $person = $this->persons->createForUser($user, []);
         }
 
@@ -160,11 +171,8 @@ class PersonController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * @throws Throwable
-     */
     #[OA\Patch(
-        path: '/api/persons/{id}',
+        path: '/persons/{id}',
         operationId: 'personsUpdate',
         summary: 'Update person',
         security: [['bearerAuth' => []]],
@@ -179,10 +187,13 @@ class PersonController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Update an existing person profile.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function update(UpdatePersonRequest $request, Person $person): JsonResponse
     {
-        $this->authorize('update', [Person::class,$person]);
-
         $updated = $this->persons->update($person, $request->validated());
         $updated->loadMissing(['car', 'user.role']);
 
@@ -192,7 +203,7 @@ class PersonController extends Controller
     }
 
     #[OA\Delete(
-        path: '/api/persons/{id}',
+        path: '/persons/{id}',
         operationId: 'personsDestroy',
         summary: 'Delete person (soft)',
         security: [['bearerAuth' => []]],
@@ -205,17 +216,18 @@ class PersonController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Soft delete a person profile.
+     */
     public function destroy(Person $person): Response
     {
-        $this->authorize('delete', [Person::class,$person]);
-
         $this->persons->softDelete($person);
 
         return response()->noContent();
     }
 
     #[OA\Patch(
-        path: '/api/admin/person-role',
+        path: '/admin/person-role',
         operationId: 'personsUpdateRole',
         summary: 'Update user role (admin)',
         security: [['bearerAuth' => []]],
@@ -228,14 +240,15 @@ class PersonController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Update the role attached to a person account.
+     */
     public function updateRole(UpdateRolePersonRequest $request): JsonResponse
     {
-        // Policy still targets Person::class; inside policy check auth()->user()->isAdmin()
         $this->authorize('updateRole', Person::class);
 
         $data = $request->validated();
 
-        // NOTE: This now updates the USER role (auth), not the person role.
         $updated = $this->persons->updateUserRoleByPersonId((int) $data['person_id'], (int) $data['role_id']);
 
         return PersonResource::make($updated)

@@ -1,11 +1,18 @@
 <?php
 
+/**
+ * @author    [Developer Name]
+ *
+ * @description Eloquent implementation of PersonRepositoryInterface for managing Person entities.
+ */
+
 namespace App\Repositories\Eloquent;
 
 use App\Models\Person;
 use App\Repositories\Interfaces\PersonRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Person repository (profile).
@@ -13,117 +20,166 @@ use Illuminate\Support\Facades\Cache;
  * Cache:
  * - persons:all (tag: persons)
  * - persons:{id} (tags: persons, person:{id})
+ *
+ * @implements PersonRepositoryInterface
  */
-class PersonEloquentRepository implements PersonRepositoryInterface
+readonly class PersonEloquentRepository implements PersonRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
+    /**
+     * Create a new person repository instance.
+     *
+     * @param  RepositoryCacheManager  $cache  The cache manager for caching person data.
+     */
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {}
 
     /**
-     * @return array<int,string>
+     * Retrieve all persons with their related data.
+     *
+     * @return Collection<int, Person> Collection of all Person entities with relations.
      */
-    private function tagPersons(): array
-    {
-        return ['persons'];
-    }
-
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagPerson(int $id): array
-    {
-        return ['persons', "person:$id"];
-    }
-
-    private function keyAll(): string
-    {
-        return 'persons:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return "persons:$id";
-    }
-
     public function all(): Collection
     {
-        /** @var Collection<int,Person> $people */
-        $people = Cache::tags($this->tagPersons())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return Person::query()
-                    ->with(['car', 'user.role'])
-                    ->get();
-            });
+        $people = $this->cache->rememberPersonsAll(function () {
+            return Person::query()
+                ->with(['car.model.brand', 'car.model.type', 'car.color', 'user.role'])
+                ->get();
+        });
 
-        foreach ($people as $p) {
-            Cache::tags($this->tagPerson($p->id))
-                ->put($this->keyById($p->id), $p, self::TTL_SECONDS);
+        foreach ($people as $person) {
+            $this->cache->putPerson($person);
         }
 
         return $people;
     }
 
+    /**
+     * Find a person by their ID.
+     *
+     * @param  int  $id  The ID of the person to retrieve.
+     * @return Person The Person entity with loaded relations.
+     *
+     * @throws ModelNotFoundException If person is not found.
+     */
     public function findById(int $id): Person
     {
-        /** @var Person $person */
-        $person = Cache::tags($this->tagPerson($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Person::query()
-                    ->with(['car', 'user.role'])
-                    ->findOrFail($id);
-            });
-
-        return $person;
+        return $this->cache->rememberPersonById($id, function () use ($id) {
+            return Person::query()
+                ->with(['car.model.brand', 'car.model.type', 'car.color', 'user.role'])
+                ->findOrFail($id);
+        });
     }
 
+    /**
+     * Create a new person record.
+     *
+     * @param  array  $data  The data to create the person with.
+     * @return Person The newly created Person entity.
+     */
     public function create(array $data): Person
     {
         $person = Person::query()
             ->create($data)
-            ->loadMissing(['car', 'user.role']);
+            ->load(['car.model.brand', 'car.model.type', 'car.color', 'user.role']);
 
-        Cache::tags($this->tagPerson((int) $person->id))
-            ->put($this->keyById((int) $person->id), $person, self::TTL_SECONDS);
-
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        $this->cache->putPerson($person);
+        $this->cache->forgetPersonsAll();
 
         return $person;
     }
 
+    /**
+     * Update an existing person record.
+     *
+     * @param  int  $id  The ID of the person to update.
+     * @param  array  $data  The data to update the person with.
+     *
+     * @throws ModelNotFoundException If person is not found.
+     */
     public function update(int $id, array $data): void
     {
-        $person = $this->findById($id);
+        $person = Person::query()->findOrFail($id);
+        $oldCarId = $person->car_id ? (int) $person->car_id : null;
 
         $person->update($data);
-        $person->refresh()->loadMissing(['car', 'user.role']);
+        $person->refresh()->load(['car.model.brand', 'car.model.type', 'car.color', 'user.role']);
 
-        Cache::tags($this->tagPerson($id))
-            ->put($this->keyById($id), $person, self::TTL_SECONDS);
+        $this->cache->putPerson($person);
+        $this->cache->forgetPersonsAll();
 
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        if ($oldCarId !== null) {
+            $this->cache->invalidatePersonsByCarId($oldCarId);
+        }
+
+        if ($person->car_id !== null) {
+            $this->cache->invalidatePersonsByCarId((int) $person->car_id);
+        }
     }
 
+    /**
+     * Delete a person record.
+     *
+     * @param  int  $id  The ID of the person to delete.
+     *
+     * @throws ModelNotFoundException If person is not found.
+     */
     public function delete(int $id): void
     {
         $person = Person::query()->findOrFail($id);
+        $carId = $person->car_id ? (int) $person->car_id : null;
+
         $person->delete();
 
-        Cache::tags($this->tagPerson($id))->flush();
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        $this->cache->forgetPerson($id);
+        $this->cache->forgetPersonsAll();
+
+        if ($carId !== null) {
+            $this->cache->invalidatePersonsByCarId($carId);
+        }
     }
 
+    /**
+     * Attach a car to a person.
+     *
+     * @param  Person  $person  The person to attach the car to.
+     * @param  int  $carId  The ID of the car to attach.
+     * @return bool True if the operation was successful, false otherwise.
+     */
     public function attachCar(Person $person, int $carId): bool
     {
+        $oldCarId = $person->car_id ? (int) $person->car_id : null;
+
         $person->car_id = $carId;
         $ok = $person->save();
 
-        $person->refresh()->loadMissing(['car', 'user.role']);
+        $person->refresh()->load(['car.model.brand', 'car.model.type', 'car.color', 'user.role']);
 
-        Cache::tags($this->tagPerson($person->id))
-            ->put($this->keyById($person->id), $person, self::TTL_SECONDS);
+        $this->cache->putPerson($person);
+        $this->cache->forgetPersonsAll();
 
-        Cache::tags($this->tagPersons())->forget($this->keyAll());
+        if ($oldCarId !== null) {
+            $this->cache->invalidatePersonsByCarId($oldCarId);
+        }
+
+        $this->cache->invalidatePersonsByCarId($carId);
 
         return $ok;
+    }
+
+    /**
+     * Restore a soft-deleted person.
+     *
+     * @param  int  $personId  The ID of the person to restore.
+     */
+    public function restore(int $personId): void
+    {
+        /** @var Person $person */
+        $person = Person::withTrashed()
+            ->find($personId);
+
+        if ($person !== null && $person->trashed() && $person->purged_at === null) {
+            $person->restore();
+        }
     }
 }

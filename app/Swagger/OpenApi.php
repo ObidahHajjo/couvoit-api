@@ -5,6 +5,8 @@ namespace App\Swagger;
 use OpenApi\Annotations as OA;
 
 /**
+ * Legacy annotation-based OpenAPI metadata container.
+ *
  * @OA\Info(
  *   title="Couvoit API",
  *   version="1.0.0",

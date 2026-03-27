@@ -4,6 +4,9 @@ namespace App\Swagger;
 
 use OpenApi\Attributes as OA;
 
+/**
+ * Holds reusable OpenAPI schema annotations.
+ */
 #[OA\Schema(
     schema: 'AuthRequestPayload',
     required: ['email', 'password'],
@@ -22,12 +25,19 @@ use OpenApi\Attributes as OA;
     type: 'object'
 )]
 #[OA\Schema(
-    schema: 'AuthTokenResponse',
+    schema: 'ChangePasswordPayload',
+    required: ['current_password', 'password', 'password_confirmation'],
     properties: [
-        new OA\Property(property: 'access_token', type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'),
-        new OA\Property(property: 'refresh_token', type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'),
-        new OA\Property(property: 'token_type', type: 'string', example: 'bearer'),
-        new OA\Property(property: 'expires_in', type: 'integer', example: 3600),
+        new OA\Property(property: 'current_password', type: 'string', format: 'password', minLength: 8, example: 'secret123'),
+        new OA\Property(property: 'password', type: 'string', format: 'password', minLength: 8, example: 'secret456'),
+        new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', minLength: 8, example: 'secret456'),
+    ],
+    type: 'object'
+)]
+#[OA\Schema(
+    schema: 'AuthSessionResponse',
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'Authenticated successfully.'),
     ],
     type: 'object'
 )]
@@ -57,10 +67,9 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(
             property: 'model',
-            required: ['name', 'seats'],
+            required: ['name'],
             properties: [
                 new OA\Property(property: 'name', type: 'string', example: '308'),
-                new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5),
             ],
             type: 'object',
         ),
@@ -73,16 +82,16 @@ use OpenApi\Attributes as OA;
             ],
             type: 'object',
         ),
-        new OA\Property(property: 'carregistration', type: 'string', example: 'AA123BB'),
-        new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5, nullable: true),
+        new OA\Property(property: 'carregistration', type: 'string', example: 'AB-123-CD'),
+        new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5),
     ],
     type: 'object'
 )]
 #[OA\Schema(
     schema: 'UpdateCarRequestPayload',
     properties: [
-        new OA\Property(property: 'carregistration', type: 'string', example: 'AA123BB', nullable: true),
-        new OA\Property(property: 'license_plate', type: 'string', example: 'AA123BB', nullable: true),
+        new OA\Property(property: 'carregistration', type: 'string', example: 'AB-123-CD', nullable: true),
+        new OA\Property(property: 'license_plate', type: 'string', example: 'AB-123-CD', nullable: true),
         new OA\Property(
             property: 'color',
             properties: [
@@ -96,11 +105,11 @@ use OpenApi\Attributes as OA;
             property: 'model',
             properties: [
                 new OA\Property(property: 'name', type: 'string', example: '308', nullable: true),
-                new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5, nullable: true),
             ],
             type: 'object',
             nullable: true,
         ),
+        new OA\Property(property: 'seats', type: 'integer', maximum: 9, minimum: 1, example: 5, nullable: true),
         new OA\Property(
             property: 'brand',
             properties: [
@@ -259,7 +268,8 @@ use OpenApi\Attributes as OA;
     properties: [
         new OA\Property(property: 'startingcity', type: 'string', maxLength: 255, example: 'Paris', nullable: true),
         new OA\Property(property: 'arrivalcity', type: 'string', maxLength: 255, example: 'Lyon', nullable: true),
-        new OA\Property(property: 'tripdate', type: 'string', format: 'date', example: '2026-02-20', nullable: true),
+        new OA\Property(property: 'tripdate', type: 'string', example: '2026-02-20 14:30', description: 'Accepted formats: Y-m-d or Y-m-d H:i', nullable: true),
+        new OA\Property(property: 'triptime', type: 'string', format: 'time', example: '14:30', nullable: true),
         new OA\Property(property: 'per_page', type: 'integer', maximum: 100, minimum: 1, example: 15, nullable: true),
     ],
     type: 'object'

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -9,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *
  * Normalizes:
  * - brand/model strings into objects
- * - carregistration by removing spaces/dashes and uppercasing
+ * - carregistration to the XX-000-XX format
  * - nested names to lowercase
  * - hex_code to uppercase
  */
@@ -42,16 +43,14 @@ class StoreCarRequest extends FormRequest
             ]);
         }
 
-        if ($this->has('seats')) {
+        if (! $this->has('seats') && data_get($this->input('model', []), 'seats') !== null) {
             $this->merge([
-                'model' => array_merge((array) $this->input('model', []), [
-                    'seats' => $this->input('seats'),
-                ]),
+                'seats' => data_get($this->input('model', []), 'seats'),
             ]);
         }
 
         $raw = (string) ($this->input('carregistration') ?? '');
-        $normalized = strtoupper(preg_replace('/[\s\-]+/', '', $raw) ?? '');
+        $normalized = LicensePlateFormatter::normalize($raw);
 
         $this->merge([
             'carregistration' => $normalized,
@@ -94,13 +93,13 @@ class StoreCarRequest extends FormRequest
 
             'model' => ['required', 'array'],
             'model.name' => ['required', 'string', 'min:1', 'max:255'],
-            'model.seats' => ['required', 'integer', 'min:1', 'max:9'],
+            'seats' => ['required', 'integer', 'min:1', 'max:9'],
 
             'color' => ['required', 'array'],
             'color.name' => ['required', 'string', 'min:1', 'max:50'],
             'color.hex_code' => ['required', 'string', 'size:7', 'regex:/^#[0-9A-F]{6}$/'],
 
-            'carregistration' => ['required', 'string', 'regex:/^[A-Z0-9]{2,12}$/'],
+            'carregistration' => ['required', 'string', 'regex:'.LicensePlateFormatter::DISPLAY_PATTERN],
         ];
     }
 }

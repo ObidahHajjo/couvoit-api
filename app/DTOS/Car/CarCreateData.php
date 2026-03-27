@@ -2,18 +2,20 @@
 
 namespace App\DTOS\Car;
 
+use App\Support\Car\LicensePlateFormatter;
 use InvalidArgumentException;
 
+/**
+ * Immutable data transfer object for car creation input.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Represents validated car data required to create a new car entity.
+ */
 final readonly class CarCreateData
 {
     /**
-     * @param string $licensePlate
-     * @param string $modelName
-     * @param int    $seats
-     * @param string $brandName
-     * @param string $typeName
-     * @param string $colorHex
-     * @param string $colorName
+     * Create a new car creation data object.
      */
     public function __construct(
         public string $licensePlate,
@@ -30,11 +32,10 @@ final readonly class CarCreateData
      *
      * Supports both normalized keys and legacy payload structure.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data  Raw request data
+     * @return static New CarCreateData instance
      *
-     * @return self
-     *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException When required fields are missing or invalid
      */
     public static function fromArray(array $data): self
     {
@@ -44,9 +45,9 @@ final readonly class CarCreateData
             ?? null;
 
         $modelName = data_get($data, 'model.name');
-        $seats     = data_get($data, 'model.seats');
+        $seats = $data['seats'] ?? data_get($data, 'model.seats');
         $brandName = data_get($data, 'brand.name');
-        $typeName  = data_get($data, 'type.name');
+        $typeName = data_get($data, 'type.name');
 
         // align with schema: colors.hex_code
         $colorHex = data_get($data, 'color.hex_code')
@@ -64,7 +65,7 @@ final readonly class CarCreateData
         }
 
         if (! is_numeric($seats) || (int) $seats <= 0) {
-            throw new InvalidArgumentException('model.seats must be a positive integer.');
+            throw new InvalidArgumentException('seats must be a positive integer.');
         }
 
         if (! is_string($brandName) || trim($brandName) === '') {
@@ -84,7 +85,7 @@ final readonly class CarCreateData
         }
 
         return new self(
-            licensePlate: strtoupper(trim($license)),
+            licensePlate: LicensePlateFormatter::normalize($license),
             modelName: strtolower(trim($modelName)),
             seats: (int) $seats,
             brandName: strtolower(trim($brandName)),

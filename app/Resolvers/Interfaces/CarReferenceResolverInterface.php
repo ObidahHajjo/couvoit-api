@@ -6,6 +6,13 @@ use App\DTOS\Car\ResolvedCarRefs;
 use App\Exceptions\ValidationLogicException;
 use App\Models\Car;
 
+/**
+ * Contract for resolving car reference identifiers from payload data.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Interface for car reference resolution services.
+ */
 interface CarReferenceResolverInterface
 {
     /**
@@ -15,12 +22,10 @@ interface CarReferenceResolverInterface
      * - brand.name
      * - type.name
      * - model.name
-     * - model.seats
      * - color.name
      * - color.hex_code
      *
-     * @param array<string,mixed> $data
-     * @return ResolvedCarRefs
+     * @param  array<string,mixed>  $data
      *
      * @throws ValidationLogicException If the payload is missing required keys/values.
      */
@@ -33,12 +38,9 @@ interface CarReferenceResolverInterface
      * If provided, this will:
      * - Load current car model as defaults
      * - Resolve brand/type if provided, otherwise reuse current model's brand/type
-     * - Resolve seats if provided, otherwise reuse current model's seats
      * - Create or reuse the matching CarModel and return its id
      *
-     * @param Car                $car
-     * @param array<string,mixed> $data
-     * @return int|null
+     * @param  array<string,mixed>  $data
      */
     public function resolveModelForUpdate(Car $car, array $data): ?int;
 
@@ -48,11 +50,9 @@ interface CarReferenceResolverInterface
      * If "color.name" is not provided, returns null (no color change).
      * If "color.name" is provided, "color.hex_code" is required.
      *
-     * @param array<string,mixed> $data
-     * @return int|null
+     * @param  array<string,mixed>  $data
      *
      * @throws ValidationLogicException When color.name is provided but color.hex_code is missing/blank.
      */
     public function resolveColorForUpdate(array $data): ?int;
 }
-

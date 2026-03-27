@@ -1,0 +1,44 @@
+<?php
+
+return [
+    'auth' => [
+        'register_success' => 'Inscription reussie.',
+        'login_success' => 'Authentification reussie.',
+        'refresh_success' => 'Session rafraichie avec succes.',
+        'logout_success' => 'Deconnexion reussie',
+        'forgot_password_notice' => 'Si un compte existe pour cet e-mail, un lien de reinitialisation a ete envoye.',
+        'password_reset_success' => 'Mot de passe reinitialise avec succes.',
+        'password_changed_success' => 'Mot de passe modifie avec succes.',
+    ],
+    'chat' => [
+        'conversation_cleared' => 'La conversation a ete effacee pour votre compte.',
+        'message_cleared' => 'Le message a ete efface pour votre compte.',
+        'messages_cleared' => 'Les messages selectionnes ont ete effaces pour votre compte.',
+    ],
+    'support_chat' => [
+        'session_created' => 'Session de support creee avec succes.',
+        'session_joined' => 'Admin a rejoint la session.',
+        'session_closed' => 'Session de support fermee.',
+        'message_sent' => 'Message envoye avec succes.',
+        'messages_marked_read' => 'Messages marques comme lus.',
+        'typing_updated' => 'Statut de saisie mis a jour.',
+        'presence_updated' => 'Presence mise a jour.',
+    ],
+    'errors' => [
+        'validation' => 'Les donnees fournies sont invalides.',
+        'forbidden' => 'Acces interdit.',
+        'route_not_found' => 'Route introuvable.',
+        'model_not_found' => ':model introuvable.',
+        'foreign_key_constraint' => 'Violation de contrainte de cle etrangere.',
+        'invalid_input_syntax' => 'Syntaxe de saisie invalide.',
+        'database_query' => 'Erreur de requete base de donnees.',
+        'server_error' => 'Erreur serveur',
+        'missing_bearer_token' => 'Jeton Bearer manquant',
+        'invalid_jwt_format' => 'Format JWT invalide',
+        'invalid_token_payload' => 'Charge utile du jeton invalide.',
+        'unauthorized' => 'Non autorise',
+        'account_inactive' => 'Compte inactif',
+        'token_expired' => 'Jeton expire',
+        'trip.date_time_in_past' => "La date et l'heure du voyage doivent être futures."
+    ],
+];

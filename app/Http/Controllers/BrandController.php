@@ -6,29 +6,24 @@ use App\Http\Resources\BrandResource;
 use App\Models\Brand;
 use App\Services\Interfaces\BrandServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Response;
 
-/**
- * HTTP controller for Brand endpoints.
- */
 #[OA\Tag(name: 'Brands', description: 'Brand endpoints.')]
+/**
+ * Handles brand lookup endpoints.
+ */
 class BrandController extends Controller
 {
     /**
-     * @param BrandServiceInterface $brands
+     * Create a new brand controller instance.
      */
     public function __construct(
         private readonly BrandServiceInterface $brands
     ) {}
 
-    /**
-     * List brands.
-     *
-     * @return JsonResponse
-     */
     #[OA\Get(
-        path: '/api/brands',
+        path: '/brands',
         operationId: 'brandsIndex',
         summary: 'List brands',
         security: [['bearerAuth' => []]],
@@ -38,6 +33,9 @@ class BrandController extends Controller
             new OA\Response(response: 401, description: 'Unauthorized'),
         ]
     )]
+    /**
+     * List brands.
+     */
     public function index(): JsonResponse
     {
         $brands = $this->brands->getBrands();
@@ -47,14 +45,8 @@ class BrandController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Show a brand.
-     *
-     * @param Brand $brand
-     * @return JsonResponse
-     */
     #[OA\Get(
-        path: '/api/brands/{id}',
+        path: '/brands/{id}',
         operationId: 'brandsShow',
         summary: 'Get brand by id',
         security: [['bearerAuth' => []]],
@@ -68,6 +60,9 @@ class BrandController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Show a brand.
+     */
     public function show(Brand $brand): JsonResponse
     {
         return (new BrandResource($brand))

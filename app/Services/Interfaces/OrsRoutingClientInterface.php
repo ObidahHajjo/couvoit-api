@@ -43,4 +43,17 @@ interface OrsRoutingClientInterface
      * @throws Throwable If the external API call fails or response is invalid.
      */
     public function durationSeconds(array $from, array $to): int;
+
+
+    /**
+     * Calculate route distance and duration between two coordinates.
+     *
+     * @param array{lng: float, lat: float} $from
+     * @param array{lng: float, lat: float} $to
+     *
+     * @return array{duration_seconds: int, distance_meters: float, distance_km: float}
+     *
+     * @throws Throwable If the external API call fails or response is invalid.
+     */
+    public function routeSummary(array $from, array $to): array;
 }

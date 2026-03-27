@@ -21,9 +21,7 @@ use Illuminate\Auth\Access\Response;
 class TripPolicy
 {
     /**
-     * Admin bypass.
-     *
-     * Returning true authorizes, returning null defers to ability methods.
+     * Grant all abilities to admins.
      *
      * @param User $user
      * @return bool|null
@@ -58,17 +56,8 @@ class TripPolicy
     public function view(User $user, Trip $trip): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Inactive users cannot view trips.");
+            return Response::deny('Inactive users cannot view trips.');
         }
-
-        $person = $user->person;
-
-        if (! $person) {
-            return Response::deny("User has no profile.");
-        }
-
-        // Driver can see passengers
-        if ($trip->person_id === $person->id) return Response::allow();
 
         return Response::allow();
     }
@@ -83,33 +72,20 @@ class TripPolicy
     public function viewPassengers(User $user, Trip $trip): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Inactive users cannot view passengers.");
+            return Response::deny('Inactive users cannot view passengers.');
         }
 
-        $person = $user->person;
-
-        if (! $person) {
-            return Response::deny("User has no profile.");
-        }
-
-        // Driver can see passengers
-        if ($trip->person_id === $person->id) return Response::allow();
-
-        // Passenger of this trip can see passengers
-        $isPassenger = $trip->passengers()
-            ->where('person_id', $person->id)
-            ->exists();
-
-        if ($isPassenger) {
-            return Response::allow();
-        }
-
-        // Optional: admin override
         if ($user->isAdmin()) {
             return Response::allow();
         }
 
-        return Response::deny("You are not allowed to view this passenger list.");
+        $isDriver = $trip->person_id === $user->person_id;
+        $isPassenger = $trip->passengers
+            ->contains(fn ($passenger) => (int) $passenger->id === $user->person_id);
+
+        return ($isDriver || $isPassenger)
+            ? Response::allow()
+            : Response::deny('Vous ne pouvez consulter que vos trajets ou vos réservations.');
     }
 
     /**
@@ -125,39 +101,11 @@ class TripPolicy
     public function create(User $user): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Only active users can create trips.");
+            return Response::deny('Only active users can create trips.');
         }
 
-        $person = $user->person;
-        if (is_null($person->car_id)) {
-            return Response::deny("Only drivers (users with a car) can create trips.");
-        }
-
-        return Response::allow();
-    }
-
-    /**
-     * Determine whether the user can create a trip for a specific driver.
-     *
-     * Non-admin users may only create trips for themselves.
-     *
-     * @param User $user
-     * @param Person $driver
-     * @return Response
-     */
-    public function createFor(User $user, Person $driver): Response
-    {
-        if (! $user->is_active) {
-            return Response::deny("Only active users can create trips.");
-        }
-
-        if ($driver->id !== $user->person_id) {
-            return Response::deny("You cannot create a trip for another user.");
-        }
-
-        $person = $user->person;
-        if (is_null($person->car_id)) {
-            return Response::deny("Only drivers (users with a car) can create trips.");
+        if (! $user->canPublishTrip()) {
+            return Response::deny('Seuls les conducteurs peuvent publier un trajet.');
         }
 
         return Response::allow();
@@ -175,14 +123,16 @@ class TripPolicy
     public function update(User $user, Trip $trip): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Only active users can update trips.");
+            return Response::deny('Only active users can update trips.');
         }
 
-        if ($trip->person_id !== $user->person_id) {
-            return Response::deny("Only the driver of this trip can update it.");
+        if ($user->isAdmin()) {
+            return Response::allow();
         }
 
-        return Response::allow();
+        return $trip->person_id === $user->person_id
+            ? Response::allow()
+            : Response::deny('Only the driver of this trip can update it.');
     }
 
     /**
@@ -193,11 +143,21 @@ class TripPolicy
      * @param User $user
      * @return Response
      */
-    public function delete(User $user): Response
+    public function delete(User $user, Trip $trip): Response
     {
-        if(!$user->isAdmin()) return Response::deny('You are not allowed to delete trips.');
-        return Response::allow();
+        if (! $user->is_active) {
+            return Response::deny('Only active users can delete trips.');
+        }
+
+        if ($user->isAdmin()) {
+            return Response::allow();
+        }
+
+        return (int) $trip->person_id === (int) $user->person_id
+            ? Response::allow()
+            : Response::deny('Vous ne pouvez supprimer que vos propres trajets.');
     }
+
 
     /**
      * Determine whether the user can cancel a trip.
@@ -216,14 +176,16 @@ class TripPolicy
         }
 
         if (! $user->is_active) {
-            return Response::deny("Only active users can cancel trips.");
+            return Response::deny('Only active users can cancel trips.');
         }
 
-        if ($trip->person_id !== $user->person_id) {
-            return Response::deny("Only the driver of this trip can cancel it.");
+        if ($user->isAdmin()) {
+            return Response::allow();
         }
 
-        return Response::allow();
+        return (int) $trip->person_id === (int) $user->person_id
+            ? Response::allow()
+            : Response::deny('Only the driver of this trip can cancel it.');
     }
 
     /**
@@ -243,7 +205,15 @@ class TripPolicy
         }
 
         if (! $user->is_active) {
-            return Response::deny("Only active users can cancel reservations.");
+            return Response::deny('Only active users can cancel reservations.');
+        }
+
+        if ($user->isAdmin()) {
+            return Response::allow();
+        }
+
+        if (! $user->canBookTrip()) {
+            return Response::deny('Vous ne pouvez pas annuler de réservation.');
         }
 
         return Response::allow();
@@ -263,22 +233,30 @@ class TripPolicy
      * @param Person $passenger
      * @return Response
      */
-    public function reserve(User $user, Trip $trip, Person $passenger): Response
+    public function reserve(User $user, Trip $trip, ?Person $passenger = null): Response
     {
         if ($trip->departure_time <= now()) {
             return Response::deny('Trip already started; reservations are closed.');
         }
 
         if (! $user->is_active) {
-            return Response::deny("Only active users can reserve seats.");
+            return Response::deny('Only active users can reserve seats.');
         }
 
-        if ($passenger->id !== $user->person_id) {
-            return Response::deny("You can only reserve a seat for yourself.");
+        if ($user->isAdmin()) {
+            return Response::deny('Un administrateur ne peut pas réserver de place.');
         }
 
-        if ($trip->person_id === $passenger->id) {
-            return Response::deny("The driver cannot reserve a seat on their own trip.");
+        if (! $user->canBookTrip()) {
+            return Response::deny('Vous ne pouvez pas réserver de place.');
+        }
+
+        if ($trip->person_id === $user->person_id) {
+            return Response::deny('The driver cannot reserve a seat on their own trip.');
+        }
+
+        if ($passenger !== null && $passenger->id !== $user->person_id) {
+            return Response::deny('Vous ne pouvez réserver que pour vous-même.');
         }
 
         return Response::allow();

@@ -11,32 +11,28 @@ use App\Models\Car;
 use App\Models\User;
 use App\Services\Interfaces\CarServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Cars', description: 'Car endpoints. Admin can list all; user only sees/edits their own car.')]
 /**
  * HTTP controller for Car endpoints.
  */
-#[OA\Tag(name: 'Cars', description: 'Car endpoints. Admin can list all; user only sees/edits their own car.')]
 class CarController extends Controller
 {
     /**
-     * @param CarServiceInterface $cars
+     * Create a new car controller instance.
      */
     public function __construct(
-        private readonly CarServiceInterface $cars
-    ) {}
+        private readonly CarServiceInterface $cars,
+    ) {
+        $this->authorizeResource(Car::class, 'car');
+    }
 
-    /**
-     * List cars.
-     * Admin: list all cars
-     * User: only his car
-     *
-     * @return JsonResponse
-     */
     #[OA\Get(
-        path: '/api/cars',
+        path: '/cars',
         operationId: 'carsIndex',
         summary: 'List cars',
         security: [['bearerAuth' => []]],
@@ -47,10 +43,13 @@ class CarController extends Controller
             new OA\Response(response: 403, description: 'Forbidden'),
         ]
     )]
+    /**
+     * List cars.
+     *
+     * Admin users receive the full collection; other users only receive their own car.
+     */
     public function index(): JsonResponse
     {
-        $this->authorize('viewAny', Car::class);
-
         /** @var User $authUser */
         $authUser = auth()->user();
 
@@ -71,14 +70,8 @@ class CarController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Show a car.
-     *
-     * @param Car $car
-     * @return JsonResponse
-     */
     #[OA\Get(
-        path: '/api/cars/{id}',
+        path: '/cars/{id}',
         operationId: 'carsShow',
         summary: 'Get car by id',
         security: [['bearerAuth' => []]],
@@ -93,10 +86,11 @@ class CarController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Show a single car.
+     */
     public function show(Car $car): JsonResponse
     {
-        $person = auth()->user()->person;
-        $this->authorize('view', [Car::class,$person,$car]);
         $car->loadMissing(['model.brand', 'model.type', 'color']);
 
         return (new CarResource($car))
@@ -104,15 +98,8 @@ class CarController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Create a car for the authenticated user.
-     *
-     * @param StoreCarRequest $request
-     * @return JsonResponse
-     * @throws Throwable
-     */
     #[OA\Post(
-        path: '/api/cars',
+        path: '/cars',
         operationId: 'carsStore',
         summary: 'Create my car',
         security: [['bearerAuth' => []]],
@@ -128,12 +115,16 @@ class CarController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Create a car for the authenticated user.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function store(StoreCarRequest $request): JsonResponse
     {
         /** @var User $user */
         $user = auth()->user();
         $person = $user->person;
-        $this->authorize('create', [Car::class, $person]);
 
         $dto = CarCreateData::fromArray($request->validated());
         $car = $this->cars->createCar($dto, $person);
@@ -145,16 +136,8 @@ class CarController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * Update a car.
-     *
-     * @param UpdateCarRequest $request
-     * @param Car $car
-     * @return JsonResponse
-     * @throws Throwable
-     */
     #[OA\Patch(
-        path: '/api/cars/{id}',
+        path: '/cars/{id}',
         operationId: 'carsUpdate',
         summary: 'Update my car',
         security: [['bearerAuth' => []]],
@@ -174,10 +157,13 @@ class CarController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
+    /**
+     * Update a car.
+     *
+     * @throws Throwable Propagates service-layer failures.
+     */
     public function update(UpdateCarRequest $request, Car $car): JsonResponse
     {
-        $this->authorize('update', [Car::class,$car]);
-
         $dto = CarUpdateData::fromArray($request->validated());
         $updatedCar = $this->cars->updateCar($car, $dto);
 
@@ -188,14 +174,8 @@ class CarController extends Controller
             ->setStatusCode(Response::HTTP_OK);
     }
 
-    /**
-     * Delete a car.
-     *
-     * @param Car $car
-     * @return Response
-     */
     #[OA\Delete(
-        path: '/api/cars/{id}',
+        path: '/cars/{id}',
         operationId: 'carsDestroy',
         summary: 'Delete my car',
         security: [['bearerAuth' => []]],
@@ -210,12 +190,54 @@ class CarController extends Controller
             new OA\Response(response: 404, description: 'Not Found'),
         ]
     )]
+    /**
+     * Delete a car.
+     */
     public function destroy(Car $car): Response
     {
-        $this->authorize('delete', [Car::class,$car]);
-
         $this->cars->deleteCar($car);
 
         return response()->noContent();
+    }
+
+    #[OA\Delete(
+        path: '/cars/search',
+        operationId: 'carsSearch',
+        summary: 'Search a car',
+        security: [['bearerAuth' => []]],
+        tags: ['Cars'],
+        parameters: [
+            new OA\Parameter(name: 'q', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'brand', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'No Content'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 404, description: 'Not Found'),
+        ]
+    )]
+    /**
+     * Search cars by free-text query and brand prefix.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->query('q', ''));
+        $brand = trim((string) $request->query('brand', ''));
+
+        if (mb_strlen($query) < 2 || mb_strlen($brand) < 3) {
+            return response()->json([
+                'data' => [],
+            ]);
+        }
+
+        $results = $this->cars->search(
+            $query,
+            $brand
+        );
+
+        return response()->json([
+            'data' => $results,
+        ]);
     }
 }

@@ -4,81 +4,72 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Address;
 use App\Repositories\Interfaces\AddressRepositoryInterface;
-use Illuminate\Support\Facades\Cache;
+use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use LogicException;
 
 /**
  * Eloquent implementation of AddressRepositoryInterface.
  *
  * Handles persistence, retrieval and caching of Address aggregates.
+ *
+ * @author Covoiturage API
+ *
+ * @description Repository for managing Address entities with caching support.
  */
-class AddressEloquentRepository implements AddressRepositoryInterface
+readonly class AddressEloquentRepository implements AddressRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Tags
-    |--------------------------------------------------------------------------
-    */
-
-    private function tagAddresses(): array
-    {
-        return ['addresses'];
-    }
-
-    private function tagAddress(int $id): array
-    {
-        return ['addresses', "address:$id"];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Keys
-    |--------------------------------------------------------------------------
-    */
-
-    private function keyById(int $id): string
-    {
-        return "addresses:$id";
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Repository Methods
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Create a new address repository instance.
+     */
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {}
 
     /**
-     * @inheritDoc
+     * Create a new address or return existing one.
+     *
+     * @param  array<string, mixed>  $data  Address data containing street_number, street, and city_id
+     * @return Address The created or existing Address instance with city relation loaded
+     *
+     * @throws ModelNotFoundException When city_id references non-existent city
      */
     public function create(array $data): Address
     {
-        $address = Address::query()->create($data);
+        $address = Address::query()->firstOrCreate(
+            [
+                'street_number' => $data['street_number'],
+                'street' => $data['street'],
+                'city_id' => $data['city_id'],
+            ],
+            $data
+        );
 
-        // Cache freshly created address
-        Cache::tags($this->tagAddress($address->id))
-            ->put($this->keyById($address->id), $address->loadMissing('city'), self::TTL_SECONDS);
+        $address->load('city');
+        $this->cache->putAddress($address);
 
         return $address;
     }
 
     /**
-     * @inheritDoc
+     * Find an address by ID or fail.
+     *
+     * @param  int  $id  The address ID to find
+     * @return Address The Address instance with city relation loaded
+     *
+     * @throws ModelNotFoundException When address not found
+     * @throws LogicException When cached value is not an Address instance
      */
     public function findOrFail(int $id): Address
     {
-        $address = Cache::tags($this->tagAddress($id))
-            ->remember(
-                $this->keyById($id),
-                self::TTL_SECONDS,
-                fn () => Address::query()
-                    ->with(['city'])
-                    ->findOrFail($id)
-            );
+        $address = $this->cache->rememberAddressById($id, fn () => Address::query()
+            ->with('city')
+            ->findOrFail($id));
 
-        if (!$address instanceof Address) throw new \LogicException('Cached value is not an Address instance.');
+        if (! $address instanceof Address) {
+            throw new LogicException('Cached value is not an Address instance.');
+        }
 
         return $address;
     }
-
 }

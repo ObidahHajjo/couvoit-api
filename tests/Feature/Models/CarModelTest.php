@@ -14,12 +14,12 @@ class CarModelTest extends TestCase
 
     public function test_car_model_uses_models_table(): void
     {
-        $this->assertSame('models', (new CarModel())->getTable());
+        $this->assertSame('models', (new CarModel)->getTable());
     }
 
     public function test_car_model_has_timestamps_disabled(): void
     {
-        $this->assertFalse((new CarModel())->timestamps);
+        $this->assertFalse((new CarModel)->timestamps);
     }
 
     public function test_car_model_belongs_to_brand_and_type(): void
@@ -29,7 +29,6 @@ class CarModelTest extends TestCase
 
         $model = CarModel::query()->create([
             'name' => 'Model 3',
-            'seats' => 5,
             'brand_id' => $brand->id,
             'type_id' => $type->id,
         ]);

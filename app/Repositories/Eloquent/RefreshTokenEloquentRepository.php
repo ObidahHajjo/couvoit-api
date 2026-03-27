@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @author    [Developer Name]
+ *
+ * @description Eloquent implementation of RefreshTokenRepositoryInterface for managing refresh tokens.
+ */
+
 namespace App\Repositories\Eloquent;
 
 use App\Exceptions\UnauthorizedException;
@@ -8,10 +14,19 @@ use App\Repositories\Interfaces\RefreshTokenRepositoryInterface;
 use Carbon\CarbonImmutable;
 use RuntimeException;
 
+/**
+ * Eloquent-backed implementation of refresh token persistence.
+ *
+ * @implements RefreshTokenRepositoryInterface
+ */
 final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInterface
 {
     /**
-     * Store hashed refresh token for a user (write-only).
+     * Store a new refresh token for a user.
+     *
+     * @param  int  $userId  The ID of the user to associate the token with.
+     * @param  string  $refreshTokenPlain  The plain refresh token to store (will be hashed).
+     * @param  CarbonImmutable  $expiresAt  The expiration timestamp of the token.
      */
     public function store(int $userId, string $refreshTokenPlain, CarbonImmutable $expiresAt): void
     {
@@ -26,14 +41,16 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
     }
 
     /**
-     * Validate provided refresh token and rotate it:
-     * - marks current token revoked
-     * - returns the owning user id
+     * Consume and invalidate a refresh token.
+     *
+     * @param  string  $refreshTokenPlain  The plain refresh token to consume.
+     * @return int The ID of the user associated with the token.
+     *
+     * @throws UnauthorizedException If the token is invalid, expired, or already revoked.
      */
     public function consume(string $refreshTokenPlain): int
     {
         $hash = $this->hash($refreshTokenPlain);
-
         /** @var RefreshToken|null $row */
         $row = RefreshToken::query()
             ->where('token_hash', $hash)
@@ -41,7 +58,7 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
             ->where('expires_at', '>', now())
             ->first();
 
-        if (!$row) {
+        if (! $row) {
             throw new UnauthorizedException('Invalid refresh token.');
         }
 
@@ -51,8 +68,14 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
     }
 
     /**
-     * Convenience: consume old token and store a new one.
-     * Returns user id (so service can issue new access token).
+     * Consume an existing refresh token and rotate with a new one.
+     *
+     * @param  string  $refreshTokenPlain  The current refresh token to consume.
+     * @param  string  $newRefreshTokenPlain  The new refresh token to store.
+     * @param  CarbonImmutable  $newExpiresAt  The expiration timestamp for the new token.
+     * @return int The ID of the user associated with the token.
+     *
+     * @throws UnauthorizedException If the current token is invalid.
      */
     public function consumeAndRotate(string $refreshTokenPlain, string $newRefreshTokenPlain, CarbonImmutable $newExpiresAt): int
     {
@@ -62,6 +85,24 @@ final class RefreshTokenEloquentRepository implements RefreshTokenRepositoryInte
         return $userId;
     }
 
+    /**
+     * Delete all refresh tokens for a specific user.
+     *
+     * @param  int  $userId  The ID of the user whose tokens should be deleted.
+     */
+    public function deleteAllByUserId(int $userId): void
+    {
+        RefreshToken::query()->where('user_id', $userId)->delete();
+    }
+
+    /**
+     * Hash a refresh token using HMAC-SHA256.
+     *
+     * @param  string  $plain  The raw refresh token to hash.
+     * @return string The hashed refresh token.
+     *
+     * @throws RuntimeException If JWT_SECRET is not set or decoding fails.
+     */
     private function hash(string $plain): string
     {
         $secret = (string) config('jwt.secret');

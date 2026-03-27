@@ -14,10 +14,9 @@ class CarModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'     => strtolower($this->faker->unique()->word()),
-            'seats'    => $this->faker->numberBetween(1, 9),
+            'name' => strtolower($this->faker->unique()->word()),
             'brand_id' => Brand::factory(),
-            'type_id'  => Type::factory(),
+            'type_id' => Type::factory(),
         ];
     }
 }

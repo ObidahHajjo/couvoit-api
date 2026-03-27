@@ -11,7 +11,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateTripRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the request is authorized.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,7 +21,7 @@ class UpdateTripRequest extends FormRequest
     }
 
     /**
-     * Validation rules.
+     * Get the validation rules for trip updates.
      *
      * @return array<string, ValidationRule|array|string>
      */
@@ -27,7 +29,7 @@ class UpdateTripRequest extends FormRequest
     {
         return [
             'kms' => ['sometimes', 'numeric', 'gt:0'],
-            'trip_datetime' => ['sometimes', 'date'],
+            'trip_datetime' => ['sometimes', 'date', 'after:now'],
             'available_seats' => ['sometimes', 'integer', 'min:1', 'max:9'],
             'smoking_allowed' => ['sometimes', 'boolean'],
 

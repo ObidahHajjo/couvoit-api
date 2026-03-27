@@ -5,6 +5,9 @@ namespace App\Repositories\Interfaces;
 use App\Models\CarModel;
 use Illuminate\Support\Collection;
 
+/**
+ * Contract for car model persistence operations.
+ */
 interface CarModelRepositoryInterface
 {
     /**
@@ -62,4 +65,38 @@ interface CarModelRepositoryInterface
      * @return Collection<int,CarModel>
      */
     public function findByBrand(int $brandId): Collection;
+
+    /**
+     * Find a model by its search_key and brand name
+     *
+     * @param string $brandSearchKey
+     * @param string $modelSearchKey
+     *
+     * @return Collection<int, CarModel>
+     */
+    public function findBySearchKey(string $brandSearchKey, string $modelSearchKey): Collection;
+
+    /**
+     * Create a new car model.
+     *
+     * @param array<string, mixed> $attributes
+     * @return CarModel
+     */
+    public function create(array $attributes): CarModel;
+
+    /**
+     * Get paginated car models for admin.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Check if model has cars.
+     *
+     * @param CarModel $model
+     * @return bool
+     */
+    public function hasCars(CarModel $model): bool;
 }

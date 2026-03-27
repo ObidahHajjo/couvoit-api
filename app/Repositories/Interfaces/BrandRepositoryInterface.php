@@ -48,4 +48,37 @@ interface BrandRepositoryInterface
      * @return void
      */
     public function delete(Brand $brand): void;
+
+    /**
+     * Create a new brand.
+     *
+     * @param array<string, mixed> $attributes
+     * @return Brand
+     */
+    public function create(array $attributes): Brand;
+
+    /**
+     * Update a brand.
+     *
+     * @param Brand $brand
+     * @param array<string, mixed> $attributes
+     * @return Brand
+     */
+    public function update(Brand $brand, array $attributes): Brand;
+
+    /**
+     * Get paginated brands for admin.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginateForAdmin(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Check if brand has models.
+     *
+     * @param Brand $brand
+     * @return bool
+     */
+    public function hasModels(Brand $brand): bool;
 }

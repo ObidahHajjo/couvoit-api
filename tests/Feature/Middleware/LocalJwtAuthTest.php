@@ -3,9 +3,9 @@
 namespace Tests\Feature\Middleware;
 
 use App\Http\Middleware\LocalJwtAuth;
+use App\Http\Middleware\SetRequestLocale;
 use App\Models\Person;
 use App\Models\User;
-use App\Security\JwtIssuer;
 use App\Security\JwtIssuerInterface;
 use Firebase\JWT\ExpiredException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,14 +42,14 @@ class LocalJwtAuthTest extends TestCase
     {
         parent::setUp();
 
-        Route::middleware(LocalJwtAuth::class)->get('/protected', function (Request $request) {
+        Route::middleware([SetRequestLocale::class, LocalJwtAuth::class])->get('/protected', function (Request $request) {
             /** @var Person|null $person */
             $person = $request->attributes->get('person');
 
             return response()->json([
                 'ok' => true,
                 'person_id' => $person?->id,
-                'user_id' => auth()->id(),
+                'user_id' => auth()->guard()->user()?->getAuthIdentifier(),
             ]);
         });
     }
@@ -161,7 +161,7 @@ class LocalJwtAuthTest extends TestCase
                 'exp' => time() + 3600,
             ]);
 
-        $this->app->instance(JwtIssuer::class, $jwt);
+        $this->app->instance(JwtIssuerInterface::class, $jwt);
 
         $res = $this->withHeader('Authorization', 'Bearer ' . $this->fakeJwt())
             ->getJson('/protected');
@@ -171,7 +171,7 @@ class LocalJwtAuthTest extends TestCase
         $res->assertJsonPath('user_id', $user->id);
         $res->assertJsonPath('person_id', $person->id);
 
-        self::assertSame($user->id, auth()->id());
+        self::assertSame($user->id, auth()->guard()->user()?->getAuthIdentifier());
     }
 
     /**
@@ -194,7 +194,7 @@ class LocalJwtAuthTest extends TestCase
                 'exp' => time() + 3600,
             ]);
 
-        $this->app->instance(JwtIssuer::class, $jwt);
+        $this->app->instance(JwtIssuerInterface::class, $jwt);
 
         $res = $this->withHeader('Authorization', 'Bearer ' . $this->fakeJwt())
             ->getJson('/protected');
@@ -231,7 +231,7 @@ class LocalJwtAuthTest extends TestCase
             ->once()
             ->andThrow(new ExpiredException('expired'));
 
-        $this->app->instance(JwtIssuer::class, $jwt);
+        $this->app->instance(JwtIssuerInterface::class, $jwt);
 
         $res = $this->withHeader('Authorization', 'Bearer ' . $this->fakeJwt())
             ->getJson('/protected');
@@ -241,5 +241,23 @@ class LocalJwtAuthTest extends TestCase
 
         // We don't assert cache forget here because best-effort invalidation depends on JWT helper import.
         // If you fix middleware to properly decode payload, you can assert Cache::missing('local:auth:' . $user->id).
+    }
+
+    public function test_missing_bearer_token_is_localized_from_accept_language(): void
+    {
+        $res = $this->withHeader('Accept-Language', 'fr-FR,fr;q=0.9,en;q=0.8')
+            ->getJson('/protected');
+
+        $res->assertStatus(401);
+        $res->assertJsonPath('error', 'Jeton Bearer manquant');
+    }
+
+    public function test_missing_bearer_token_is_localized_from_normalized_arabic_accept_language(): void
+    {
+        $res = $this->withHeader('Accept-Language', 'ar-SA,ar;q=0.9,en;q=0.8')
+            ->getJson('/protected');
+
+        $res->assertStatus(401);
+        $res->assertJsonPath('error', 'رمز Bearer مفقود');
     }
 }

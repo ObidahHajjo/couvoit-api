@@ -7,10 +7,20 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use RuntimeException;
 
+/**
+ * Firebase JWT-backed access token issuer and verifier.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Handles JWT token issuance and verification using Firebase JWT library.
+ */
 final class JwtIssuer implements JwtIssuerInterface
 {
     private const ALG = 'HS256';
 
+    /**
+     * Resolve the configured JWT signing secret.
+     */
     private function secret(): string
     {
         $secret = (string) config('jwt.secret');
@@ -25,12 +35,19 @@ final class JwtIssuer implements JwtIssuerInterface
             if ($decoded === false) {
                 throw new RuntimeException('JWT_SECRET base64 decoding failed');
             }
+
             return $decoded;
         }
 
         return $secret;
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param  User  $user  The user to generate the token for
+     * @return string The encoded JWT token
+     */
     public function issueAccessToken(User $user): string
     {
         $now = time();
@@ -46,8 +63,8 @@ final class JwtIssuer implements JwtIssuerInterface
             'sub' => (string) $user->id,
 
             // Helpful claims
-            'email' => (string) $user->email,
-            'role_id' => (int) $user->role_id,
+            'email' => $user->email,
+            'role_id' => $user->role_id,
             'jti' => bin2hex(random_bytes(16)),
         ];
 
@@ -55,9 +72,12 @@ final class JwtIssuer implements JwtIssuerInterface
     }
 
     /**
-     * Verify JWT signature + basic claim validation.
+     * {@inheritdoc}
      *
-     * @return object decoded claims
+     * @param  string  $jwt  The JWT token to verify
+     * @return object The decoded token payload
+     *
+     * @throws RuntimeException If the token is invalid, expired, or has wrong issuer/audience
      */
     public function verify(string $jwt): object
     {
@@ -75,7 +95,7 @@ final class JwtIssuer implements JwtIssuerInterface
         }
 
         $sub = $decoded->sub ?? null;
-        if (!is_string($sub) || $sub === '') {
+        if (! is_string($sub) || $sub === '') {
             throw new RuntimeException('Missing sub');
         }
 

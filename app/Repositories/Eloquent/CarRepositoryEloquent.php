@@ -4,8 +4,11 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Car;
 use App\Repositories\Interfaces\CarRepositoryInterface;
+use App\Support\Cache\RepositoryCacheManager;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Eloquent implementation of CarRepositoryInterface.
@@ -16,115 +19,147 @@ use Illuminate\Support\Facades\Cache;
  * - model.brand
  * - model.type
  * - color
+ *
+ * @author Covoiturage API
+ *
+ * @description Repository for managing Car entities with caching support.
  */
-class CarRepositoryEloquent implements CarRepositoryInterface
+readonly class CarRepositoryEloquent implements CarRepositoryInterface
 {
-    private const TTL_SECONDS = 3600;
+    /**
+     * Create a new car repository instance.
+     */
+    public function __construct(
+        private RepositoryCacheManager $cache
+    ) {}
 
     /**
-     * @return array<int,string>
+     * Get all cars with model, brand, type, and color relations.
+     *
+     * @return Collection<int, Car> Collection of all Car instances
      */
-    private function tagCars(): array
-    {
-        return ['cars'];
-    }
-
-    /**
-     * @param int $id
-     * @return array<int,string>
-     */
-    private function tagCar(int $id): array
-    {
-        return ['cars', 'car:' . $id];
-    }
-
-    private function keyAll(): string
-    {
-        return 'cars:all';
-    }
-
-    private function keyById(int $id): string
-    {
-        return 'cars:' . $id;
-    }
-
-    /** @inheritDoc */
     public function all(): Collection
     {
         /** @var Collection<int,Car> $cars */
-        $cars = Cache::tags($this->tagCars())
-            ->remember($this->keyAll(), self::TTL_SECONDS, function () {
-                return Car::query()->with(['model.brand', 'model.type', 'color'])->get();
-            });
+        $cars = $this->cache->rememberCarsAll(function () {
+            return Car::query()
+                ->with(['model.brand', 'model.type', 'color'])
+                ->get();
+        });
 
-        // Optional: warm per-car caches so find/findOrFail can hit cache after all()
         foreach ($cars as $car) {
-            Cache::tags($this->tagCar($car->id))
-                ->put($this->keyById($car->id), $car, self::TTL_SECONDS);
+            $this->cache->putCar($car);
         }
 
         return $cars;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a car by its ID.
+     *
+     * @param  int  $id  The car ID to find
+     * @return Car|null The Car instance with relations if found
+     */
     public function find(int $id): ?Car
     {
         /** @var Car|null $car */
-        $car = Cache::tags($this->tagCar($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Car::query()->with(['model.brand', 'model.type', 'color'])->find($id);
-            });
+        $car = $this->cache->rememberCarById($id, function () use ($id) {
+            return Car::query()
+                ->with(['model.brand', 'model.type', 'color'])
+                ->find($id);
+        });
 
         return $car;
     }
 
-    /** @inheritDoc */
+    /**
+     * Find a car by ID or throw an exception.
+     *
+     * @param  int  $id  The car ID to find
+     * @return Car The Car instance with relations
+     *
+     * @throws ModelNotFoundException When car not found
+     */
     public function findOrFail(int $id): Car
     {
         /** @var Car $car */
-        $car = Cache::tags($this->tagCar($id))
-            ->remember($this->keyById($id), self::TTL_SECONDS, function () use ($id) {
-                return Car::query()->with(['model.brand', 'model.type', 'color'])->findOrFail($id);
-            });
+        $car = $this->cache->rememberCarById($id, function () use ($id) {
+            return Car::query()
+                ->with(['model.brand', 'model.type', 'color'])
+                ->findOrFail($id);
+        });
 
         return $car;
     }
 
-    /** @inheritDoc */
+    /**
+     * Create a new car.
+     *
+     * @param  array<string, mixed>  $data  Car data to create
+     * @return Car The newly created Car instance with relations
+     *
+     * @throws QueryException When creation fails
+     */
     public function create(array $data): Car
     {
-        $car = Car::query()->create($data)->loadMissing(['model.brand', 'model.type', 'color']);
+        $car = Car::query()
+            ->create($data)
+            ->load(['model.brand', 'model.type', 'color']);
 
-        Cache::tags($this->tagCar($car->id))
-            ->put($this->keyById($car->id), $car, self::TTL_SECONDS);
-
-        Cache::tags($this->tagCars())->forget($this->keyAll());
+        $this->cache->putCar($car);
+        $this->cache->forgetCarsAll();
+        $this->cache->invalidatePersonsByCarId($car->id);
 
         return $car;
     }
 
-    /** @inheritDoc */
+    /**
+     * Update a car with new data.
+     *
+     * @param  Car  $car  The Car instance to update
+     * @param  array<string, mixed>  $data  New data to apply
+     * @return bool True if update was successful
+     */
     public function update(Car $car, array $data): bool
     {
         $ok = $car->update($data);
-        $car->refresh()->loadMissing(['model.brand', 'model.type', 'color']);
+        $car->refresh()->load(['model.brand', 'model.type', 'color']);
 
-        Cache::tags($this->tagCar($car->id))
-            ->put($this->keyById($car->id), $car, self::TTL_SECONDS);
-
-        Cache::tags($this->tagCars())->forget($this->keyAll());
+        $this->cache->putCar($car);
+        $this->cache->forgetCarsAll();
+        $this->cache->invalidatePersonsByCarId($car->id);
 
         return $ok;
     }
 
-    /** @inheritDoc */
+    /**
+     * Delete a car.
+     *
+     * @param  Car  $car  The Car instance to delete
+     *
+     * @throws \Exception When database deletion fails
+     */
     public function delete(Car $car): void
     {
         $id = $car->id;
 
         $car->delete();
 
-        Cache::tags($this->tagCar($id))->flush();
-        Cache::tags($this->tagCars())->forget($this->keyAll());
+        $this->cache->forgetCar($id);
+        $this->cache->forgetCarsAll();
+        $this->cache->invalidatePersonsByCarId($id);
+    }
+
+    /**
+     * Paginate all cars for admin panel.
+     *
+     * @param  int  $perPage  Number of items per page (default: 15)
+     * @return LengthAwarePaginator Paginated list of Car instances
+     */
+    public function paginateForAdmin(int $perPage = 15): LengthAwarePaginator
+    {
+        return Car::query()
+            ->with(['model.brand', 'color'])
+            ->paginate($perPage);
     }
 }

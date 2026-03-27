@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\Car;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -53,40 +52,47 @@ class CarPolicy
      *
      * @param User $user
      * @param Car    $car
-     * @param Person $person
      * @return Response
      */
-    public function view(User $user, Person $person, Car $car): Response
+    public function view(User $user, Car $car): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Compte inactif : accès aux voitures interdit.");
+            return Response::deny('Compte inactif : accès aux voitures interdit.');
         }
 
-        if (is_null($person->car_id)) {
+        $person = $user->person;
+
+        if (! $person ||! $user->isDriver()) {
             return Response::deny("Vous n'avez pas de voiture associée à votre compte.");
         }
 
-        if ($person->car_id !== $car->id) {
-            return Response::deny("Vous ne pouvez consulter que votre propre voiture.");
+        if ((int) $person->car_id !== $car->id) {
+            return Response::deny('Vous ne pouvez consulter que votre propre voiture.');
         }
 
         return Response::allow();
     }
 
+
     /**
      * Determine whether the user can create a car.
      *
      * @param User $user
-     * @param Person $person
      * @return Response
      */
-    public function create(User $user, Person $person): Response
+    public function create(User $user): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Compte inactif : création de voiture interdite.");
+            return Response::deny('Compte inactif : création de voiture interdite.');
         }
 
-        if (! is_null($person->car_id)) {
+        $person = $user->person;
+
+        if (! $person) {
+            return Response::deny("Profil utilisateur introuvable.");
+        }
+
+        if ($user->isDriver()) {
             return Response::deny("Vous avez déjà une voiture. Impossible d'en créer une autre.");
         }
 
@@ -97,22 +103,23 @@ class CarPolicy
      * Determine whether the user can update the given car.
      *
      * @param User $user
-     * @param Person $person
      * @param Car    $car
      * @return Response
      */
-    public function update(User $user, Person $person, Car $car): Response
+    public function update(User $user, Car $car): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Compte inactif : modification de voiture interdite.");
+            return Response::deny('Compte inactif : modification de voiture interdite.');
         }
 
-        if (is_null($person->car_id)) {
+        $person = $user->person;
+
+        if (! $person || !$user->isDriver()) {
             return Response::deny("Vous n'avez pas de voiture à modifier.");
         }
 
-        if ($user->$person !== $car->id) {
-            return Response::deny("Vous ne pouvez modifier que votre propre voiture.");
+        if ((int) $person->car_id !== $car->id) {
+            return Response::deny('Vous ne pouvez modifier que votre propre voiture.');
         }
 
         return Response::allow();
@@ -122,22 +129,23 @@ class CarPolicy
      * Determine whether the user can delete the given car.
      *
      * @param User $user
-     * @param Person $person
      * @param Car    $car
      * @return Response
      */
-    public function delete(User $user,Person $person, Car $car): Response
+    public function delete(User $user, Car $car): Response
     {
         if (! $user->is_active) {
-            return Response::deny("Compte inactif : suppression de voiture interdite.");
+            return Response::deny('Compte inactif : suppression de voiture interdite.');
         }
 
-        if (is_null($person->car_id)) {
+        $person = $user->person;
+
+        if (! $person || !$user->isDriver()) {
             return Response::deny("Vous n'avez pas de voiture à supprimer.");
         }
 
-        if ($user->$person !== $car->id) {
-            return Response::deny("Vous ne pouvez supprimer que votre propre voiture.");
+        if ((int) $person->car_id !== $car->id) {
+            return Response::deny('Vous ne pouvez supprimer que votre propre voiture.');
         }
 
         return Response::allow();

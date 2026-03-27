@@ -111,11 +111,17 @@ class Trip extends Model
         return $this->belongsToMany(Person::class, 'reservations', 'trip_id', 'person_id');
     }
 
+    /**
+     * Get the departure address for the trip.
+     */
     public function departureAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'departure_address_id');
     }
 
+    /**
+     * Get the arrival address for the trip.
+     */
     public function arrivalAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'arrival_address_id');

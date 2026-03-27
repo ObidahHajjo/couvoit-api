@@ -5,15 +5,13 @@ namespace App\DTOS\Car;
 /**
  * Value object holding resolved foreign key references
  * required to create or update a Car aggregate.
+ *
+ * @author Covoiturage API Team
+ *
+ * @description Contains resolved entity IDs for brand, type, model, and color references.
  */
 final readonly class ResolvedCarRefs
 {
-    /**
-     * @param int      $brandId
-     * @param int      $typeId
-     * @param int|null $modelId
-     * @param int|null $colorId
-     */
     public function __construct(
         public int $brandId,
         public int $typeId,
